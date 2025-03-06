@@ -1,0 +1,50 @@
+{
+    "en": {
+      "menu": {
+        "main": "Main Menu",
+        "users": "Users Menu",
+        "learning": "Learning Support",
+        "schedules": "Schedules and Appointments",
+        "academic": "Academic Curricula",
+        "financial": "Financial Menu"
+      },
+      "items": {
+        "overview": "Overview",
+        "studentManagement": "Student Management",
+        "teacherManagement": "Teacher Management",
+        "userManagement": "User Management",
+        "questionBank": "Question and Bank",
+        "educationalContent": "Educational Content",
+        "semesterManagement": "Semester Management",
+        "categories": "Categories and Stages",
+        "sections": "Sections and Materials",
+        "academicParts": "Academic Parts",
+        "onlinePayment": "Online Payment",
+        "balanceCards": "Balance Cards"
+      }
+    },
+    "ar": {
+      "menu": {
+        "main": "القائمة الرئيسية",
+        "users": "قائمة المستخدمين",
+        "learning": "الدعم التعليمي",
+        "schedules": "الجداول والمواعيد",
+        "academic": "المناهج الدراسية",
+        "financial": "القائمة المالية"
+      },
+      "items": {
+        "overview": "نظرة عامة",
+        "studentManagement": "إدارة الطلاب",
+        "teacherManagement": "إدارة المعلمين",
+        "userManagement": "إدارة المستخدمين",
+        "questionBank": "بنك الأسئلة",
+        "educationalContent": "المحتوى التعليمي",
+        "semesterManagement": "إدارة الفصول الدراسية",
+        "categories": "الفئات والمراحل",
+        "sections": "الأقسام والمواد",
+        "academicParts": "الأجزاء الأكاديمية",
+        "onlinePayment": "الدفع عبر الإنترنت",
+        "balanceCards": "بطاقات الرصيد"
+      }
+    }
+  }

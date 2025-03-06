@@ -1,0 +1,18 @@
+{
+  "auth": {
+    "login": "Login",
+    "email": "Email",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot Password?",
+    "signIn": "Sign In",
+    "demoCredentials": "Demo Credentials",
+    "fillDemo": "Fill Demo Credentials",
+    "invalidCredentials": "Invalid credentials",
+    "error": "An error occurred during login"
+  },
+  "welcome": {
+    "title": "Locate certified suppliers",
+    "message": "Help our buyers locate certified suppliers around the country and help our suppliers generate more revenue."
+  }
+}
