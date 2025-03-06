@@ -1,4 +1,4 @@
-// src/App.jsx
+// src/App.js
 import React from "react";
 import {
   BrowserRouter as Router,
@@ -19,6 +19,7 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import ProfilePage from "./pages/user/ProfilePage";
 import Unauthorized from "./pages/common/Unauthorized";
 import NotFound from "./pages/common/NotFound";
+import ServerError from "./pages/common/ServerError";
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
                   element={<ResetPasswordForm />}
                 />
                 <Route path="/unauthorized" element={<Unauthorized />} />
+                <Route path="/server-error" element={<ServerError />} />
 
                 {/* Protected routes - require authentication */}
                 <Route element={<ProtectedRoute />}>
