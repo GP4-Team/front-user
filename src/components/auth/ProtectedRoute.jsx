@@ -1,13 +1,26 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import AuthContext from '../../contexts/AuthContext';
 
-export const ProtectedRoute = () => {
-  const { currentUser, loading } = useAuth();
-  
+// Protected route wrapper component
+// Redirects to login if not authenticated
+const ProtectedRoute = () => {
+  // Use React's useContext directly with AuthContext
+  const auth = useContext(AuthContext);
+  const { isAuthenticated, loading } = auth;
+
+  // Show loading spinner while checking authentication
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+      </div>
+    );
   }
-  
-  return currentUser ? <Outlet /> : <Navigate to="/login" />;
+
+  // If authenticated, render nested routes (Outlet)
+  // If not authenticated, redirect to login page
+  return isAuthenticated ? <Outlet /> : <Navigate to="/" replace />;
 };
+
+export default ProtectedRoute;

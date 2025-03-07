@@ -1,106 +1,145 @@
-// src/contexts/AuthContext.jsx
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Create the context
-export const AuthContext = createContext();
+// Create auth context
+const AuthContext = createContext();
 
-// Create the provider component
+// Custom hook to use auth context
+export const useAuth = () => useContext(AuthContext);
+
+// Auth provider component
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Check if user is logged in from localStorage
+  // Check for existing auth on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    const checkAuth = () => {
+      try {
+        // Get stored token and user data
+        const storedToken = localStorage.getItem('auth_token');
+        const storedUser = localStorage.getItem('user_data');
+
+        if (storedToken && storedUser) {
+          setToken(storedToken);
+          setUser(JSON.parse(storedUser));
+        }
+      } catch (error) {
+        console.error('Auth restoration error:', error);
+        // Clear invalid data
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
   }, []);
 
-  // Register function
-  const register = async (userData) => {
-    setLoading(true);
-    setError('');
-    
+  // Login function
+  const login = (userData, authToken) => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Store in state
+      setUser(userData);
+      setToken(authToken);
       
-      navigate('/login', { 
-        state: { 
-          message: 'Registration successful! Please check your email to verify your account.' 
-        } 
-      });
+      // Store in localStorage
+      localStorage.setItem('auth_token', authToken);
+      localStorage.setItem('user_data', JSON.stringify(userData));
       
-      return { success: true };
+      // Navigate to dashboard
+      navigate('/dashboard');
+      
+      return true;
     } catch (error) {
-      setError('Registration failed. Please try again.');
-      throw error;
-    } finally {
-      setLoading(false);
+      console.error('Login error:', error);
+      return false;
     }
   };
 
-  // Login function
-  const login = async (email, password) => {
-    setLoading(true);
-    setError('');
+  // Demo login function - for testing without API
+  const demoLogin = (email, password) => {
+    // Demo credentials
+    const DEMO_CREDENTIALS = {
+      email: 'demo@example.com',
+      password: 'demo1234'
+    };
     
-    try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (!email || !password) {
-        throw new Error('Please provide email and password');
-      }
-      
-      // Create mock user
-      const user = {
-        id: '1',
-        firstName: 'Test',
-        lastName: 'User',
-        email,
+    // Check credentials
+    if (email === DEMO_CREDENTIALS.email && password === DEMO_CREDENTIALS.password) {
+      const userData = {
+        id: 1,
+        email: DEMO_CREDENTIALS.email,
+        username: 'demouser',
         role: 'user'
       };
       
-      // Store in localStorage
-      localStorage.setItem('user', JSON.stringify(user));
-      setCurrentUser(user);
-      
-      navigate('/dashboard');
-      
-      return { user };
-    } catch (error) {
-      setError(error.message || 'Login failed. Please check your credentials.');
-      throw error;
-    } finally {
-      setLoading(false);
+      // Use login function with demo data
+      return login(userData, 'demo-jwt-token-12345');
     }
+    
+    return false;
   };
 
   // Logout function
   const logout = () => {
-    localStorage.removeItem('user');
-    setCurrentUser(null);
-    navigate('/login');
+    // Clear state
+    setUser(null);
+    setToken(null);
+    
+    // Clear localStorage
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
+    
+    // Navigate to login
+    navigate('/');
   };
 
-  const value = {
-    currentUser,
-    loading,
-    error,
-    register,
-    login,
-    logout
+  // Registration function
+  const register = (userData) => {
+    try {
+      // For demo purposes, generate a token and user ID
+      const mockUserData = {
+        id: Math.floor(Math.random() * 1000),
+        email: userData.email,
+        username: userData.username,
+        role: 'user'
+      };
+      
+      const mockToken = 'demo-registration-token-' + Date.now();
+      
+      // Use the login function to set auth state and navigate
+      return login(mockUserData, mockToken);
+    } catch (error) {
+      console.error('Registration error:', error);
+      return false;
+    }
   };
-  
+
+  // Check if user is authenticated
+  const isAuthenticated = !!token;
+
+  // Define the context value
+  const contextValue = {
+    user,
+    token,
+    loading,
+    login,
+    demoLogin,
+    logout,
+    register,
+    isAuthenticated
+  };
+
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+// Export AuthContext as default export
+export default AuthContext;
