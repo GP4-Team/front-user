@@ -15,7 +15,7 @@ const NotFoundPage = () => {
           The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
         </p>
         <a 
-          href="/" 
+          href="/home" 
           className="px-8 py-3 rounded-full bg-black text-white font-medium hover:bg-gray-800 transition-colors duration-300"
         >
           Back to Home
