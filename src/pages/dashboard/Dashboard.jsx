@@ -1,447 +1,450 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState } from 'react';
+import { 
+  BarChart, 
+  Calendar,
+  GraduationCap,
+  BookOpen,
+  Bell,
+  Clock,
+  CheckCircle,
+  FileText,
+  TrendingUp,
+  Menu,
+  ChevronRight,
+  User
+} from 'lucide-react';
 
-// Mock data for enrolled courses
-const mockEnrolledCourses = [
-  {
-    id: 1,
-    title: 'Introduction to UI/UX Design',
-    instructor: 'Emma Davis',
-    progress: 45,
-    nextLesson: 'User Research Methods',
-    thumbnail: '/api/placeholder/400/200',
-    lastAccessed: '2 days ago'
-  },
-  {
-    id: 2,
-    title: 'Web Development Fundamentals',
-    instructor: 'Michael Wong',
-    progress: 72,
-    nextLesson: 'CSS Layouts and Flexbox',
-    thumbnail: '/api/placeholder/400/200',
-    lastAccessed: 'Yesterday'
-  }
-];
-
-// Mock data for recommended courses
-const mockRecommendedCourses = [
-  {
-    id: 3,
-    title: 'Advanced UI Animation',
-    instructor: 'Jessica Parker',
-    rating: 4.8,
-    students: 3240,
-    thumbnail: '/api/placeholder/400/200',
-    price: 79.99
-  },
-  {
-    id: 4,
-    title: 'JavaScript for Designers',
-    instructor: 'Alex Johnson',
-    rating: 4.6,
-    students: 2180,
-    thumbnail: '/api/placeholder/400/200',
-    price: 59.99
-  },
-  {
-    id: 5,
-    title: 'Mobile App Design Workshop',
-    instructor: 'Ryan Martinez',
-    rating: 4.9,
-    students: 1895,
-    thumbnail: '/api/placeholder/400/200',
-    price: 89.99
-  }
-];
-
-// Mock data for upcoming events
-const mockUpcomingEvents = [
-  {
-    id: 1,
-    title: 'Live Q&A: Design Systems',
-    date: '2025-03-15T15:00:00',
-    instructor: 'Emma Davis',
-    type: 'webinar'
-  },
-  {
-    id: 2,
-    title: 'Portfolio Review Session',
-    date: '2025-03-18T14:30:00',
-    instructor: 'Michael Wong',
-    type: 'workshop'
-  }
-];
-
-const StudentDashboard = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [enrolledCourses, setEnrolledCourses] = useState([]);
-  const [recommendedCourses, setRecommendedCourses] = useState([]);
-  const [upcomingEvents, setUpcomingEvents] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('dashboard');
-
-  useEffect(() => {
-    // Simulate API call to fetch dashboard data
-    const fetchDashboardData = async () => {
-      setIsLoading(true);
-      
-      try {
-        // In a real app, these would be actual API calls
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-        
-        setEnrolledCourses(mockEnrolledCourses);
-        setRecommendedCourses(mockRecommendedCourses);
-        setUpcomingEvents(mockUpcomingEvents);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchDashboardData();
-  }, []);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+const Dashboard = () => {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // Mock data
+  const studentData = {
+    name: "Ahmed Mohamed",
+    department: "Information Systems",
+    semester: "Fall 2023",
+    overallGPA: 3.7,
+    completedCredits: 87,
+    remainingCredits: 45
   };
-
-  // Format date for upcoming events
-  const formatEventDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short',
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <svg className="animate-spin h-10 w-10 text-black mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <p className="text-lg text-gray-600">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
+  
+  const courseData = [
+    { id: 1, code: "CS301", name: "Database Systems", progress: 68, instructor: "Dr. Heba Ahmed", nextClass: "Mon, 10:00 AM", location: "Hall B" },
+    { id: 2, code: "CS315", name: "Software Engineering", progress: 75, instructor: "Dr. Mahmoud Ali", nextClass: "Tue, 1:00 PM", location: "Lab 3" },
+    { id: 3, code: "CS350", name: "Computer Networks", progress: 42, instructor: "Dr. Samia Hassan", nextClass: "Wed, 11:30 AM", location: "Hall A" },
+    { id: 4, code: "CS325", name: "Operating Systems", progress: 56, instructor: "Dr. Khaled Omar", nextClass: "Thu, 9:00 AM", location: "Lab 1" }
+  ];
+  
+  const upcomingAssignments = [
+    { course: "CS301", title: "ER Diagram Design", dueDate: "Oct 25, 2023", daysLeft: 3 },
+    { course: "CS315", title: "Requirements Document", dueDate: "Oct 28, 2023", daysLeft: 6 },
+    { course: "CS350", title: "Network Protocols Lab", dueDate: "Nov 5, 2023", daysLeft: 14 }
+  ];
+  
+  const announcements = [
+    { title: "Midterm Schedule Published", date: "Oct 10, 2023", isNew: true },
+    { title: "New Database Lab Resources Available", date: "Oct 8, 2023", isNew: false },
+    { title: "Academic Advising Week", date: "Oct 5, 2023", isNew: false }
+  ];
+  
+  const upcomingExams = [
+    { course: "CS301", title: "Midterm Exam", date: "Nov 10, 2023", time: "10:00 AM" },
+    { course: "CS315", title: "Midterm Exam", date: "Nov 12, 2023", time: "1:00 PM" },
+    { course: "CS350", title: "Quiz 3", date: "Oct 30, 2023", time: "11:30 AM" }
+  ];
+  
+  const recentGrades = [
+    { course: "CS301", assignment: "Quiz 1", grade: "18/20", date: "Oct 5, 2023" },
+    { course: "CS315", assignment: "Project Proposal", grade: "27/30", date: "Oct 7, 2023" },
+    { course: "CS350", assignment: "Lab Report 1", grade: "24/25", date: "Oct 12, 2023" }
+  ];
+  
+  const attendanceData = [
+    { day: "Mon", percentage: 100 },
+    { day: "Tue", percentage: 100 },
+    { day: "Wed", percentage: 75 },
+    { day: "Thu", percentage: 100 },
+    { day: "Fri", percentage: 100 }
+  ];
+  
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  
+  // Calculate overall attendance
+  const overallAttendance = attendanceData.reduce((sum, day) => sum + day.percentage, 0) / attendanceData.length;
+  
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <Link to="/" className="font-bold text-xl text-gray-900">Skilloo</Link>
-            </div>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-[#263238] text-[#ECEFF1]' : 'bg-[#ECEFF1] text-[#455A64]'}`}>
+      {/* Top Navigation Bar */}
+      <header className={`py-3 px-6 ${isDarkMode ? 'bg-[#37474F] text-white' : 'bg-white'} shadow-sm`}>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <Menu className="h-6 w-6" />
+            <h1 className="text-xl font-bold">Eduara</h1>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <button className="relative p-2 rounded-full hover:bg-opacity-10 hover:bg-black">
+              <Bell className="h-5 w-5" />
+              <span className={`absolute top-1 right-1 h-2 w-2 rounded-full ${isDarkMode ? 'bg-[#A5D6A7]' : 'bg-[#81C784]'}`}></span>
+            </button>
             
-            <div className="flex items-center space-x-4">
-              <div className="relative group">
-                <button className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 focus:outline-none">
-                  <span>{user?.name || 'Student'}</span>
-                  <img 
-                    src="/api/placeholder/40/40" 
-                    alt={user?.name}
-                    className="w-10 h-10 rounded-full border-2 border-gray-200"
-                  />
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
-                  <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</Link>
-                  <Link to="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</Link>
-                  <button 
-                    onClick={handleLogout} 
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Sign Out
-                  </button>
-                </div>
+            <button 
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className={`p-2 rounded-full ${isDarkMode ? 'bg-[#455A64]' : 'bg-[#ECEFF1]'}`}
+            >
+              {isDarkMode ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+              )}
+            </button>
+            
+            <div className="flex items-center">
+              <div className="h-8 w-8 bg-[#607D8B] rounded-full flex items-center justify-center text-white">
+                {studentData.name.charAt(0)}
               </div>
             </div>
           </div>
         </div>
       </header>
       
-      {/* Navigation */}
-      <div className="bg-white shadow-sm border-t">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
-            <button 
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'dashboard' 
-                  ? 'border-black text-gray-900' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-              onClick={() => setActiveTab('dashboard')}
-            >
-              Dashboard
-            </button>
-            <button 
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'courses' 
-                  ? 'border-black text-gray-900' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-              onClick={() => setActiveTab('courses')}
-            >
-              My Courses
-            </button>
-            <button 
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'calendar' 
-                  ? 'border-black text-gray-900' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-              onClick={() => setActiveTab('calendar')}
-            >
-              Calendar
-            </button>
-            <button 
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'certificates' 
-                  ? 'border-black text-gray-900' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-              onClick={() => setActiveTab('certificates')}
-            >
-              Certificates
-            </button>
-          </nav>
-        </div>
-      </div>
-      
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome section */}
-        <div className="bg-white shadow rounded-lg p-6 mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome back, {user?.name?.split(' ')[0] || 'Student'}!</h1>
-          <p className="text-gray-600">Continue learning where you left off.</p>
-        </div>
-        
-        {/* Stats section */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white shadow rounded-lg p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-gray-500 text-sm">Courses Enrolled</p>
-                <p className="text-2xl font-bold">{enrolledCourses.length}</p>
-              </div>
-            </div>
+      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {/* Page Header */}
+        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+          <div>
+            <h2 className="text-2xl font-bold">Dashboard</h2>
+            <p className={`${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`}>{currentDate}</p>
           </div>
           
-          <div className="bg-white shadow rounded-lg p-6">
+          <div className={`mt-4 sm:mt-0 px-4 py-2 rounded-lg ${isDarkMode ? 'bg-[#455A64]' : 'bg-white'}`}>
             <div className="flex items-center">
-              <div className="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-gray-500 text-sm">Completed</p>
-                <p className="text-2xl font-bold">0</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white shadow rounded-lg p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-gray-500 text-sm">Hours Learned</p>
-                <p className="text-2xl font-bold">12.5</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white shadow rounded-lg p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-gray-500 text-sm">Certificates</p>
-                <p className="text-2xl font-bold">0</p>
-              </div>
+              <Calendar className="h-5 w-5 mr-2" />
+              <span>Semester: <strong>{studentData.semester}</strong></span>
             </div>
           </div>
         </div>
         
-        {/* Enrolled courses section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Your Courses</h2>
-            <Link to="/my-courses" className="text-blue-600 hover:text-blue-700 text-sm font-medium">View all</Link>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className={`p-6 rounded-xl shadow-sm ${isDarkMode ? 'bg-[#37474F]' : 'bg-white'}`}>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className={`text-sm ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`}>Overall GPA</p>
+                <p className="text-2xl font-bold mt-1">{studentData.overallGPA}</p>
+              </div>
+              <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-[#455A64]' : 'bg-[#ECEFF1]'}`}>
+                <TrendingUp className={isDarkMode ? 'text-[#A5D6A7]' : 'text-[#81C784]'} />
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full ${isDarkMode ? 'bg-[#A5D6A7]' : 'bg-[#81C784]'}`} 
+                  style={{ width: `${(studentData.overallGPA / 4) * 100}%` }}
+                ></div>
+              </div>
+            </div>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-6">
-            {enrolledCourses.map((course) => (
-              <div key={course.id} className="bg-white shadow rounded-lg overflow-hidden">
-                <div className="flex flex-col md:flex-row h-full">
-                  <div className="md:w-1/3">
-                    <img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover" />
+          <div className={`p-6 rounded-xl shadow-sm ${isDarkMode ? 'bg-[#37474F]' : 'bg-white'}`}>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className={`text-sm ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`}>Credit Hours</p>
+                <p className="text-2xl font-bold mt-1">{studentData.completedCredits}/{studentData.completedCredits + studentData.remainingCredits}</p>
+              </div>
+              <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-[#455A64]' : 'bg-[#ECEFF1]'}`}>
+                <GraduationCap className={isDarkMode ? 'text-[#A5D6A7]' : 'text-[#81C784]'} />
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full ${isDarkMode ? 'bg-[#A5D6A7]' : 'bg-[#81C784]'}`} 
+                  style={{ width: `${(studentData.completedCredits / (studentData.completedCredits + studentData.remainingCredits)) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+          
+          <div className={`p-6 rounded-xl shadow-sm ${isDarkMode ? 'bg-[#37474F]' : 'bg-white'}`}>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className={`text-sm ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`}>Current Courses</p>
+                <p className="text-2xl font-bold mt-1">{courseData.length}</p>
+              </div>
+              <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-[#455A64]' : 'bg-[#ECEFF1]'}`}>
+                <BookOpen className={isDarkMode ? 'text-[#A5D6A7]' : 'text-[#81C784]'} />
+              </div>
+            </div>
+            <p className={`mt-4 text-sm ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`}>
+              {courseData.length} active courses this semester
+            </p>
+          </div>
+          
+          <div className={`p-6 rounded-xl shadow-sm ${isDarkMode ? 'bg-[#37474F]' : 'bg-white'}`}>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className={`text-sm ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`}>Attendance</p>
+                <p className="text-2xl font-bold mt-1">{overallAttendance.toFixed(0)}%</p>
+              </div>
+              <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-[#455A64]' : 'bg-[#ECEFF1]'}`}>
+                <CheckCircle className={isDarkMode ? 'text-[#A5D6A7]' : 'text-[#81C784]'} />
+              </div>
+            </div>
+            <div className="mt-4 flex justify-between">
+              {attendanceData.map((day, index) => (
+                <div key={index} className="flex flex-col items-center">
+                  <div className="h-16 w-3 bg-gray-200 rounded-full overflow-hidden relative">
+                    <div 
+                      className={`absolute bottom-0 left-0 right-0 ${day.percentage === 100 ? (isDarkMode ? 'bg-[#A5D6A7]' : 'bg-[#81C784]') : 'bg-yellow-400'}`} 
+                      style={{ height: `${day.percentage}%` }}
+                    ></div>
                   </div>
-                  <div className="p-5 md:w-2/3">
-                    <h3 className="text-lg font-semibold mb-1">{course.title}</h3>
-                    <p className="text-gray-600 text-sm mb-3">Instructor: {course.instructor}</p>
-                    
-                    <div className="mb-3">
-                      <div className="flex items-center justify-between text-sm text-gray-500 mb-1">
-                        <span>Progress</span>
-                        <span>{course.progress}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full" 
-                          style={{ width: `${course.progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">Last accessed: {course.lastAccessed}</span>
-                      <Link 
-                        to={`/course/${course.id}`} 
-                        className="px-4 py-2 bg-black text-white text-sm rounded-md hover:bg-gray-800 transition-colors"
-                      >
-                        Continue
-                      </Link>
-                    </div>
-                  </div>
+                  <span className={`text-xs mt-1 ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`}>{day.day}</span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
         
-        {/* Upcoming events section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Upcoming Events</h2>
-            <Link to="/calendar" className="text-blue-600 hover:text-blue-700 text-sm font-medium">View calendar</Link>
-          </div>
-          
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            {upcomingEvents.length > 0 ? (
-              <div className="divide-y divide-gray-200">
-                {upcomingEvents.map((event) => (
-                  <div key={event.id} className="p-5 hover:bg-gray-50">
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 mr-4">
-                        <div className={`p-3 rounded-full ${
-                          event.type === 'webinar' 
-                            ? 'bg-blue-100 text-blue-600' 
-                            : 'bg-green-100 text-green-600'
-                        }`}>
-                          {event.type === 'webinar' ? (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                          ) : (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                          )}
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Courses */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Current Courses */}
+            <div className={`rounded-xl shadow-sm overflow-hidden ${isDarkMode ? 'bg-[#37474F]' : 'bg-white'}`}>
+              <div className="p-6">
+                <h3 className="text-lg font-bold mb-4">Current Courses</h3>
+                
+                <div className="space-y-4">
+                  {courseData.map((course) => (
+                    <div 
+                      key={course.id} 
+                      className={`p-4 rounded-lg ${isDarkMode ? 'bg-[#455A64]' : 'bg-[#ECEFF1]'} hover:shadow-md transition-shadow`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="flex items-center">
+                            <span className={`px-2 py-1 text-xs rounded ${isDarkMode ? 'bg-[#607D8B] text-white' : 'bg-[#B0BEC5] text-[#455A64]'} mr-2`}>
+                              {course.code}
+                            </span>
+                            <h4 className="font-medium">{course.name}</h4>
+                          </div>
+                          <p className={`text-sm mt-1 ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`}>
+                            {course.instructor}
+                          </p>
+                        </div>
+                        <ChevronRight className={`h-5 w-5 ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`} />
+                      </div>
+                      
+                      <div className="mt-3">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className={isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}>Course Progress</span>
+                          <span>{course.progress}%</span>
+                        </div>
+                        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div 
+                            className={isDarkMode ? 'bg-[#A5D6A7]' : 'bg-[#81C784]'} 
+                            style={{ width: `${course.progress}%`, height: '100%' }}
+                          ></div>
                         </div>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold">{event.title}</h3>
-                        <p className="text-gray-600 mb-2">Instructor: {event.instructor}</p>
-                        <p className="text-gray-500 text-sm">{formatEventDate(event.date)}</p>
-                      </div>
-                      <div className="ml-4">
-                        <button className="px-4 py-2 bg-black text-white text-sm rounded-md hover:bg-gray-800 transition-colors">
-                          Join
-                        </button>
+                      
+                      <div className="flex flex-wrap gap-4 mt-3 text-xs">
+                        <div className={`flex items-center ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`}>
+                          <Clock className="h-3 w-3 mr-1" />
+                          <span>Next: {course.nextClass}</span>
+                        </div>
+                        <div className={`flex items-center ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`}>
+                          <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <span>{course.location}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center text-gray-500">
-                No upcoming events scheduled.
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Recommended courses section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Recommended for You</h2>
-            <Link to="/courses" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Browse all courses</Link>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-6">
-            {recommendedCourses.map((course) => (
-              <div key={course.id} className="bg-white shadow rounded-lg overflow-hidden">
-                <img src={course.thumbnail} alt={course.title} className="w-full h-48 object-cover" />
-                <div className="p-5">
-                  <h3 className="text-lg font-semibold mb-1">{course.title}</h3>
-                  <p className="text-gray-600 text-sm mb-2">{course.instructor}</p>
-                  
-                  <div className="flex items-center mb-3">
-                    <div className="flex text-yellow-400 mr-1">
-                      {[...Array(5)].map((_, i) => (
-                        <svg key={i} className="w-4 h-4" fill={i < Math.floor(course.rating) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                        </svg>
-                      ))}
-                    </div>
-                    <span className="text-sm text-gray-600">{course.rating}</span>
-                    <span className="text-sm text-gray-500 ml-2">({course.students.toLocaleString()} students)</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center mt-4">
-                    <span className="font-bold text-lg">${course.price}</span>
-                    <Link 
-                      to={`/course/${course.id}`}
-                      className="px-4 py-2 bg-black text-white text-sm rounded-md hover:bg-gray-800 transition-colors"
-                    >
-                      Details
-                    </Link>
-                  </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            </div>
+            
+            {/* Recent Grades */}
+            <div className={`rounded-xl shadow-sm ${isDarkMode ? 'bg-[#37474F]' : 'bg-white'}`}>
+              <div className="p-6">
+                <h3 className="text-lg font-bold mb-4">Recent Grades</h3>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className={`text-left ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`}>
+                        <th className="pb-3 text-sm font-medium">Course</th>
+                        <th className="pb-3 text-sm font-medium">Assignment</th>
+                        <th className="pb-3 text-sm font-medium">Grade</th>
+                        <th className="pb-3 text-sm font-medium">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y ${isDarkMode ? 'divide-[#455A64]' : 'divide-gray-200'}`}>
+                      {recentGrades.map((grade, index) => (
+                        <tr key={index}>
+                          <td className="py-3 text-sm">
+                            <span className={`px-2 py-1 text-xs rounded ${isDarkMode ? 'bg-[#607D8B] text-white' : 'bg-[#B0BEC5] text-[#455A64]'}`}>
+                              {grade.course}
+                            </span>
+                          </td>
+                          <td className="py-3 text-sm">{grade.assignment}</td>
+                          <td className="py-3 text-sm font-medium">{grade.grade}</td>
+                          <td className="py-3 text-sm text-gray-500">{grade.date}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div className="mt-4 text-center">
+                  <button className={`text-sm ${isDarkMode ? 'text-[#A5D6A7]' : 'text-[#607D8B]'} hover:underline`}>
+                    View All Grades
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Right Column - Sidebar */}
+          <div className="space-y-6">
+            {/* Upcoming Assignments */}
+            <div className={`rounded-xl shadow-sm ${isDarkMode ? 'bg-[#37474F]' : 'bg-white'}`}>
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold">Upcoming Assignments</h3>
+                  <span className={`text-xs ${isDarkMode ? 'bg-[#455A64] text-[#B0BEC5]' : 'bg-[#ECEFF1] text-[#607D8B]'} px-2 py-1 rounded-full`}>
+                    {upcomingAssignments.length} Due
+                  </span>
+                </div>
+                
+                <div className="space-y-3">
+                  {upcomingAssignments.map((assignment, index) => (
+                    <div 
+                      key={index} 
+                      className={`p-3 rounded-lg ${isDarkMode ? 'bg-[#455A64]' : 'bg-[#ECEFF1]'} ${
+                        assignment.daysLeft <= 3 ? 'border-l-4 border-red-500' : 'border-l-4 border-yellow-500'
+                      }`}
+                    >
+                      <div className="flex justify-between mb-1">
+                        <span className={`text-xs ${isDarkMode ? 'bg-[#607D8B] text-white' : 'bg-[#B0BEC5] text-[#455A64]'} px-2 py-0.5 rounded`}>
+                          {assignment.course}
+                        </span>
+                        <span className={`text-xs ${
+                          assignment.daysLeft <= 3 
+                            ? 'text-red-500' 
+                            : (isDarkMode ? 'text-yellow-400' : 'text-yellow-600')
+                        }`}>
+                          {assignment.daysLeft} days left
+                        </span>
+                      </div>
+                      <p className="font-medium text-sm">{assignment.title}</p>
+                      <p className={`text-xs mt-1 ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`}>
+                        Due: {assignment.dueDate}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-4 text-center">
+                  <button className={`text-sm ${isDarkMode ? 'text-[#A5D6A7]' : 'text-[#607D8B]'} hover:underline`}>
+                    View All Assignments
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Upcoming Exams */}
+            <div className={`rounded-xl shadow-sm ${isDarkMode ? 'bg-[#37474F]' : 'bg-white'}`}>
+              <div className="p-6">
+                <h3 className="text-lg font-bold mb-4">Upcoming Exams</h3>
+                
+                <div className="space-y-3">
+                  {upcomingExams.map((exam, index) => (
+                    <div 
+                      key={index} 
+                      className={`p-3 rounded-lg ${isDarkMode ? 'bg-[#455A64]' : 'bg-[#ECEFF1]'}`}
+                    >
+                      <div className="flex justify-between mb-1">
+                        <span className={`text-xs ${isDarkMode ? 'bg-[#607D8B] text-white' : 'bg-[#B0BEC5] text-[#455A64]'} px-2 py-0.5 rounded`}>
+                          {exam.course}
+                        </span>
+                      </div>
+                      <p className="font-medium text-sm">{exam.title}</p>
+                      <div className="flex justify-between mt-2 text-xs">
+                        <div className={`flex items-center ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`}>
+                          <Calendar className="h-3 w-3 mr-1" />
+                          <span>{exam.date}</span>
+                        </div>
+                        <div className={`flex items-center ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`}>
+                          <Clock className="h-3 w-3 mr-1" />
+                          <span>{exam.time}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Announcements */}
+            <div className={`rounded-xl shadow-sm ${isDarkMode ? 'bg-[#37474F]' : 'bg-white'}`}>
+              <div className="p-6">
+                <h3 className="text-lg font-bold mb-4">Announcements</h3>
+                
+                <div className="space-y-3">
+                  {announcements.map((announcement, index) => (
+                    <div 
+                      key={index} 
+                      className={`p-3 ${announcement.isNew ? 
+                        (isDarkMode ? 'bg-[#455A64] border-l-4 border-[#A5D6A7]' : 'bg-[#ECEFF1] border-l-4 border-[#81C784]') : 
+                        (isDarkMode ? 'bg-[#455A64]/50' : 'bg-[#ECEFF1]/50')
+                      } rounded-lg`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium text-sm">
+                            {announcement.title}
+                            {announcement.isNew && (
+                              <span className="ml-2 px-1.5 py-0.5 text-xs rounded bg-[#A5D6A7] text-[#455A64]">New</span>
+                            )}
+                          </p>
+                          <p className={`text-xs mt-1 ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`}>
+                            {announcement.date}
+                          </p>
+                        </div>
+                        <ChevronRight className={`h-5 w-5 ${isDarkMode ? 'text-[#B0BEC5]' : 'text-[#78909C]'}`} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </main>
-      
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-gray-500 text-sm">
-            <p>© 2025 Skilloo. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };
 
-export default StudentDashboard;
+export default Dashboard;

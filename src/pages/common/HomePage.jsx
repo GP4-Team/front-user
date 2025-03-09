@@ -1,406 +1,309 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+// src/pages/common/HomePage.jsx
+import React from 'react';
+import { Link } from 'react-router-dom';
+import Navbar from '../../components/layout/Navbar'; // Import the Navbar component
+import Footer from '../../components/layout/Footer'; // Import the Navbar component
 
-const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isAuthenticated, user, logout } = useAuth();
-  const navigate = useNavigate();
-  
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-  
-  return (
-    <header className="py-4 px-6 md:px-12 bg-white">
-      <div className="max-w-7xl mx-auto flex justify-between items-center">
-        {/* Logo */}
-        <Link to="/" className="flex items-center">
-          <span className="text-2xl font-bold tracking-tight">Skilloo</span>
-        </Link>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-8">
-          <Link to="/" className="font-medium hover:text-gray-600 transition-colors duration-200">Home</Link>
-          <Link to="/courses" className="font-medium hover:text-gray-600 transition-colors duration-200">Courses</Link>
-          <Link to="/mentors" className="font-medium hover:text-gray-600 transition-colors duration-200">Mentors</Link>
-          <Link to="/about" className="font-medium hover:text-gray-600 transition-colors duration-200">About</Link>
-        </nav>
-
-        {/* Auth Buttons - Desktop */}
-        <div className="hidden md:flex items-center space-x-4">
-          {isAuthenticated ? (
-            <>
-              <div className="flex items-center">
-                <span className="mr-2">{user?.name || 'User'}</span>
-                <img 
-                  src="/api/placeholder/40/40" 
-                  alt={user?.name} 
-                  className="w-8 h-8 rounded-full border-2 border-gray-200"
-                />
-              </div>
-              
-              <div className="relative group">
-                <button className="font-medium hover:text-gray-600 transition-colors duration-200">
-                  Dashboard
-                </button>
-                <div className="absolute right-0 w-48 mt-2 py-2 bg-white rounded-md shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-                  <Link to="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Dashboard</Link>
-                  {user?.role === 'admin' && (
-                    <Link to="/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Admin Panel</Link>
-                  )}
-                  {user?.role === 'instructor' && (
-                    <Link to="/instructor" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Instructor Panel</Link>
-                  )}
-                  <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    Sign Out
-                  </button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="font-medium hover:text-gray-600 transition-colors duration-200">Sign In</Link>
-              <Link 
-                to="/register" 
-                className="px-5 py-2 rounded-full bg-black text-white font-medium hover:bg-gray-800 transition-colors duration-200"
-              >
-                Get Started
-              </Link>
-            </>
-          )}
-        </div>
-
-        {/* Mobile Menu Button */}
-        <button 
-          className="md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300" 
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
-          <svg 
-            className="w-6 h-6" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24" 
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {isMenuOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            )}
-          </svg>
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden mt-4 py-4">
-          <Link to="/" className="block py-2 px-4 font-medium hover:bg-gray-100 hover:text-gray-900">Home</Link>
-          <Link to="/courses" className="block py-2 px-4 font-medium hover:bg-gray-100 hover:text-gray-900">Courses</Link>
-          <Link to="/mentors" className="block py-2 px-4 font-medium hover:bg-gray-100 hover:text-gray-900">Mentors</Link>
-          <Link to="/about" className="block py-2 px-4 font-medium hover:bg-gray-100 hover:text-gray-900">About</Link>
-          
-          <div className="mt-4 pt-4 border-t border-gray-300">
-            {isAuthenticated ? (
-              <>
-                <div className="px-4 py-2 flex items-center">
-                  <img 
-                    src="/api/placeholder/40/40" 
-                    alt={user?.name} 
-                    className="w-8 h-8 rounded-full mr-2"
-                  />
-                  <span className="font-medium">{user?.name || 'User'}</span>
-                </div>
-                <Link to="/dashboard" className="block py-2 px-4 font-medium hover:bg-gray-100 hover:text-gray-900">Dashboard</Link>
-                {user?.role === 'admin' && (
-                  <Link to="/admin" className="block py-2 px-4 font-medium hover:bg-gray-100 hover:text-gray-900">Admin Panel</Link>
-                )}
-                {user?.role === 'instructor' && (
-                  <Link to="/instructor" className="block py-2 px-4 font-medium hover:bg-gray-100 hover:text-gray-900">Instructor Panel</Link>
-                )}
-                <button 
-                  onClick={handleLogout}
-                  className="block w-full text-left py-2 px-4 font-medium hover:bg-gray-100 hover:text-gray-900"
-                >
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="block py-2 px-4 font-medium hover:bg-gray-100 hover:text-gray-900">Sign In</Link>
-                <Link to="/register" className="block py-2 px-4 font-medium hover:bg-gray-100 hover:text-gray-900">Get Started</Link>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </header>
-  );
-};
 
 const HomePage = () => {
   return (
-    <div className="min-h-screen bg-white">
-      <Header />
-      
-      {/* Hero Section */}
-      <section className="py-16 px-6 md:py-24 bg-yellow-50">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6">
-              Learn from anywhere around the globe with us
-            </h1>
-            <p className="text-lg mb-8 text-gray-700">
-              Get quality courses with us with the best price. Now you can get the best course from us. We have top mentors around the globe.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Link 
-                to="/courses" 
-                className="px-8 py-3 rounded-full bg-black text-white font-medium hover:bg-gray-800 transition-colors duration-300"
-              >
-                Get Started
-              </Link>
-              <button className="flex items-center px-6 py-3 rounded-full bg-white text-black font-medium border border-gray-300 hover:bg-gray-100 transition-colors duration-300">
-                <span className="mr-2">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                  </svg>
-                </span>
-                How it works?
-              </button>
+
+    <>
+     <Navbar />
+    <div className="bg-background-light min-h-screen pb-10">
+      {/* Main Hero Section */}
+      <div className="relative bg-gradient-to-br from-blue-50 to-gray-100 pt-16 pb-24">
+        {/* Decorative elements - curves and dots */}
+        <div className="absolute top-20 left-0 w-full">
+          <svg className="w-full" height="120" fill="none">
+            <path 
+              d="M0,50 Q300,100 600,30 T1200,50" 
+              stroke="#A5D6A7" 
+              strokeWidth="3" 
+              strokeDasharray="10,10" 
+              fill="none"
+            />
+          </svg>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            {/* Left side content */}
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                Discover your path to
+                <span className="text-primary-base"> Eduara</span>
+                <span className="block text-5xl mt-2">EDUCATION!</span>
+              </h1>
+              <div className="w-32 h-2 bg-accent-secondary mb-6 rounded-full"></div>
+              
+              <p className="text-gray-600 mb-8">
+                Whether you're a student, teacher, or professional seeking to develop your skills, Eduara
+                provides you with the tools and courses necessary for success. Learn from elite
+                trainers, enjoy an advanced learning experience, and be ready for a better future.
+              </p>
+              
+              <div className="flex flex-wrap gap-4">
+                <Link 
+                  to="/register" 
+                  className="inline-flex items-center px-6 py-3 bg-primary-base text-white font-medium rounded-full hover:bg-primary-dark transition-colors"
+                >
+                  Join the First
+                  <span className="ml-2">📝</span>
+                </Link>
+                
+                <div className="flex space-x-3">
+                  <a 
+                    href="#" 
+                    className="w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-sm hover:bg-gray-50"
+                  >
+                    <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
+                    </svg>
+                  </a>
+                  <a 
+                    href="#" 
+                    className="w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-sm hover:bg-gray-50"
+                  >
+                    <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+                    </svg>
+                  </a>
+                  <a 
+                    href="#" 
+                    className="w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-sm hover:bg-gray-50"
+                  >
+                    <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                      <path fillRule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clipRule="evenodd" />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+              
+              {/* Features */}
+              <div className="flex flex-wrap gap-6 mt-8">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 mr-3">
+                    <div className="p-2 bg-blue-100 rounded-full">
+                      <svg className="w-5 h-5 text-primary-base" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <span className="text-sm text-gray-700 font-medium">Your Path to Success</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 mr-3">
+                    <div className="p-2 bg-blue-100 rounded-full">
+                      <svg className="w-5 h-5 text-primary-base" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" />
+                        <path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <span className="text-sm text-gray-700 font-medium">Strongest Tracking System</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 mr-3">
+                    <div className="p-2 bg-blue-100 rounded-full">
+                      <svg className="w-5 h-5 text-primary-base" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <span className="text-sm text-gray-700 font-medium">AI-Powered Support</span>
+                </div>
+              </div>
             </div>
             
-            <div className="mt-12">
-              <div className="flex items-center">
-                <div className="flex -space-x-2 mr-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <img 
-                      key={i}
-                      src={`/api/placeholder/40/40`} 
-                      alt={`Mentor ${i}`} 
-                      className="w-8 h-8 rounded-full border-2 border-white"
-                    />
-                  ))}
-                </div>
-                <div>
-                  <div className="font-bold text-lg">100+</div>
-                  <div className="text-sm text-gray-600">Top Class Mentors</div>
-                </div>
+            {/* Right side character illustration */}
+            <div className="hidden md:block relative">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-56 h-56 bg-accent-primary rounded-full opacity-60"></div>
               </div>
-            </div>
-          </div>
-          <div className="relative">
-            <div className="relative z-10">
-              <img 
-                src="/api/placeholder/500/500" 
-                alt="Student with headphones" 
-                className="rounded-lg shadow-xl mx-auto"
-              />
-              <div className="absolute -top-4 -right-4 bg-white rounded-xl p-4 shadow-lg">
-                <div className="text-black font-bold">110K</div>
-                <div className="text-gray-500 text-sm">Active Students</div>
-              </div>
-            </div>
-            <div className="absolute top-1/2 -right-12 transform -translate-y-1/2 w-40 h-40 bg-yellow-300 rounded-full -z-10 opacity-70"></div>
-          </div>
-        </div>
-      </section>
-
-      {/* Why We Are Different Section */}
-      <section className="py-16 px-6">
-        <div className="max-w-7xl mx-auto text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-8">Why We Are Different From Others?</h2>
-          <p className="text-lg max-w-3xl mx-auto">
-            We have highly professional mentors around the globe. We have great features than any other platform.
-          </p>
-        </div>
-
-        <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
-          {/* Feature 1 */}
-          <div className="bg-white p-8 rounded-xl shadow-md border border-gray-100">
-            <div className="w-14 h-14 bg-green-100 rounded-lg flex items-center justify-center mb-6">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold mb-3">Best Quality</h3>
-            <p className="text-gray-600">
-              Our courses are reviewed by industry experts to ensure the highest quality and relevance.
-            </p>
-          </div>
-
-          {/* Feature 2 */}
-          <div className="bg-white p-8 rounded-xl shadow-md border border-gray-100">
-            <div className="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold mb-3">Time Flexibility</h3>
-            <p className="text-gray-600">
-              Learn at your own pace with lifetime access to courses and flexible scheduling.
-            </p>
-          </div>
-
-          {/* Feature 3 */}
-          <div className="bg-white p-8 rounded-xl shadow-md border border-gray-100">
-            <div className="w-14 h-14 bg-red-100 rounded-lg flex items-center justify-center mb-6">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold mb-3">Fast Support</h3>
-            <p className="text-gray-600">
-              Get answers to your questions quickly with our 24/7 support and active community.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Courses Section */}
-      <section className="py-16 px-6 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center">Our most popular & demanded courses</h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Course 1 */}
-            <div className="bg-white rounded-xl overflow-hidden shadow-md">
-              <img src="/api/placeholder/400/200" alt="Course thumbnail" className="w-full h-48 object-cover" />
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-bold">Branding & Logo</h3>
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
+              <div className="relative">
+                <img 
+                  src="/images/student-character.png" 
+                  alt="Student character" 
+                  className="mx-auto"
+                />
+                {/* Add decorative elements like circles and lines */}
+                <div className="absolute top-10 right-10">
+                  <div className="w-8 h-8 bg-blue-300 rounded-full opacity-50"></div>
+                </div>
+                <div className="absolute top-32 left-0">
+                  <svg width="100" height="30" viewBox="0 0 100 30" fill="none">
+                    <path d="M0,15 Q25,0 50,15 T100,15" stroke="#78909C" strokeWidth="2" fill="none" />
                   </svg>
                 </div>
-                <p className="text-gray-600 mb-6">Learn how to create beautiful and memorable brand identities that stand out in the market.</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <img src="/api/placeholder/40/40" alt="Instructor" className="w-8 h-8 rounded-full mr-2" />
-                    <span className="text-sm text-gray-600">John Smith</span>
-                  </div>
-                  <div className="text-yellow-500 font-bold">$69.99</div>
-                </div>
               </div>
             </div>
-
-            {/* Course 2 */}
-            <div className="bg-white rounded-xl overflow-hidden shadow-md">
-              <img src="/api/placeholder/400/200" alt="Course thumbnail" className="w-full h-48 object-cover" />
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-bold">Poster Design</h3>
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
-                  </svg>
-                </div>
-                <p className="text-gray-600 mb-6">Master the art of eye-catching poster design with practical techniques and creative approaches.</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <img src="/api/placeholder/40/40" alt="Instructor" className="w-8 h-8 rounded-full mr-2" />
-                    <span className="text-sm text-gray-600">Emma Davis</span>
-                  </div>
-                  <div className="text-yellow-500 font-bold">$59.99</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Course 3 */}
-            <div className="bg-white rounded-xl overflow-hidden shadow-md">
-              <img src="/api/placeholder/400/200" alt="Course thumbnail" className="w-full h-48 object-cover" />
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-bold">Advanced Graphics Design</h3>
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
-                  </svg>
-                </div>
-                <p className="text-gray-600 mb-6">Take your design skills to the next level with advanced techniques in industry-standard tools.</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <img src="/api/placeholder/40/40" alt="Instructor" className="w-8 h-8 rounded-full mr-2" />
-                    <span className="text-sm text-gray-600">Michael Wong</span>
-                  </div>
-                  <div className="text-yellow-500 font-bold">$79.99</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="text-center mt-12">
-            <Link to="/courses" className="inline-block px-8 py-3 bg-red-500 text-white font-medium rounded-md hover:bg-red-600 transition-colors duration-300">
-              Explore All Courses
-            </Link>
           </div>
         </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-12 px-6 bg-gray-100">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="mb-8 md:mb-0">
-            <h3 className="text-xl font-bold mb-4">Skilloo</h3>
-            <p className="text-gray-600 mb-4">
-              Learn from the best instructors and advance your skills with practical, industry-relevant courses.
-            </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-500 hover:text-gray-800">
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+      </div>
+      
+      {/* Study Materials Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <h2 className="text-3xl font-bold mb-12">
+          <span className="bg-gray-100 px-3 py-1 rounded-md">Study</span>
+          <span className="text-primary-base">Materials</span>
+        </h2>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {/* Math Card 1 */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 flex flex-col items-center transition-transform hover:transform hover:scale-105">
+            <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-red-200 flex items-center justify-center">
+                <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
-              </a>
-              <a href="#" className="text-gray-500 hover:text-gray-800">
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723 10.1 10.1 0 01-3.127 1.184A4.92 4.92 0 0016.327 2a4.935 4.935 0 00-4.93 4.93c0 .386.023.762.07 1.127A14.087 14.087 0 011.695 3.05a4.926 4.926 0 001.523 6.573 4.868 4.868 0 01-2.23-.616v.06a4.935 4.935 0 003.95 4.835 4.968 4.968 0 01-2.223.085 4.937 4.937 0 004.604 3.417 9.868 9.868 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.054 0 13.999-7.496 13.999-13.986 0-.209 0-.42-.015-.63a9.936 9.936 0 002.46-2.548l-.047-.02z"/>
-                </svg>
-              </a>
-              <a href="#" className="text-gray-500 hover:text-gray-800">
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
-                </svg>
-              </a>
+              </div>
             </div>
+            <h3 className="text-lg font-bold text-center mb-2">الرياضيات</h3>
+            <p className="text-sm text-gray-500 text-center">الصف الثاني الثانوي</p>
           </div>
           
-          <div>
-            <h3 className="text-lg font-bold mb-4">Courses</h3>
-            <ul className="space-y-2">
-              <li><a href="#" className="text-gray-600 hover:text-gray-900">Design</a></li>
-              <li><a href="#" className="text-gray-600 hover:text-gray-900">Development</a></li>
-              <li><a href="#" className="text-gray-600 hover:text-gray-900">Marketing</a></li>
-              <li><a href="#" className="text-gray-600 hover:text-gray-900">Business</a></li>
-              <li><a href="#" className="text-gray-600 hover:text-gray-900">Photography</a></li>
-            </ul>
+          {/* Math Card 2 */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 flex flex-col items-center transition-transform hover:transform hover:scale-105">
+            <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-orange-200 flex items-center justify-center">
+                <svg className="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-lg font-bold text-center mb-2">الرياضيات</h3>
+            <p className="text-sm text-gray-500 text-center">الصف الأول الاعدادي</p>
           </div>
           
-          <div>
-            <h3 className="text-lg font-bold mb-4">Company</h3>
-            <ul className="space-y-2">
-              <li><a href="#" className="text-gray-600 hover:text-gray-900">About Us</a></li>
-              <li><a href="#" className="text-gray-600 hover:text-gray-900">Careers</a></li>
-              <li><a href="#" className="text-gray-600 hover:text-gray-900">Blog</a></li>
-              <li><a href="#" className="text-gray-600 hover:text-gray-900">Press</a></li>
-              <li><a href="#" className="text-gray-600 hover:text-gray-900">Contact</a></li>
-            </ul>
+          {/* Physics Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 flex flex-col items-center transition-transform hover:transform hover:scale-105">
+            <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-blue-200 flex items-center justify-center">
+                <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-lg font-bold text-center mb-2">الفيزياء</h3>
+            <p className="text-sm text-gray-500 text-center">الصف الثاني الثانوي</p>
           </div>
           
-          <div>
-            <h3 className="text-lg font-bold mb-4">Legal</h3>
-            <ul className="space-y-2">
-              <li><a href="#" className="text-gray-600 hover:text-gray-900">Terms of Service</a></li>
-              <li><a href="#" className="text-gray-600 hover:text-gray-900">Privacy Policy</a></li>
-              <li><a href="#" className="text-gray-600 hover:text-gray-900">Cookie Policy</a></li>
-              <li><a href="#" className="text-gray-600 hover:text-gray-900">Copyright</a></li>
-            </ul>
+          {/* Chemistry Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 flex flex-col items-center transition-transform hover:transform hover:scale-105">
+            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-green-200 flex items-center justify-center">
+                <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-lg font-bold text-center mb-2">الكيمياء</h3>
+            <p className="text-sm text-gray-500 text-center">الصف الثاني الثانوي</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* About Platform Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <h2 className="text-3xl font-bold mb-12">
+          <span className="bg-gray-100 px-3 py-1 rounded-md">About</span>
+          <span className="text-primary-base">Eduara</span>
+        </h2>
+        
+        <div className="mb-12">
+          <h3 className="text-2xl font-bold mb-6 flex items-center">
+            WHY CHOOSE THE PLATFORM 
+            <span className="text-primary-base mx-2">Eduara</span>
+            ?
+            <div className="h-1 w-24 bg-accent-secondary mx-4 rounded-full"></div>
+          </h3>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+          {/* AI Support Feature */}
+          <div className="text-center">
+            <div className="inline-block mb-4">
+              <div className="w-16 h-16 mx-auto bg-yellow-100 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+            </div>
+            <h4 className="text-xl font-bold mb-2">AI Support</h4>
+            <p className="text-gray-600 text-sm">
+              AI analyzes your level in each part of the curriculum and tells you how to improve your level
+            </p>
+          </div>
+          
+          {/* Top Teachers Feature */}
+          <div className="text-center">
+            <div className="inline-block mb-4">
+              <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            </div>
+            <h4 className="text-xl font-bold mb-2">Top Teachers</h4>
+            <p className="text-gray-600 text-sm">
+              We provided the best teaching staff to help you reach top grades
+            </p>
+          </div>
+          
+          {/* Continuous Challenges Feature */}
+          <div className="text-center">
+            <div className="inline-block mb-4">
+              <div className="w-16 h-16 mx-auto bg-purple-100 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+            </div>
+            <h4 className="text-xl font-bold mb-2">Continuous Challenges</h4>
+            <p className="text-gray-600 text-sm">
+              We turned the learning experience into a game where you can improve your level and compete with friends
+            </p>
+          </div>
+          
+          {/* Periodic Exams Feature */}
+          <div className="text-center">
+            <div className="inline-block mb-4">
+              <div className="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+              </div>
+            </div>
+            <h4 className="text-xl font-bold mb-2">Periodic Exams</h4>
+            <p className="text-gray-600 text-sm">
+              We provided the best question banks in each curriculum for you to practice and train on everything
+            </p>
           </div>
         </div>
         
-        <div className="mt-12 pt-8 border-t border-gray-300 text-center">
-          <p className="text-gray-600">© 2025 Skilloo. All rights reserved.</p>
+        {/* Character image at the bottom */}
+        <div className="flex justify-center">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-64 h-64 bg-yellow-300 rounded-full opacity-60"></div>
+            </div>
+            <img 
+              src="/images/graduate-character.png" 
+              alt="Graduate character" 
+              className="relative z-10 max-w-xs"
+            />
+            {/* Blue circle/logo behind character */}
+            <div className="absolute right-0 top-0 w-32 h-32 bg-primary-light rounded-full opacity-60 -z-0"></div>
+          </div>
         </div>
-      </footer>
+      </div>
+      
+      <Footer />
     </div>
+    </>
   );
 };
 

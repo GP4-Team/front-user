@@ -1,56 +1,62 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext.jsx';
-import AuthPage from './pages/auth/AuthPage.jsx';
-import Dashboard from './pages/dashboard/Dashboard.jsx';
-import Home from './pages/common/HomePage.jsx';
-import Profile from './pages/user/ProfilePage.jsx';
-import NotFound from './pages/common/NotFound.jsx';
-import Unauthorized from './pages/common/Unauthorized.jsx';
-import ServerError from './pages/common//ServerError.jsx';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext.jsx";
+// Layout components
+import ExamPageWithData from "./pages/ExamPageWithData";
+import { ThemeProvider } from "./contexts/ThemeContext.jsx"
+import Navbar from "./components/navigation/Navbar";
+import Sidebar from "./components/navigation/Sidebar";
+// Auth pages
+import AuthPage from "./pages/auth/AuthPage.jsx";
+// Main pages
+import Dashboard from "./pages/dashboard/Dashboard.jsx";
+import Home from "./pages/common/HomePage.jsx";
+import Profile from "./pages/user/ProfilePage.jsx";
+// Error pages
+import NotFound from "./pages/common/NotFound.jsx";
+import Unauthorized from "./pages/common/Unauthorized.jsx";
+import ServerError from "./pages/common/ServerError.jsx";
 
-// Simple route guard implementation
-const ProtectedRoute = ({ children }) => {
-  // This is a simplified version - replace with your auth check logic
-  const isAuthenticated = localStorage.getItem('auth_token') !== null;
-  if (!isAuthenticated) {
-    return <Navigate to="/unauthorized" replace />;
-  }
-  return children;
-};
+// Protected route component
+import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 
 function App() {
   return (
+    <ThemeProvider>
     <Router>
       <AuthProvider>
         <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<AuthPage />} />
-          <Route path="/login" element={<Navigate to="/" replace />} />
-          <Route path="/home" element={<Home />} />
-
-          {/* Protected routes */}
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          } />
-
-          {/* Error pages */}
+          {/* تغيير المسار الرئيسي لعرض الصفحة الرئيسية */}
+          <Route path="/" element={<Home />} />
+          
+          {/* نقل مسار تسجيل الدخول */}
+          <Route path="/auth" element={<AuthPage />} />
+          
+          {/* باقي المسارات */}
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/server-error" element={<ServerError />} />
           <Route path="/not-found" element={<NotFound />} />
           
-          {/* Fallback route */}
+          {/* المسارات المحمية */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
+            
+            {/* صفحة الامتحان */}
+            <Route path="/exam" element={<ExamPageWithData />} />
+          </Route>
+          
+          {/* مسار احتياطي لتوجيه المسارات غير الموجودة */}
           <Route path="*" element={<Navigate to="/not-found" replace />} />
         </Routes>
       </AuthProvider>
     </Router>
+    </ThemeProvider>
   );
 }
 
