@@ -1,30 +1,35 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+// src/contexts/LanguageContext.js
+import React, { createContext, useState, useEffect, useContext } from 'react';
 
-const LanguageContext = createContext(null);
+// Create a context for language
+const LanguageContext = createContext();
 
+// Create a provider component
 export const LanguageProvider = ({ children }) => {
-  const [currentLang, setCurrentLang] = useState(
-    localStorage.getItem('language') || 'en'
-  );
+  const [language, setLanguage] = useState('ar'); // Default to Arabic
 
+  // Apply RTL direction for Arabic whenever language changes
   useEffect(() => {
-    // Update direction when language changes
-    document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-    localStorage.setItem('language', currentLang);
-  }, [currentLang]);
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = language;
+  }, [language]);
 
-  const value = {
-    currentLang,
-    switchLanguage: (lang) => setCurrentLang(lang)
+  // Toggle between Arabic and English
+  const toggleLanguage = () => {
+    setLanguage(language === 'ar' ? 'en' : 'ar');
   };
 
+  // Check if the document is in RTL mode
+  const isRTL = language === 'ar';
+
   return (
-    <LanguageContext.Provider value={value}>
+    <LanguageContext.Provider value={{ language, toggleLanguage, isRTL }}>
       {children}
     </LanguageContext.Provider>
   );
 };
 
+// Custom hook to use the language context
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
   if (!context) {

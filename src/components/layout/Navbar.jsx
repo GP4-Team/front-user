@@ -10,25 +10,37 @@ const EduaraLogo = () => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 250" className="h-14 w-auto">
       {/* Simple graduation cap icon with modern muted colors */}
-      <path d="M70 140 L150 100 L230 140 L150 180 Z" fill={isDarkMode ? "#607D8B" : "#546E7A"} />
-      <line x1="150" y1="180" x2="150" y2="220" stroke={isDarkMode ? "#607D8B" : "#546E7A"} strokeWidth="3" strokeLinecap="round" />
-      <circle cx="150" cy="220" r="7" fill={isDarkMode ? "#607D8B" : "#546E7A"} />
-      <circle cx="150" cy="140" r="5" fill={isDarkMode ? "#81C784" : "#A5D6A7"} opacity="0.9" />
+      <path d="M70 140 L150 100 L230 140 L150 180 Z" fill={isDarkMode ? "#3949AB" : "#1A237E"} />
+      <line x1="150" y1="180" x2="150" y2="220" stroke={isDarkMode ? "#3949AB" : "#1A237E"} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="150" cy="220" r="7" fill={isDarkMode ? "#3949AB" : "#1A237E"} />
+      <circle cx="150" cy="140" r="5" fill={isDarkMode ? "#FFC107" : "#FFC107"} opacity="0.9" />
       
       {/* Simple yet modern wordmark - Eduara only with modern color */}
-      <text x="245" y="155" fontFamily="Arial, sans-serif" fontSize="70" fontWeight="bold" fill={isDarkMode ? "#ECEFF1" : "#455A64"}>Eduara</text>
+      <text x="245" y="155" fontFamily="Arial, sans-serif" fontSize="70" fontWeight="bold" fill={isDarkMode ? "#FFFFFF" : "#37474F"}>Eduara</text>
       
       {/* Enhanced accent line - subtle complementary color */}
-      <line x1="245" y1="175" x2="340" y2="175" stroke={isDarkMode ? "#81C784" : "#A5D6A7"} strokeWidth="5" strokeLinecap="round" />
+      <line x1="245" y1="175" x2="340" y2="175" stroke={isDarkMode ? "#FFC107" : "#FFC107"} strokeWidth="5" strokeLinecap="round" />
     </svg>
   );
 };
 
 const Navbar = () => {
   const { toggleTheme, isDarkMode } = useTheme();
+  const [language, setLanguage] = React.useState('ar'); // Default to Arabic
+  
+  // Toggle between Arabic and English
+  const toggleLanguage = () => {
+    setLanguage(language === 'ar' ? 'en' : 'ar');
+  };
+  
+  // Apply RTL direction for Arabic
+  React.useEffect(() => {
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = language;
+  }, [language]);
   
   return (
-    <header className="bg-white dark:bg-dark-card shadow-md py-3 sticky top-0 z-50 transition-colors duration-200">
+    <header className="bg-white dark:bg-dark-card shadow-md py-3 sticky top-0 z-50 transition-colors duration-200" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
         {/* Logo Area */}
         <div className="flex items-center">
@@ -41,29 +53,19 @@ const Navbar = () => {
         <nav className="hidden lg:block">
           <ul className="flex space-x-8">
             <li className="relative group">
-              <Link to="#" className="flex items-center text-text-dark dark:text-dark font-medium hover:text-primary-base dark:hover:text-primary-lightest transition-colors">
-                Educational Stages
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <Link to="/courses" className="flex items-center text-text-dark dark:text-dark font-medium hover:text-primary-base dark:hover:text-primary-lightest transition-colors">
+                {language === 'ar' ? 'المقررات' : 'Courses'}
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${language === 'ar' ? 'mr-1' : 'ml-1'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </Link>
             </li>
             <li className="relative group">
-              <Link to="#" className="flex items-center text-text-dark dark:text-dark font-medium hover:text-primary-base dark:hover:text-primary-lightest transition-colors">
-                Study Subjects
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <Link to="/exams" className="flex items-center text-text-dark dark:text-dark font-medium hover:text-primary-base dark:hover:text-primary-lightest transition-colors">
+                {language === 'ar' ? 'الامتحانات' : 'Exams'}
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${language === 'ar' ? 'mr-1' : 'ml-1'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
-              </Link>
-            </li>
-            <li>
-              <Link to="/instructions" className="text-text-dark dark:text-dark font-medium hover:text-primary-base dark:hover:text-primary-lightest transition-colors">
-                Instructions
-              </Link>
-            </li>
-            <li>
-              <Link to="/leaderboard" className="text-text-dark dark:text-dark font-medium hover:text-primary-base dark:hover:text-primary-lightest transition-colors">
-                Leaderboard
               </Link>
             </li>
           </ul>
@@ -72,10 +74,10 @@ const Navbar = () => {
         {/* Actions Area */}
         <div className="flex items-center space-x-4">
           {/* Search Box */}
-          <div className="hidden md:flex items-center bg-bg-light dark:bg-primary-dark rounded-full px-3 py-1">
+          <div className="hidden md:flex items-center bg-f0f4f8 dark:bg-primary-dark rounded-full px-3 py-1">
             <input
               type="text"
-              placeholder="Search..."
+              placeholder={language === 'ar' ? "بحث..." : "Search..."}
               className="bg-transparent border-none focus:outline-none text-sm w-36 dark:text-dark dark:placeholder-primary-lightest"
             />
             <button type="submit" className="text-primary-base dark:text-primary-lightest">
@@ -85,10 +87,19 @@ const Navbar = () => {
             </button>
           </div>
           
+          {/* Language Toggle */}
+          <button 
+            onClick={toggleLanguage} 
+            className="p-1 focus:outline-none text-3949ab dark:text-7986cb"
+            aria-label={language === 'ar' ? "Switch to English" : "التبديل إلى العربية"}
+          >
+            {language === 'ar' ? 'EN' : 'عربي'}
+          </button>
+          
           {/* Theme Toggle */}
           <button 
             onClick={toggleTheme} 
-            className="p-1 focus:outline-none text-primary-base dark:text-primary-lightest"
+            className="p-1 focus:outline-none text-3949ab dark:text-7986cb"
             aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
           >
             {isDarkMode ? (
@@ -102,20 +113,12 @@ const Navbar = () => {
             )}
           </button>
           
-          {/* Login Button */}
-          {/* <Link 
-            to="/auth"
-            className="flex items-center text-primary-base dark:text-primary-lightest font-medium hover:text-primary-dark dark:hover:text-white transition-colors"
-          >
-            <span className="mr-1">→</span> Login
-          </Link> */}
-          
           {/* Join Button */}
           <Link 
             to="/auth"
-            className="bg-accent-primary dark:bg-accent-secondary text-text-dark dark:text-text-dark font-bold py-2 px-5 rounded-full border-2 border-dashed border-primary-dark dark:border-primary-lightest border-opacity-20 dark:border-opacity-20 hover:bg-accent-secondary dark:hover:bg-accent-primary transition-colors"
+            className="bg-ffc107 dark:bg-ffc107 text-37474f dark:text-37474f font-bold py-2 px-5 rounded-full border-2 border-dashed border-1a237e dark:border-7986cb border-opacity-20 dark:border-opacity-20 hover:bg-ffca28 dark:hover:bg-ffca28 transition-colors"
           >
-            Join us!
+            {language === 'ar' ? 'انضم إلينا!' : 'Join us!'}
           </Link>
         </div>
       </div>
