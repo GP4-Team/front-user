@@ -6,28 +6,23 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // New color palette from the image
+        // Primary colors from your palette
         "primary-dark": "#1A237E",
         "primary-base": "#3949AB",
         "primary-light": "#7986CB",
         accent: "#FFC107",
-        "neutral-dark": "#37474F",
-        "neutral-light": "#F0F4F8",
-        "neutral-white": "#FFFFFF",
 
-        // Keep the old palette for backward compatibility
-        "primary-lightest": "#B0BEC5",
-        "accent-primary": "#A5D6A7",
-        "accent-secondary": "#81C784",
-        "text-dark": "#455A64",
-        "bg-light": "#ECEFF1",
+        // Neutral colors from your palette
+        "text-dark": "#37474F",
+        "bg-light": "#F0F4F8",
+        white: "#FFFFFF",
       },
       backgroundColor: {
-        dark: "#1A237E", // Updated to match the new primary-dark
-        "dark-card": "#3949AB", // Updated to match the new primary-base
+        dark: "#1A237E", // Primary dark
+        "dark-card": "#3949AB", // Primary base
       },
       textColor: {
-        dark: "#FFFFFF", // Updated to neutral-white for better contrast
+        dark: "#FFFFFF", // White
       },
     },
   },

@@ -10,7 +10,6 @@ import { ThemeProvider } from "./contexts/ThemeContext.jsx";
 import { LanguageProvider } from "./contexts/LanguageContext.jsx";
 
 // Layout components
-
 import Navbar from "./components/navigation/Navbar";
 import Sidebar from "./components/navigation/Sidebar";
 
@@ -21,6 +20,10 @@ import AuthPage from "./pages/auth/AuthPage.jsx";
 import Dashboard from "./pages/dashboard/Dashboard.jsx";
 import Home from "./pages/common/HomePage.jsx";
 import Profile from "./pages/user/ProfilePage.jsx";
+
+// Course Pages
+import EnrolledCoursesPage from "./pages/courses/EnrolledCoursesPage.jsx";
+import CourseDetailPage from "./pages/courses/CourseDetailPage.jsx";
 
 // Error pages
 import NotFound from "./pages/common/NotFound.jsx";
@@ -58,6 +61,14 @@ function App() {
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
+
+                {/* Course Routes */}
+                <Route path="/courses" element={<EnrolledCoursesPage />} />
+                <Route
+                  path="/courses/:courseId"
+                  element={<CourseDetailPage />}
+                />
+
                 {/* صفحات نظام الامتحانات */}
                 <Route path="/exams" element={<MyExamsPage />} />
                 <Route path="/exams/:examId" element={<ExamDetailsPage />} />
