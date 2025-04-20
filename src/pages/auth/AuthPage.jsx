@@ -158,7 +158,8 @@ const ModernAuth = () => {
           rememberMe: formData.login.rememberMe
         }));
         
-        alert(language === 'ar' ? 'تم تسجيل الدخول بنجاح!' : 'Login successful!');
+        // Redirect to home page or dashboard
+        window.location.href = '/'; // أو window.location.href = '/dashboard';
       } else if (panel === 'signup') {
         console.log('Sign up with:', formData.signup);
         

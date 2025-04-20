@@ -1,137 +1,179 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+// src/contexts/AuthContext.jsx
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AuthService } from '../services/api/index';
 
-// Create auth context
-const AuthContext = createContext();
+// إنشاء السياق
+export const AuthContext = createContext();
 
-// Custom hook to use auth context
-export const useAuth = () => useContext(AuthContext);
-
-// Auth provider component
+/**
+ * مزود سياق المصادقة - يدير حالة المستخدم وعمليات المصادقة
+ * @param {Object} props - خصائص المكون
+ * @returns {JSX.Element} - مكون مزود سياق المصادقة
+ */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Check for existing auth on mount
+  // التحقق من حالة المصادقة عند تحميل التطبيق
   useEffect(() => {
-    const checkAuth = () => {
+    const initAuth = async () => {
+      setIsLoading(true);
       try {
-        // Get stored token and user data
-        const storedToken = localStorage.getItem('auth_token');
-        const storedUser = localStorage.getItem('user_data');
+        if (AuthService.isLoggedIn()) {
+          // محاولة استعادة المستخدم من التخزين المحلي أولاً
+          const storedUser = AuthService.getStoredUser();
+          if (storedUser) {
+            setUser(storedUser);
+            setIsAuthenticated(true);
+          }
 
-        if (storedToken && storedUser) {
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
+          // ثم تحديث البيانات من الخادم (في الخلفية)
+          try {
+            const userData = await AuthService.getCurrentUser();
+            setUser(userData);
+            setIsAuthenticated(true);
+          } catch (error) {
+            // إذا فشلت عملية جلب البيانات من الخادم، نقوم بتسجيل الخروج
+            console.error('فشل التحقق من المستخدم الحالي:', error);
+            handleLogout();
+          }
         }
       } catch (error) {
-        console.error('Auth restoration error:', error);
-        // Clear invalid data
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_data');
+        console.error('خطأ أثناء تهيئة المصادقة:', error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    checkAuth();
+    initAuth();
   }, []);
 
-  // Login function
-  const login = (userData, authToken) => {
+  /**
+   * تسجيل الدخول
+   * @param {string} email - البريد الإلكتروني
+   * @param {string} password - كلمة المرور
+   * @param {string} redirectPath - مسار إعادة التوجيه بعد تسجيل الدخول
+   * @returns {Promise} - Promise مع بيانات المستخدم
+   */
+  const login = async (email, password, redirectPath = '/dashboard') => {
     try {
-      // Store in state
-      setUser(userData);
-      setToken(authToken);
+      const data = await AuthService.login(email, password);
+      setUser(data.user);
+      setIsAuthenticated(true);
       
-      // Store in localStorage
-      localStorage.setItem('auth_token', authToken);
-      localStorage.setItem('user_data', JSON.stringify(userData));
-      
-      // Navigate to dashboard
-      navigate('/dashboard');
-      
-      return true;
+      // توجيه المستخدم إلى الصفحة المطلوبة بعد تسجيل الدخول
+      navigate(redirectPath);
+      return data;
     } catch (error) {
-      console.error('Login error:', error);
-      return false;
+      console.error('خطأ في تسجيل الدخول:', error);
+      throw error;
     }
   };
 
-  // Demo login function - for testing without API
-  const demoLogin = (email, password) => {
-    // Demo credentials
-    const DEMO_CREDENTIALS = {
-      email: 'demo@example.com',
-      password: 'demo1234'
-    };
-    
-    // Check credentials
-    if (email === DEMO_CREDENTIALS.email && password === DEMO_CREDENTIALS.password) {
-      const userData = {
-        id: 1,
-        email: DEMO_CREDENTIALS.email,
-        username: 'demouser',
-        role: 'user'
-      };
-      
-      // Use login function with demo data
-      return login(userData, 'demo-jwt-token-12345');
-    }
-    
-    return false;
-  };
-
-  // Logout function
-  const logout = () => {
-    // Clear state
+  /**
+   * تسجيل الخروج
+   * @param {string} redirectPath - مسار إعادة التوجيه بعد تسجيل الخروج
+   */
+  const handleLogout = (redirectPath = '/auth') => {
+    AuthService.logout();
     setUser(null);
-    setToken(null);
+    setIsAuthenticated(false);
     
-    // Clear localStorage
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
-    
-    // Navigate to login
-    navigate('/');
+    // توجيه المستخدم إلى صفحة تسجيل الدخول
+    navigate(redirectPath);
   };
 
-  // Registration function
-  const register = (userData) => {
+  /**
+   * التسجيل
+   * @param {Object} userData - بيانات المستخدم
+   * @param {boolean} loginAfterRegister - هل تسجيل الدخول بعد التسجيل؟
+   * @param {string} redirectPath - مسار إعادة التوجيه بعد التسجيل
+   * @returns {Promise} - Promise مع بيانات المستخدم المسجل
+   */
+  const register = async (userData, loginAfterRegister = true, redirectPath = '/dashboard') => {
     try {
-      // For demo purposes, generate a token and user ID
-      const mockUserData = {
-        id: Math.floor(Math.random() * 1000),
-        email: userData.email,
-        username: userData.username,
-        role: 'user'
-      };
+      const data = await AuthService.register(userData);
       
-      const mockToken = 'demo-registration-token-' + Date.now();
+      // تسجيل الدخول تلقائياً بعد التسجيل إذا طُلب ذلك
+      if (loginAfterRegister && data.email) {
+        await login(data.email, userData.password, redirectPath);
+      }
       
-      // Use the login function to set auth state and navigate
-      return login(mockUserData, mockToken);
+      return data;
     } catch (error) {
-      console.error('Registration error:', error);
-      return false;
+      console.error('خطأ في التسجيل:', error);
+      throw error;
     }
   };
 
-  // Check if user is authenticated
-  const isAuthenticated = !!token;
+  /**
+   * تحديث بيانات المستخدم
+   * @param {Object} userData - بيانات المستخدم المحدثة
+   * @returns {Promise} - Promise مع بيانات المستخدم المحدثة
+   */
+  const updateUserData = async (userData) => {
+    try {
+      const updatedUser = await AuthService.updateProfile(userData);
+      setUser(updatedUser);
+      return updatedUser;
+    } catch (error) {
+      console.error('خطأ في تحديث بيانات المستخدم:', error);
+      throw error;
+    }
+  };
 
-  // Define the context value
+  /**
+   * تغيير كلمة المرور
+   * @param {string} currentPassword - كلمة المرور الحالية
+   * @param {string} newPassword - كلمة المرور الجديدة
+   * @returns {Promise} - Promise مع رسالة نجاح
+   */
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      return await AuthService.changePassword(currentPassword, newPassword);
+    } catch (error) {
+      console.error('خطأ في تغيير كلمة المرور:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * التحقق مما إذا كان المستخدم يمتلك دوراً معيناً
+   * @param {string} role - الدور المطلوب التحقق منه
+   * @returns {boolean} - هل يمتلك المستخدم هذا الدور؟
+   */
+  const hasRole = (role) => {
+    if (!user || !user.roles) return false;
+    return user.roles.includes(role);
+  };
+
+  /**
+   * التحقق مما إذا كان المستخدم يمتلك إذناً معيناً
+   * @param {string} permission - الإذن المطلوب التحقق منه
+   * @returns {boolean} - هل يمتلك المستخدم هذا الإذن؟
+   */
+  const hasPermission = (permission) => {
+    if (!user || !user.permissions) return false;
+    return user.permissions.includes(permission);
+  };
+
+  // توفير القيم للسياق
   const contextValue = {
     user,
-    token,
-    loading,
+    setUser,
+    isAuthenticated,
+    setIsAuthenticated,
+    isLoading,
     login,
-    demoLogin,
-    logout,
+    logout: handleLogout,
     register,
-    isAuthenticated
+    updateUserData,
+    changePassword,
+    hasRole,
+    hasPermission
   };
 
   return (
@@ -141,5 +183,13 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Export AuthContext as default export
-export default AuthContext;
+// هوك مخصص لاستخدام سياق المصادقة
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth يجب استخدامه داخل AuthProvider');
+  }
+  return context;
+};
+
+export default AuthProvider;

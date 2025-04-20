@@ -1,177 +1,234 @@
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { useLanguage } from "../../contexts/LanguageContext";
-import { useTheme } from "../../contexts/ThemeContext";
-import { Home } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { User, Menu, X, Sun, Moon, Search, Globe, ChevronDown, Home, BookOpen, GraduationCap, FileText } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const Navbar = () => {
-  const location = useLocation();
-  const { language, toggleLanguage, isRTL } = useLanguage();
+  const { isAuthenticated, user, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
-  const isArabic = language === "ar";
+  const { language, toggleLanguage, isRTL } = useLanguage();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // Handle theme toggle with debugging
-  const handleThemeToggle = () => {
-    console.log("Toggle clicked, before:", isDarkMode);
-    toggleTheme();
-    console.log("After toggle function called");
-  };
+  // تتبع التمرير لتغيير خلفية الـ navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
-  // Function to check if a path is active
-  const isActive = (path) => {
-    return (
-      location.pathname === path || location.pathname.startsWith(`${path}/`)
-    );
-  };
+  // إغلاق القائمة عند الانتقال بين الصفحات
+  useEffect(() => {
+    setIsMenuOpen(false);
+    setIsProfileMenuOpen(false);
+  }, [location.pathname]);
 
   return (
-    <header className="flex justify-between items-center py-4 px-8 bg-white dark:bg-[#1E1E1E] shadow-sm">
-      {/* Logo */}
-      <div className="flex items-center">
-        <svg
-          className={`w-9 h-9 ${isRTL ? "ml-2.5" : "mr-2.5"}`}
-          viewBox="0 0 36 36"
-        >
-          <path d="M10 18 L18 12 L26 18 L18 24 Z" fill="#3949AB" />
-          <line
-            x1="18"
-            y1="24"
-            x2="18"
-            y2="28"
-            stroke="#3949AB"
-            strokeWidth="2"
-          />
-        </svg>
-        <span className="text-2xl font-extrabold font-cairo text-[#37474F] dark:text-white">
-          Eduara
-        </span>
-      </div>
-
-      {/* Navigation */}
-      <nav className="hidden md:block">
-        <ul className="flex">
-          {/* Explicit Home Link with Home Icon */}
-          <li className="relative group mx-4">
-            <Link
-              to="/"
-              className={`flex items-center font-medium transition-all hover:-translate-y-0.5 ${
-                isActive("/")
-                  ? "text-[#3949AB] border-b-2 border-[#3949AB] pb-1"
-                  : "text-[#37474F] dark:text-white hover:text-[#3949AB]"
-              }`}
+    <header className={`fixed w-full top-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white dark:bg-gray-800 shadow-md' : 'bg-primary-base text-white'}`}>
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center">
+            <div className="bg-white rounded-full h-8 w-8 flex items-center justify-center mr-2">
+              <svg 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path 
+                  d="M12 2L5 6V10C5 15.5 8.1 20.6 12 22C15.9 20.6 19 15.5 19 10V6L12 2ZM16 10C16 14.1 13.9 18 12 19.5C10.1 18 8 14.1 8 10V7.3L12 5L16 7.3V10Z" 
+                  fill="#303F9F" 
+                />
+                <path 
+                  d="M11 10H13V16H11V10ZM11 6H13V8H11V6Z" 
+                  fill="#303F9F" 
+                />
+              </svg>
+            </div>
+            <span className={`font-bold text-xl ${isScrolled ? 'text-[#303F9F] dark:text-white' : 'text-white'}`}>
+              Eduara
+            </span>
+          </Link>
+          
+          {/* Desktop Nav Links */}
+          <div className="hidden md:flex items-center space-x-6 rtl:space-x-reverse">
+            <Link 
+              to="/" 
+              className={`${isScrolled ? 'text-gray-700 dark:text-gray-200 hover:text-primary-base dark:hover:text-primary-light' : 'text-white hover:text-accent'} transition-colors flex items-center gap-2`}
             >
-              <Home size={18} className="mr-1" />
-              {isArabic ? "الرئيسية" : "Home"}
+              <Home size={18} />
+              {language === 'ar' ? 'الرئيسية' : 'Home'}
             </Link>
-          </li>
-          <li className="relative group mx-4">
-            <Link
-              to="/courses"
-              className={`flex items-center font-medium transition-all hover:-translate-y-0.5 ${
-                isActive("/courses")
-                  ? "text-[#3949AB] border-b-2 border-[#3949AB] pb-1"
-                  : "text-[#37474F] dark:text-white hover:text-[#3949AB]"
-              }`}
+            <Link 
+              to="/courses" 
+              className={`${isScrolled ? 'text-gray-700 dark:text-gray-200 hover:text-primary-base dark:hover:text-primary-light' : 'text-white hover:text-accent'} transition-colors flex items-center gap-2`}
             >
-              {isArabic ? "الدورات" : "Courses"}
+              <BookOpen size={18} />
+              {language === 'ar' ? 'الكورسات' : 'Courses'}
             </Link>
-          </li>
-          <li className="relative group mx-4">
-            <Link
-              to="/exams"
-              className={`flex items-center font-medium transition-all hover:-translate-y-0.5 ${
-                isActive("/exams")
-                  ? "text-[#3949AB] border-b-2 border-[#3949AB] pb-1"
-                  : "text-[#37474F] dark:text-white hover:text-[#3949AB]"
-              }`}
+            <Link 
+              to="/exams" 
+              className={`${isScrolled ? 'text-gray-700 dark:text-gray-200 hover:text-primary-base dark:hover:text-primary-light' : 'text-white hover:text-accent'} transition-colors flex items-center gap-2`}
             >
-              {isArabic ? "الاختبارات" : "Exams"}
+              <FileText size={18} />
+              {language === 'ar' ? 'الامتحانات' : 'Exams'}
             </Link>
-          </li>
-        </ul>
-      </nav>
-
-      {/* Action Buttons */}
-      <div className="flex items-center">
-        {/* Home Button - Direct link visible on all screens */}
-        <Link
-          to="/"
-          className="mr-4 bg-[#3949AB] text-white p-2 rounded-full hover:bg-[#1A237E] transition-colors"
-          aria-label="Go to Home page"
-        >
-          <Home size={18} />
-        </Link>
-
-        {/* Search Bar */}
-        <div className="hidden md:flex items-center bg-[#F0F4F8] dark:bg-[#2D2D2D] rounded-full px-4 py-2 shadow-inner">
-          <input
-            type="text"
-            placeholder={isArabic ? "بحث..." : "Search..."}
-            className="bg-transparent border-none outline-none w-48 text-sm font-tajawal text-[#37474F] dark:text-white"
-          />
-          <svg
-            className="w-4 h-4 text-[#7986CB] dark:text-[#AAAAAA] cursor-pointer"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
-            <path
-              d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </div>
-
-        {/* Theme Toggle */}
-        <button
-          onClick={handleThemeToggle}
-          className="mx-4 text-[#7986CB] dark:text-[#AAAAAA] hover:text-[#3949AB] transition-colors"
-          aria-label={
-            isDarkMode ? "Switch to light mode" : "Switch to dark mode"
-          }
-        >
-          {isDarkMode ? (
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z"
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-              <path
-                d="M12 2V4M12 20V22M4 12H2M6.31412 6.31412L4.8999 4.8999M17.6859 6.31412L19.1001 4.8999M6.31412 17.69L4.8999 19.1042M17.6859 17.69L19.1001 19.1042M22 12H20"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          ) : (
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          )}
-        </button>
-
-        {/* Language Toggle */}
-        <button
-          onClick={toggleLanguage}
-          className="mx-4 text-[#7986CB] dark:text-[#AAAAAA] hover:text-[#3949AB] transition-colors"
-          aria-label={isArabic ? "Switch to English" : "التبديل إلى العربية"}
-        >
-          {isArabic ? "EN" : "عربي"}
-        </button>
-
-        {/* User Profile Button or Login Button */}
-        <Link to="/profile" className="ml-4 flex items-center">
-          <div className="w-8 h-8 bg-[#3949AB] rounded-full flex items-center justify-center text-white text-sm">
-            AM
+            <Link 
+              to="/subjects" 
+              className={`${isScrolled ? 'text-gray-700 dark:text-gray-200 hover:text-primary-base dark:hover:text-primary-light' : 'text-white hover:text-accent'} transition-colors flex items-center gap-2`}
+            >
+              <GraduationCap size={18} />
+              {language === 'ar' ? 'المواد الدراسية' : 'Subjects'}
+            </Link>
           </div>
-        </Link>
+          
+          {/* Actions */}
+          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+            {/* Buttons */}
+            <button 
+              className="p-2 rounded-full focus:outline-none" 
+              onClick={toggleLanguage}
+              aria-label={language === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
+            >
+              <Globe size={20} className={`${isScrolled ? 'text-gray-700 dark:text-gray-200' : 'text-white'}`} />
+            </button>
+            
+            <button 
+              className="p-2 rounded-full focus:outline-none" 
+              onClick={toggleTheme}
+              aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDarkMode ? (
+                <Sun size={20} className={`${isScrolled ? 'text-gray-700 dark:text-gray-200' : 'text-white'}`} />
+              ) : (
+                <Moon size={20} className={`${isScrolled ? 'text-gray-700 dark:text-gray-200' : 'text-white'}`} />
+              )}
+            </button>
+            
+            {/* Profile or Login */}
+            {isAuthenticated ? (
+              <div className="relative">
+                <button 
+                  className={`flex items-center space-x-1 rtl:space-x-reverse ${isScrolled ? 'hover:bg-gray-100 dark:hover:bg-gray-700' : 'hover:bg-[#303F9F]'} rounded-full p-1 focus:outline-none transition-colors`}
+                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                >
+                  <img 
+                    src={user?.avatar || "/api/placeholder/40/40"} 
+                    alt="Profile" 
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                  <ChevronDown size={16} className={`${isScrolled ? 'text-gray-700 dark:text-gray-200' : 'text-white'}`} />
+                </button>
+                
+                {/* Dropdown for profile */}
+                {isProfileMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10">
+                    <Link 
+                      to="/profile" 
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      {language === 'ar' ? 'الملف الشخصي' : 'Profile'}
+                    </Link>
+                    <Link 
+                      to="/courses/enrolled" 
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      {language === 'ar' ? 'كورساتي' : 'My Courses'}
+                    </Link>
+                    <button 
+                      onClick={logout}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      {language === 'ar' ? 'تسجيل الخروج' : 'Logout'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex space-x-2 rtl:space-x-reverse">
+                <Link
+                  to="/auth?mode=login"
+                  className={`${isScrolled 
+                    ? 'text-[#303F9F] border border-[#303F9F] hover:bg-[#3949AB]/10 dark:text-[#3949AB] dark:hover:bg-gray-700' 
+                    : 'text-white border border-white hover:bg-white hover:text-[#303F9F]'} 
+                    px-4 py-1.5 rounded-md transition-colors`}
+                >
+                  {language === 'ar' ? 'تسجيل الدخول' : 'Login'}
+                </Link>
+                <Link
+                  to="/auth?mode=register"
+                  className={`${isScrolled 
+                    ? 'bg-[#3949AB] text-white hover:bg-[#303F9F] dark:bg-[#3949AB] dark:hover:bg-[#303F9F]' 
+                    : 'bg-white text-[#303F9F] hover:bg-[#FFC107] hover:text-white hover:border-[#FFC107]'} 
+                    px-4 py-1.5 rounded-md transition-colors`}
+                >
+                  {language === 'ar' ? 'سجل مجاناً' : 'Register Free'}
+                </Link>
+              </div>
+            )}
+            
+            {/* Mobile menu button */}
+            <button 
+              className="md:hidden p-2 rounded-md focus:outline-none" 
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? (
+                <X size={24} className={`${isScrolled ? 'text-gray-700 dark:text-gray-200' : 'text-white'}`} />
+              ) : (
+                <Menu size={24} className={`${isScrolled ? 'text-gray-700 dark:text-gray-200' : 'text-white'}`} />
+              )}
+            </button>
+          </div>
+        </div>
+        
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4">
+            <div className="flex flex-col space-y-4">
+              <Link 
+                to="/" 
+                className={`${isScrolled ? 'text-gray-700 dark:text-gray-200' : 'text-white'} px-4 py-2 rounded-md hover:bg-primary-base hover:text-white transition-colors flex items-center gap-2`}
+              >
+                <Home size={18} />
+                {language === 'ar' ? 'الرئيسية' : 'Home'}
+              </Link>
+              <Link 
+                to="/courses" 
+                className={`${isScrolled ? 'text-gray-700 dark:text-gray-200' : 'text-white'} px-4 py-2 rounded-md hover:bg-primary-base hover:text-white transition-colors flex items-center gap-2`}
+              >
+                <BookOpen size={18} />
+                {language === 'ar' ? 'الكورسات' : 'Courses'}
+              </Link>
+              <Link 
+                to="/exams" 
+                className={`${isScrolled ? 'text-gray-700 dark:text-gray-200' : 'text-white'} px-4 py-2 rounded-md hover:bg-primary-base hover:text-white transition-colors flex items-center gap-2`}
+              >
+                <FileText size={18} />
+                {language === 'ar' ? 'الامتحانات' : 'Exams'}
+              </Link>
+              <Link 
+                to="/subjects" 
+                className={`${isScrolled ? 'text-gray-700 dark:text-gray-200' : 'text-white'} px-4 py-2 rounded-md hover:bg-primary-base hover:text-white transition-colors flex items-center gap-2`}
+              >
+                <GraduationCap size={18} />
+                {language === 'ar' ? 'المواد الدراسية' : 'Subjects'}
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );
