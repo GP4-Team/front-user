@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { colors } from '../../utils/colors';
 
 // Components
 import Navbar from '../../components/navigation/Navbar';
-import CourseCard from '../../components/courses/CourseCard';
-import CoursesFilter from '../../components/courses/CoursesFilter';
+import SimplifiedCourseCard from '../../components/courses/SimplifiedCourseCard';
 import SimpleFooter from '../../components/home/SimpleFooter';
 
 /**
@@ -21,9 +21,7 @@ const AllCoursesPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
-    level: '',
-    price: '',
-    category: '',
+    level: ''
   });
   
   // Helper function to get text based on language
@@ -41,35 +39,10 @@ const AllCoursesPage = () => {
         },
         description: {
           ar: 'دورة شاملة في الرياضيات للصف الثاني الثانوي تغطي جميع المفاهيم الأساسية والمتقدمة.',
-          en: 'Comprehensive mathematics course for 2nd secondary grade covering all basic and advanced concepts.',
+          en: 'Comprehensive mathematics course for 2nd secondary grade.',
         },
-        category: {
-          ar: 'الرياضيات الثانوية',
-          en: 'Secondary Mathematics',
-        },
-        instructor: {
-          ar: 'د. شايلي جوتمان',
-          en: 'Prof. Shaylee Gutmann',
-        },
-        instructorTitle: {
-          ar: 'أستاذ الرياضيات',
-          en: 'Mathematics Professor',
-        },
-        instructorAvatar: '/api/placeholder/100/100',
-        level: {
-          ar: 'الصف الثاني الثانوي',
-          en: '2nd Grade Secondary',
-        },
-        levelId: 'grade11',
-        price: {
-          amount: 46.56,
-          currency: 'EGP',
-        },
-        priceCategory: 'paid',
         image: '/api/placeholder/400/225',
-        badgeColor: '#3B82F6',
-        categoryType: 'chapters',
-        code: 'PGK',
+        levelId: 'grade11',
       },
       {
         id: 'arabic-basic-secondary',
@@ -79,35 +52,10 @@ const AllCoursesPage = () => {
         },
         description: {
           ar: 'دورة أساسية في قواعد اللغة العربية للمرحلة الثانوية تساعدك على إتقان اللغة.',
-          en: 'Basic course in Arabic grammar for the secondary stage to help you master the language.',
+          en: 'Basic course in Arabic grammar for the secondary stage.',
         },
-        category: {
-          ar: 'اللغة العربية الأساسية',
-          en: 'Basic Arabic Language',
-        },
-        instructor: {
-          ar: 'آرا ساواين',
-          en: 'Ara Sawayn',
-        },
-        instructorTitle: {
-          ar: 'أستاذ اللغة العربية',
-          en: 'Arabic Language Professor',
-        },
-        instructorAvatar: '/api/placeholder/100/100',
-        level: {
-          ar: 'الصف الأول الثانوي',
-          en: '1st Grade Secondary',
-        },
-        levelId: 'grade10',
-        price: {
-          amount: 0,
-          currency: 'EGP',
-        },
-        priceCategory: 'free',
         image: '/api/placeholder/400/225',
-        badgeColor: '#4CAF50',
-        categoryType: 'months',
-        code: 'PLN',
+        levelId: 'grade10',
       },
       {
         id: 'chemistry-3rd-secondary',
@@ -117,35 +65,10 @@ const AllCoursesPage = () => {
         },
         description: {
           ar: 'دورة متكاملة في الكيمياء للصف الثالث الثانوي تؤهلك للتفوق في امتحان الثانوية العامة.',
-          en: 'Integrated chemistry course for the 3rd secondary grade that qualifies you to excel in the high school exam.',
+          en: 'Integrated chemistry course for the 3rd secondary grade.',
         },
-        category: {
-          ar: 'كيمياء ثالثة ثانوي',
-          en: 'Chemistry - 3rd Secondary',
-        },
-        instructor: {
-          ar: 'عبدالرحمن مصطفى محمود',
-          en: 'Abdelrahman Mostafa Mahmoud',
-        },
-        instructorTitle: {
-          ar: 'مدرس كيمياء',
-          en: 'Chemistry Teacher',
-        },
-        instructorAvatar: '/api/placeholder/100/100',
-        level: {
-          ar: 'الصف الثالث الثانوي',
-          en: '3rd Grade Secondary',
-        },
-        levelId: 'grade12',
-        price: {
-          amount: 0,
-          currency: 'EGP',
-        },
-        priceCategory: 'free',
         image: '/api/placeholder/400/225',
-        badgeColor: '#FFC107',
-        categoryType: 'classes',
-        code: 'EGP',
+        levelId: 'grade12',
       },
       {
         id: 'physics-3rd-secondary',
@@ -155,111 +78,36 @@ const AllCoursesPage = () => {
         },
         description: {
           ar: 'كورس متميز للفيزياء للصف الثالث الثانوي مع شرح تفصيلي لجميع أجزاء المنهج.',
-          en: 'Distinguished physics course for the 3rd secondary grade with a detailed explanation of all parts of the curriculum.',
+          en: 'Distinguished physics course for the 3rd secondary grade.',
         },
-        category: {
-          ar: 'فيزياء ثالثة ثانوي',
-          en: 'Physics - 3rd Secondary',
-        },
-        instructor: {
-          ar: 'د. زلما هيني',
-          en: 'Dr. Zelma Heaney',
-        },
-        instructorTitle: {
-          ar: 'أستاذ الفيزياء',
-          en: 'Physics Professor',
-        },
-        instructorAvatar: '/api/placeholder/100/100',
-        level: {
-          ar: 'الصف الثالث الثانوي',
-          en: '3rd Grade Secondary',
-        },
+        image: '/api/placeholder/400/225',
         levelId: 'grade12',
-        price: {
-          amount: 75.30,
-          currency: 'EGP',
-        },
-        priceCategory: 'paid',
-        image: '/api/placeholder/400/225',
-        badgeColor: '#9C27B0',
-        categoryType: 'chapters',
-        code: 'GMD',
       },
       {
-        id: 'english-preparatory',
+        id: 'english-secondary',
         title: {
-          ar: 'اللغة الإنجليزية الإعدادية',
-          en: 'Preparatory English Language',
+          ar: 'اللغة الإنجليزية الثانوية',
+          en: 'Secondary English Language',
         },
         description: {
-          ar: 'كورس اللغة الإنجليزية للمرحلة الإعدادية مع التركيز على قواعد اللغة والتحدث والاستماع.',
-          en: 'English language course for the preparatory stage with a focus on grammar, speaking and listening.',
+          ar: 'كورس اللغة الإنجليزية للمرحلة الثانوية مع التركيز على قواعد اللغة.',
+          en: 'English language course for the secondary stage.',
         },
-        category: {
-          ar: 'اللغة الإنجليزية الإعدادية',
-          en: 'Preparatory English Language',
-        },
-        instructor: {
-          ar: 'كارمل كوفاسيك',
-          en: 'Carmel Kovacek',
-        },
-        instructorTitle: {
-          ar: 'مدرس لغة إنجليزية',
-          en: 'English Teacher',
-        },
-        instructorAvatar: '/api/placeholder/100/100',
-        level: {
-          ar: 'الصف الثالث الإعدادي',
-          en: '3rd Grade Preparatory',
-        },
-        levelId: 'grade9',
-        price: {
-          amount: 35.99,
-          currency: 'EGP',
-        },
-        priceCategory: 'paid',
         image: '/api/placeholder/400/225',
-        badgeColor: '#FF5722',
-        categoryType: 'months',
-        code: 'SHP',
+        levelId: 'grade10',
       },
       {
-        id: 'science-elementary',
+        id: 'science-secondary',
         title: {
-          ar: 'العلوم للمرحلة الابتدائية',
-          en: 'Elementary Science',
+          ar: 'العلوم للمرحلة الثانوية',
+          en: 'Secondary Science',
         },
         description: {
-          ar: 'كورس علوم للمرحلة الابتدائية مصمم بطريقة تفاعلية وممتعة للأطفال.',
-          en: 'Science course for elementary school designed in an interactive and fun way for children.',
+          ar: 'كورس علوم متكامل للمرحلة الثانوية مصمم بطريقة تفاعلية وممتعة.',
+          en: 'Integrated science course for secondary school.',
         },
-        category: {
-          ar: 'العلوم الابتدائية',
-          en: 'Elementary Science',
-        },
-        instructor: {
-          ar: 'نيل ساور',
-          en: 'Nelle Sauer',
-        },
-        instructorTitle: {
-          ar: 'مدرس علوم',
-          en: 'Science Teacher',
-        },
-        instructorAvatar: '/api/placeholder/100/100',
-        level: {
-          ar: 'الصف الرابع الابتدائي',
-          en: '4th Grade Elementary',
-        },
-        levelId: 'grade4',
-        price: {
-          amount: 0,
-          currency: 'EGP',
-        },
-        priceCategory: 'free',
         image: '/api/placeholder/400/225',
-        badgeColor: '#00BCD4',
-        categoryType: 'classes',
-        code: 'BYN',
+        levelId: 'grade11',
       },
     ];
     
@@ -278,9 +126,7 @@ const AllCoursesPage = () => {
       result = result.filter(
         (course) =>
           getText(course.title.ar, course.title.en).toLowerCase().includes(query) ||
-          getText(course.description.ar, course.description.en).toLowerCase().includes(query) ||
-          getText(course.category.ar, course.category.en).toLowerCase().includes(query) ||
-          getText(course.instructor.ar, course.instructor.en).toLowerCase().includes(query)
+          getText(course.description.ar, course.description.en).toLowerCase().includes(query)
       );
     }
     
@@ -289,30 +135,20 @@ const AllCoursesPage = () => {
       result = result.filter((course) => course.levelId === filters.level);
     }
     
-    // تطبيق فلتر السعر
-    if (filters.price) {
-      result = result.filter((course) => course.priceCategory === filters.price);
-    }
-    
-    // تطبيق فلتر التصنيف
-    if (filters.category) {
-      result = result.filter((course) => course.categoryType === filters.category);
-    }
+
     
     setFilteredCourses(result);
   }, [courses, searchQuery, filters, language]);
   
   /**
    * معالجة تغيير الفلاتر
-   * @param {string} filterType - نوع الفلتر (level, price, category)
+   * @param {string} filterType - نوع الفلتر (level, category)
    * @param {string} value - قيمة الفلتر
    */
   const handleFilterChange = (filterType, value) => {
     if (filterType === 'reset') {
       setFilters({
-        level: '',
-        price: '',
-        category: '',
+        level: ''
       });
       return;
     }
@@ -325,14 +161,14 @@ const AllCoursesPage = () => {
   
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+      <div className={`flex justify-center items-center h-screen ${isDarkMode ? 'bg-[#121212]' : 'bg-[#F0F4F8]'}`}>
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#3949AB]"></div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-[#121212] text-[#E0E0E0]' : 'bg-[#F0F4F8] text-[#37474F]'}`}>
       {/* Navbar */}
       <Navbar />
       
@@ -340,7 +176,7 @@ const AllCoursesPage = () => {
       <div className="pt-20"></div>
       
       {/* رأس الصفحة */}
-      <div className="bg-[#f0f4f8] py-12">
+      <div className={`${isDarkMode ? 'bg-[#1E1E1E]' : 'bg-[#3949AB]'} py-12 text-white`}>
         <div className="container mx-auto px-4">
           <h1 className="text-3xl font-bold text-center mb-8">
             {getText('استكشف الدورات التعليمية', 'Explore Educational Courses')}
@@ -352,10 +188,10 @@ const AllCoursesPage = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={getText('ابحث عن الدورات أو المدرسين...', 'Search for courses or instructors...')}
-              className="w-full py-3 px-12 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#3949AB] focus:border-transparent shadow-sm"
+              placeholder={getText('ابحث عن الدورات...', 'Search for courses...')}
+              className={`w-full py-3 px-12 rounded-full border ${isDarkMode ? 'bg-[#333333] border-[#444444] text-white placeholder-gray-400' : 'bg-white border-gray-300 text-[#37474F]'} focus:outline-none focus:ring-2 focus:ring-[#7986CB] focus:border-transparent shadow-sm`}
             />
-            <Search size={20} className={`absolute top-3.5 ${isRTL ? 'right-4' : 'left-4'} text-gray-400`} />
+            <Search size={20} className={`absolute top-3.5 ${isRTL ? 'right-4' : 'left-4'} ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
           </div>
         </div>
       </div>
@@ -365,10 +201,63 @@ const AllCoursesPage = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* جانب الفلاتر */}
           <div className="lg:w-1/4">
-            <CoursesFilter
-              filters={filters}
-              onFilterChange={handleFilterChange}
-            />
+            <div className={`${isDarkMode ? 'bg-[#1E1E1E] border-[#333333]' : 'bg-white border-gray-200'} rounded-lg shadow-md p-4 border sticky top-24`}>
+              <h2 className="text-xl font-bold mb-4">
+                {getText('الفلتر', 'Filter')}
+              </h2>
+              
+              {/* فلتر المرحلة الدراسية */}
+              <div className="mb-6">
+                <h3 className={`font-medium mb-2 pb-2 border-b ${isDarkMode ? 'border-[#333333]' : 'border-gray-200'}`}>
+                  {getText('المرحلة الدراسية', 'Educational Level')}
+                </h3>
+                <div className="space-y-2 mt-3">
+                  <label className="block">
+                    <input
+                      type="radio"
+                      name="level"
+                      value="grade10"
+                      checked={filters.level === 'grade10'}
+                      onChange={() => handleFilterChange('level', 'grade10')}
+                      className="mr-2 rtl:ml-2"
+                    />
+                    {getText('الصف الأول الثانوي', '1st Grade Secondary')}
+                  </label>
+                  <label className="block">
+                    <input
+                      type="radio"
+                      name="level"
+                      value="grade11"
+                      checked={filters.level === 'grade11'}
+                      onChange={() => handleFilterChange('level', 'grade11')}
+                      className="mr-2 rtl:ml-2"
+                    />
+                    {getText('الصف الثاني الثانوي', '2nd Grade Secondary')}
+                  </label>
+                  <label className="block">
+                    <input
+                      type="radio"
+                      name="level"
+                      value="grade12"
+                      checked={filters.level === 'grade12'}
+                      onChange={() => handleFilterChange('level', 'grade12')}
+                      className="mr-2 rtl:ml-2"
+                    />
+                    {getText('الصف الثالث الثانوي', '3rd Grade Secondary')}
+                  </label>
+                </div>
+              </div>
+              
+
+              
+              {/* زر إعادة تعيين الفلاتر */}
+              <button
+                onClick={() => handleFilterChange('reset')}
+                className={`w-full py-2 px-4 rounded-md ${isDarkMode ? 'bg-[#333333] hover:bg-[#444444] text-white' : 'bg-gray-200 hover:bg-gray-300 text-[#37474F]'} transition duration-200`}
+              >
+                {getText('إعادة تعيين', 'Reset')}
+              </button>
+            </div>
           </div>
           
           {/* جانب الكورسات */}
@@ -389,12 +278,12 @@ const AllCoursesPage = () => {
             {filteredCourses.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredCourses.map((course) => (
-                  <CourseCard key={course.id} course={course} />
+                  <SimplifiedCourseCard key={course.id} course={course} />
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                <p className="text-gray-600">
+              <div className={`${isDarkMode ? 'bg-[#1E1E1E] text-[#E0E0E0]' : 'bg-white text-[#37474F]'} rounded-lg shadow-md p-8 text-center`}>
+                <p>
                   {getText(
                     'لم يتم العثور على دورات مطابقة لمعايير البحث الخاصة بك. يرجى تجربة معايير مختلفة.',
                     'No courses found matching your search criteria. Please try different criteria.'
@@ -405,11 +294,10 @@ const AllCoursesPage = () => {
                     setSearchQuery('');
                     setFilters({
                       level: '',
-                      price: '',
                       category: '',
                     });
                   }}
-                  className="mt-4 bg-[#3949AB] hover:bg-[#303F9F] text-white font-medium py-2 px-4 rounded-md transition duration-200"
+                  className={`mt-4 ${isDarkMode ? 'bg-[#3949AB] hover:bg-[#1A237E]' : 'bg-[#3949AB] hover:bg-[#1A237E]'} text-white font-medium py-2 px-4 rounded-md transition duration-200`}
                 >
                   {getText('إعادة تعيين البحث', 'Reset Search')}
                 </button>
@@ -419,7 +307,7 @@ const AllCoursesPage = () => {
             {/* زر تحميل المزيد - يظهر فقط إذا كان هناك المزيد من الكورسات */}
             {filteredCourses.length > 0 && filteredCourses.length % 6 === 0 && (
               <div className="text-center mt-8">
-                <button className="bg-white border border-[#3949AB] text-[#3949AB] hover:bg-[#f0f4f8] font-medium py-2 px-6 rounded-md transition-colors">
+                <button className={`${isDarkMode ? 'bg-[#1E1E1E] border-[#7986CB] text-[#7986CB] hover:bg-[#333333]' : 'bg-white border-[#3949AB] text-[#3949AB] hover:bg-gray-100'} border font-medium py-2 px-6 rounded-md transition-colors`}>
                   {getText('تحميل المزيد', 'Load More')}
                 </button>
               </div>
