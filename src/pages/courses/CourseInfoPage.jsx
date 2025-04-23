@@ -14,31 +14,31 @@ import InstructorInfo from "../../components/courseInfo/InstructorInfo";
 
 // Mock course data - would come from API in real app
 const MOCK_COURSE = {
-  id: "experimental-camp",
+  id: "experimental-course",
   title: {
-    ar: "معسكر تجريبي لمنصة اديورا التعليمية",
-    en: "Experimental Camp for Eduara Educational Platform",
+    ar: "كيمياء عضوية - المركبات الهيدروكربونية",
+    en: "Organic Chemistry - Hydrocarbon Compounds",
   },
   subtitle: {
-    ar: "معسكر تجريبي لمنصة اديورا التعليمية 2025",
-    en: "Experimental Camp for Eduara Educational Platform 2025",
+    ar: "دراسة المركبات العضوية وتفاعلاتها",
+    en: "Study of Organic Compounds and Their Reactions",
   },
   description: {
-    ar: "معسكر تجريبي جديد لمنصة اديورا التعليمية معسكر تجريبي لمنصة اديورا التعليمية معسكر تجريبي لمنصة اديورا التعليمية",
-    en: "A new experimental camp for Eduara educational platform. Experimental camp for Eduara educational platform. Experimental camp for Eduara educational platform.",
+    ar: "تشمل هذه المادة دراسة المركبات العضوية مثل الالكينات والالكاينات والكحولات والايثرات، مع شرح مفصل لتركيبها وتفاعلاتها وتطبيقاتها في الحياة اليومية.",
+    en: "This course covers the study of organic compounds such as alkenes, alkynes, alcohols, and ethers, with detailed explanation of their structure, reactions, and applications in everyday life.",
   },
   instructor: {
-    ar: "عبدالرحمن مصطفى محمود",
-    en: "Abdelrahman Mostafa Mahmoud",
+    ar: "د. محمد السيد",
+    en: "Dr. Mohamed Elsayed",
   },
   instructorAvatar: "/api/placeholder/100/100",
   category: {
-    ar: "كيمياء",
-    en: "Chemistry",
+    ar: "الكيمياء العضوية",
+    en: "Organic Chemistry",
   },
   subcategory: {
-    ar: "كيمياء ثالثة ثانوي",
-    en: "Chemistry 3rd Secondary",
+    ar: "مركبات عضوية - ثالثة ثانوي",
+    en: "Organic Compounds - 3rd Secondary",
   },
   level: {
     ar: "الصف الثالث الثانوي",
@@ -48,12 +48,13 @@ const MOCK_COURSE = {
   rating: 4.0,
   reviewsCount: 1,
   studentsCount: 100,
+  // Empty price placeholder to prevent errors
   price: {
-    amount: 100,
+    amount: 0,
     discountedAmount: 0,
-    discountPercentage: 100,
-    currency: "EGP",
-    expiryTime: "19يوم 06:11:40",
+    discountPercentage: 0,
+    currency: "",
+    expiryTime: "",
   },
   image: "/api/placeholder/600/400",
   badge: {
@@ -62,15 +63,15 @@ const MOCK_COURSE = {
   },
   courseInfo: [
     {
-      title: { ar: "58 ساعة و 17 دقيقة", en: "58 hours and 17 minutes" },
+      title: { ar: "58 ساعة من الشرح المفصل", en: "58 hours of detailed explanation" },
       icon: "Clock",
     },
     {
-      title: { ar: "كيمياء ثالثة ثانوي", en: "Chemistry 3rd Secondary" },
+      title: { ar: "شرح كيمياء عضوية ثالثة ثانوي", en: "Organic Chemistry for 3rd Secondary" },
       icon: "Book",
     },
     {
-      title: { ar: "66 تمرين", en: "66 exercises" },
+      title: { ar: "66 تمرين على المركبات العضوية", en: "66 exercises on organic compounds" },
       icon: "FileText",
     },
     {
@@ -81,38 +82,38 @@ const MOCK_COURSE = {
   sections: [
     {
       id: "section-1",
-      title: { ar: "قسم تجربة", en: "Experimental Section" },
+      title: { ar: "الالكينات", en: "Alkenes" },
       lessonsCount: 5,
       exercisesCount: 2,
       expanded: true,
       lessons: [
         {
           id: "lesson-1-1",
-          title: { ar: "درس يوتيوب تجريبي", en: "Experimental YouTube Lesson" },
+          title: { ar: "شرح الالكينات", en: "Alkenes Explanation" },
           type: "video",
           icon: "youtube"
         },
         {
           id: "lesson-1-2",
-          title: { ar: "يوتيوب محمي", en: "Protected YouTube" },
+          title: { ar: "تفاعلات الالكينات", en: "Alkenes Reactions" },
           type: "video",
           icon: "youtube"
         },
         {
           id: "lesson-1-3",
-          title: { ar: "درس صورة تجريبية 3", en: "Experimental Image Lesson 3" },
+          title: { ar: "ملخص الالكينات", en: "Alkenes Summary" },
           type: "audio",
           icon: "audio"
         },
         {
           id: "exam-1",
-          title: { ar: "امتحان تجريبي 1", en: "Experimental Exam 1" },
+          title: { ar: "امتحان الالكينات 1", en: "Alkenes Exam 1" },
           type: "exam",
           icon: "exam"
         },
         {
           id: "exam-2",
-          title: { ar: "امتحان تجريبي 2", en: "Experimental Exam 2" },
+          title: { ar: "امتحان الالكينات 2", en: "Alkenes Exam 2" },
           type: "exam",
           icon: "exam"
         }
@@ -120,19 +121,69 @@ const MOCK_COURSE = {
     },
     {
       id: "section-2",
-      title: { ar: "قسم تجربة 2", en: "Experimental Section 2" },
+      title: { ar: "الالكاينات", en: "Alkynes" },
       lessonsCount: 4,
       exercisesCount: 1,
       expanded: false,
-      lessons: []
+      lessons: [
+        {
+          id: "lesson-2-1",
+          title: { ar: "شرح الالكاينات", en: "Alkynes Explanation" },
+          type: "video",
+          icon: "youtube"
+        },
+        {
+          id: "lesson-2-2",
+          title: { ar: "ملخص الالكاينات", en: "Alkynes Summary" },
+          type: "image",
+          icon: "image"
+        },
+        {
+          id: "lesson-2-3",
+          title: { ar: "شرح صوتي للالكاينات", en: "Alkynes Audio Explanation" },
+          type: "audio",
+          icon: "audio"
+        },
+        {
+          id: "exam-3",
+          title: { ar: "امتحان الالكاينات", en: "Alkynes Exam" },
+          type: "exam",
+          icon: "exam"
+        }
+      ]
     },
     {
       id: "section-3",
-      title: { ar: "قسم جديد", en: "New Section" },
-      lessonsCount: 0,
-      exercisesCount: 1,
+      title: { ar: "الكحولات والايثرات", en: "Alcohols and Ethers" },
+      lessonsCount: 4,
+      exercisesCount: 2,
       expanded: false,
-      lessons: []
+      lessons: [
+        {
+          id: "lesson-3-1",
+          title: { ar: "الكحولات وتفاعلاتها", en: "Alcohols and Their Reactions" },
+          type: "video",
+          icon: "youtube"
+        },
+        {
+          id: "lesson-3-2",
+          title: { ar: "الايثرات وتفاعلاتها", en: "Ethers and Their Reactions" },
+          type: "video",
+          icon: "youtube"
+        },
+        {
+          id: "lesson-3-3",
+          title: { ar: "ملخص للكحولات والايثرات", en: "Summary of Alcohols and Ethers" },
+          type: "image",
+          icon: "image"
+        },
+        {
+          id: "exam-4",
+          title: { ar: "امتحان الكحولات والايثرات", en: "Alcohols and Ethers Exam" },
+          type: "exam",
+          icon: "exam"
+        }
+      ]
     }
   ],
   reviews: [
@@ -160,7 +211,7 @@ const CourseInfoPage = () => {
   // State for the course data
   const [course, setCourse] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("sections"); // sections, description, reviews
+  const [activeTab, setActiveTab] = useState("lessons"); // lessons, description
   
   // Helper function to get text based on language
   const getText = (obj) => {
@@ -175,15 +226,25 @@ const CourseInfoPage = () => {
     const timer = setTimeout(() => {
       setCourse(MOCK_COURSE);
       setIsLoading(false);
+      
+      // Set default active tab (not "reviews" anymore)
+      if (activeTab === "reviews") {
+        setActiveTab("lessons");
+      }
+      
+      // Set page title
+      if (MOCK_COURSE) {
+        document.title = language === "ar" ? MOCK_COURSE.title.ar : MOCK_COURSE.title.en;
+      }
     }, 500);
     
     return () => clearTimeout(timer);
   }, [courseId]);
 
-  // وظيفة التسجيل في الكورس / الدخول للمعسكر
+  // وظيفة التسجيل في الكورس / الدخول للمادة
   // في مرحلة التطوير: توجيه مباشر بدون التحقق من تسجيل الدخول
   const handleEnrollment = () => {
-    // توجيه مباشر إلى صفحة محتوى الكورس في مرحلة التطوير
+    // توجيه مباشر إلى صفحة محتوى المادة في مرحلة التطوير
     navigate(`/courses/${courseId}/content`);
   };
 
@@ -234,7 +295,7 @@ const CourseInfoPage = () => {
                 language={language} 
               />
               
-              {activeTab === "sections" && (
+              {activeTab === "lessons" && (
                 <CourseSections 
                   sections={course.sections} 
                   getText={getText} 
@@ -246,90 +307,6 @@ const CourseInfoPage = () => {
                 <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                   <div className="prose max-w-none">
                     <p>{getText(course.description)}</p>
-                  </div>
-                </div>
-              )}
-              
-              {activeTab === "reviews" && (
-                <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                  <div className="mb-6">
-                    <h2 className="text-xl font-bold mb-4">
-                      {language === "ar" ? "التقييمات" : "Reviews"}
-                    </h2>
-                    <div className="flex items-center mb-4">
-                      <div className="flex-shrink-0">
-                        <span className="text-3xl font-bold text-purple-600">{course.rating}</span>
-                      </div>
-                      <div className="ml-4 flex-grow">
-                        <div className="flex items-center">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <svg 
-                              key={star}
-                              className={`w-5 h-5 ${star <= course.rating ? 'text-yellow-400' : 'text-gray-300'}`}
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                          ))}
-                          <span className="ml-2 text-sm text-gray-600">
-                            {course.reviewsCount} {language === "ar" ? "من المراجعات" : "reviews"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Review List */}
-                  <div className="space-y-6">
-                    <h3 className="font-bold text-lg">
-                      {language === "ar" ? "آخر خمس تقييمات" : "Last 5 Reviews"}
-                    </h3>
-                    
-                    {course.reviews.map((review) => (
-                      <div key={review.id} className="border-b border-gray-200 pb-4 mb-4 last:border-0">
-                        <div className="flex items-center mb-2">
-                          <img 
-                            src={review.user.avatar} 
-                            alt={getText(review.user.name)} 
-                            className="w-10 h-10 rounded-full mr-3"
-                          />
-                          <div>
-                            <p className="font-medium">{getText(review.user.name)}</p>
-                            <p className="text-sm text-gray-600">{review.date}</p>
-                          </div>
-                        </div>
-                        <div className="flex mb-2">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <svg 
-                              key={star}
-                              className={`w-4 h-4 ${star <= review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                          ))}
-                        </div>
-                        {review.comment && getText(review.comment) && (
-                          <p className="text-gray-700">{getText(review.comment)}</p>
-                        )}
-                      </div>
-                    ))}
-                    
-                    {/* Add Review Button */}
-                    <button 
-                      className="w-full border border-gray-300 rounded-md py-3 px-4 flex items-center justify-center hover:bg-gray-50 transition"
-                    >
-                      <svg 
-                        className="w-5 h-5 mr-2 text-yellow-400"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      {language === "ar" ? "إضافة تقييم" : "Add Review"}
-                    </button>
                   </div>
                 </div>
               )}
@@ -356,7 +333,7 @@ const CourseInfoPage = () => {
               <div className="bg-white rounded-lg shadow-sm p-4 mt-6">
                 <div className="flex justify-between items-center">
                   <h3 className="font-medium text-gray-800">
-                    {language === "ar" ? "مشاركة المعسكر" : "Share the Camp"}
+                    {language === "ar" ? "مشاركة المادة" : "Share the Course"}
                   </h3>
                   <div className="flex space-x-2">
                     <button className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition">

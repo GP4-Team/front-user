@@ -28,13 +28,13 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
   const getLessonIcon = (lesson) => {
     switch (lesson.type) {
       case "video":
-        return <Play size={18} className={`${isDarkMode ? "text-blue-400" : "text-blue-500"} mr-2 rtl:ml-2`} />;
+        return <Play size={18} className={`${isDarkMode ? "text-[#7986CB]" : "text-[#3949AB]"} mr-2 rtl:ml-2`} />;
       case "audio":
-        return <Volume2 size={18} className={`${isDarkMode ? "text-blue-400" : "text-blue-500"} mr-2 rtl:ml-2`} />;
+        return <Volume2 size={18} className={`${isDarkMode ? "text-[#7986CB]" : "text-[#3949AB]"} mr-2 rtl:ml-2`} />;
       case "image":
-        return <ImageIcon size={18} className={`${isDarkMode ? "text-blue-400" : "text-blue-500"} mr-2 rtl:ml-2`} />;
+        return <ImageIcon size={18} className={`${isDarkMode ? "text-[#7986CB]" : "text-[#3949AB]"} mr-2 rtl:ml-2`} />;
       case "exam":
-        return <Files size={18} className={`${isDarkMode ? "text-blue-400" : "text-blue-500"} mr-2 rtl:ml-2`} />;
+        return <Files size={18} className={`${isDarkMode ? "text-[#7986CB]" : "text-[#3949AB]"} mr-2 rtl:ml-2`} />;
       default:
         return <FileText size={18} className={`${isDarkMode ? "text-blue-400" : "text-blue-500"} mr-2 rtl:ml-2`} />;
     }
@@ -44,9 +44,9 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
   const getStatusIcon = (lesson) => {
     switch (lesson.status) {
       case "completed":
-        return <CheckCircle size={18} className="text-green-500 ml-2 rtl:mr-2" />;
+        return <CheckCircle size={18} className="text-[#81C784] ml-2 rtl:mr-2" />;
       case "locked":
-        return <Lock size={18} className="text-gray-400 ml-2 rtl:mr-2" />;
+        return <Lock size={18} className="text-[#B0BEC5] ml-2 rtl:mr-2" />;
       default:
         return null;
     }
@@ -58,8 +58,8 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mr-3 rtl:ml-3 rtl:mr-0">
-              <span className="text-blue-500 text-sm font-medium">
+            <div className="w-8 h-8 bg-[#1A237E] dark:bg-[#3949AB]/20 rounded-full flex items-center justify-center mr-3 rtl:ml-3 rtl:mr-0">
+              <span className="text-[#FFC107] text-sm font-medium">
                 {language === "ar" ? course.sections.length : course.sections.length}
               </span>
             </div>
@@ -87,14 +87,14 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
             onClick={() => toggleSection(section.id)}
           >
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3 rtl:ml-3 rtl:mr-0">
+              <div className="w-8 h-8 bg-[#3949AB] rounded-full flex items-center justify-center mr-3 rtl:ml-3 rtl:mr-0">
                 <span className="text-white text-sm font-medium">
                   {section.completed}/{section.lessons ? section.lessons.length : 0}
                 </span>
               </div>
               <div>
-                <h3 className="font-medium">
-                  {getText(section.title)}
+                <h3 className="font-medium text-[#37474F]">
+                  {section.lessons && section.lessons.length > 0 ? getText(section.lessons[0].title) : getText(section.title)}
                 </h3>
               </div>
             </div>
@@ -115,8 +115,8 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
                   key={lesson.id}
                   className={`py-3 px-2 flex items-center justify-between rounded-md cursor-pointer ${
                     currentLesson && currentLesson.id === lesson.id 
-                      ? "bg-blue-50 dark:bg-blue-900/20" 
-                      : "hover:bg-gray-50 dark:hover:bg-gray-700"
+                      ? "bg-[#ECEFF1] dark:bg-[#1A237E]/20" 
+                      : "hover:bg-[#F5F7F9] dark:hover:bg-[#3949AB]/20"
                   } transition-colors ${lesson.status === "locked" ? "opacity-70" : ""}`}
                   onClick={() => lesson.status !== "locked" && selectLesson(lesson)}
                 >
@@ -124,12 +124,12 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
                     {getLessonIcon(lesson)}
                     <div>
                       <h4 className={`text-sm font-medium ${
-                        lesson.status === "locked" ? "text-gray-500 dark:text-gray-400" : ""
+                        lesson.status === "locked" ? "text-[#37474F] dark:text-[#F0F4F8]" : "text-[#37474F] dark:text-[#F0F4F8]"
                       }`}>
                         {getText(lesson.title)}
                       </h4>
                       {lesson.duration && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-[#37474F] dark:text-[#B0BEC5]">
                           {language === "ar" ? `(قدره ${getText(lesson.duration)})` : `(${getText(lesson.duration)})`}
                         </p>
                       )}

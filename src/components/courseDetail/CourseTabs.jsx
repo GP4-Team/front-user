@@ -18,7 +18,6 @@ const CourseTabs = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: 'sections', label: { ar: 'الأقسام', en: 'Sections' } },
     { id: 'description', label: { ar: 'الوصف', en: 'Description' } },
-    { id: 'reviews', label: { ar: 'التقييمات', en: 'Reviews' } },
     { id: 'instructor', label: { ar: 'المدرس', en: 'Instructor' } },
   ];
 

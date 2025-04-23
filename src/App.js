@@ -66,33 +66,45 @@ function App() {
                   {/* المسارات المحمية - تم تعطيلها مؤقتاً لأغراض التطوير */}
                   {/* للتطوير فقط: تم إزالة ProtectedRoute مؤقتاً */}
                   {/* <Route element={<ProtectedRoute />}> */}
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/profile" element={<Profile />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/profile" element={<Profile />} />
 
-                    {/* Course Routes */}
-                    <Route path="/courses" element={<AllCoursesPage />} />
-                    <Route path="/courses/enrolled" element={<EnrolledCoursesPage />} />
-                    {/* تغيير مسارات الكورس لتكون: */}
-                    {/* 1. صفحة معلومات الكورس (الجديدة) */}
-                    <Route path="/courses/:courseId" element={<CourseInfoPage />} />
-                    {/* 2. صفحة محتوى الكورس (القديمة) */}
-                    <Route path="/courses/:courseId/content" element={<CourseDetailPage />} />
+                  {/* Course Routes */}
+                  <Route path="/courses" element={<AllCoursesPage />} />
+                  <Route
+                    path="/courses/enrolled"
+                    element={<EnrolledCoursesPage />}
+                  />
+                  {/* تغيير مسارات الكورس لتكون: */}
+                  {/* 1. صفحة معلومات الكورس (الجديدة) */}
+                  <Route
+                    path="/courses/:courseId"
+                    element={<CourseInfoPage />}
+                  />
+                  {/* 2. صفحة محتوى الكورس (القديمة) */}
+                  <Route
+                    path="/courses/:courseId/content"
+                    element={<CourseDetailPage />}
+                  />
 
-                    {/* صفحات نظام الامتحانات */}
-                    <Route path="/exams" element={<MyExamsPage />} />
-                    <Route path="/exams/:examId" element={<ExamDetailsPage />} />
-                    <Route
-                      path="/exams/:examId/questions"
-                      element={<ExamQuestionsPage />}
-                    />
-                    <Route
-                      path="/exams/:examId/results"
-                      element={<ExamResultsPage />}
-                    />
+                  {/* صفحات نظام الامتحانات */}
+                  <Route path="/exams" element={<MyExamsPage />} />
+                  <Route path="/exams/:examId" element={<ExamDetailsPage />} />
+                  <Route
+                    path="/exams/:examId/questions"
+                    element={<ExamQuestionsPage />}
+                  />
+                  <Route
+                    path="/exams/:examId/results"
+                    element={<ExamResultsPage />}
+                  />
                   {/* </Route> */}
 
                   {/* مسار احتياطي لتوجيه المسارات غير الموجودة */}
-                  <Route path="*" element={<Navigate to="/not-found" replace />} />
+                  <Route
+                    path="*"
+                    element={<Navigate to="/not-found" replace />}
+                  />
                 </Routes>
               </AuthProvider>
             </ToastProvider>

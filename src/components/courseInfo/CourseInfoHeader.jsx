@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 const CourseInfoHeader = ({ course, getText }) => {
@@ -21,29 +21,14 @@ const CourseInfoHeader = ({ course, getText }) => {
       
       {/* معلومات الكورس */}
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-2 text-gray-800">{getText(course.title)}</h1>
-        <p className="text-sm text-gray-600 mb-4">{getText(course.subtitle)}</p>
+        <h1 className="text-2xl font-bold mb-2 text-[#37474F]">{getText(course.title)}</h1>
+        <p className="text-sm text-[#37474F] mb-4">{getText(course.subtitle)}</p>
         
-        {/* تقييم ومعلومات إضافية */}
+        {/* معلومات إضافية */}
         <div className="flex flex-wrap items-center gap-4 mb-4">
           <div className="flex items-center">
-            <div className="flex items-center mr-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star 
-                  key={star}
-                  size={16} 
-                  className={`${star <= course.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
-                />
-              ))}
-            </div>
-            <span className="text-sm text-gray-600">
-              ({course.reviewsCount} {language === "ar" ? "تقييم" : "reviews"})
-            </span>
-          </div>
-          
-          <div className="flex items-center">
-            <Users size={16} className="mr-1 text-gray-500" />
-            <span className="text-sm text-gray-600">
+            <Users size={16} className="mr-1 text-[#37474F]" />
+            <span className="text-sm text-[#37474F]">
               {course.studentsCount}+ {language === "ar" ? "طالب" : "students"}
             </span>
           </div>
@@ -57,8 +42,8 @@ const CourseInfoHeader = ({ course, getText }) => {
             className="w-10 h-10 rounded-full object-cover mr-3"
           />
           <div>
-            <p className="font-medium text-gray-800">{getText(course.instructor)}</p>
-            <p className="text-sm text-blue-600">{getText(course.subcategory)}</p>
+            <p className="font-medium text-[#37474F]">{getText(course.instructor)}</p>
+            <p className="text-sm text-[#3949AB]">{getText(course.subcategory)}</p>
           </div>
         </div>
       </div>
