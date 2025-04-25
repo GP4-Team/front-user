@@ -7,7 +7,6 @@ import { colors } from '../../utils/colors';
 // Components
 import Navbar from '../../components/navigation/Navbar';
 import SimplifiedCourseCard from '../../components/courses/SimplifiedCourseCard';
-import SimpleFooter from '../../components/home/SimpleFooter';
 
 /**
  * صفحة عرض جميع الكورسات المتاحة
@@ -316,8 +315,7 @@ const AllCoursesPage = () => {
         </div>
       </div>
       
-      {/* Footer */}
-      <SimpleFooter />
+      {/* تم إزالة الفوتر بالكامل */}
     </div>
   );
 };

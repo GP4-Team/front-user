@@ -5,7 +5,6 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import Navbar from "../../components/navigation/Navbar";
-import SimpleFooter from "../../components/home/SimpleFooter";
 import CourseInfoCard from "../../components/courseInfo/CourseInfoCard";
 import CourseInfoTabs from "../../components/courseInfo/CourseInfoTabs";
 import CourseInfoHeader from "../../components/courseInfo/CourseInfoHeader";
@@ -364,8 +363,7 @@ const CourseInfoPage = () => {
         </div>
       </div>
       
-      {/* Footer */}
-      <SimpleFooter />
+      {/* تم إزالة الفوتر بالكامل */}
     </div>
   );
 };

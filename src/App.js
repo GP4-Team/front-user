@@ -12,8 +12,7 @@ import { ToastProvider } from "./contexts/ToastContext.jsx";
 import ErrorBoundary from "./components/ui/feedback/ErrorBoundary";
 
 // Layout components
-import Navbar from "./components/navigation/Navbar";
-import Sidebar from "./components/navigation/Sidebar";
+import MainLayout from "./components/layout/MainLayout";
 
 // Auth pages
 import AuthPage from "./pages/auth/AuthPage.jsx";
@@ -43,6 +42,15 @@ import ExamResultsPage from "./pages/exams/ExamResultsPage.jsx";
 // Protected route component
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 
+// Wrap component with MainLayout
+const withMainLayout = (Component) => {
+  return (props) => (
+    <MainLayout>
+      <Component {...props} />
+    </MainLayout>
+  );
+};
+
 function App() {
   return (
     <ErrorBoundary>
@@ -53,50 +61,50 @@ function App() {
               <AuthProvider>
                 <Routes>
                   {/* تغيير المسار الرئيسي لعرض الصفحة الرئيسية */}
-                  <Route path="/" element={<Home />} />
+                  <Route path="/" element={withMainLayout(Home)()} />
 
                   {/* نقل مسار تسجيل الدخول */}
-                  <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/auth" element={withMainLayout(AuthPage)()} />
 
                   {/* باقي المسارات */}
-                  <Route path="/unauthorized" element={<Unauthorized />} />
-                  <Route path="/server-error" element={<ServerError />} />
-                  <Route path="/not-found" element={<NotFound />} />
+                  <Route path="/unauthorized" element={withMainLayout(Unauthorized)()} />
+                  <Route path="/server-error" element={withMainLayout(ServerError)()} />
+                  <Route path="/not-found" element={withMainLayout(NotFound)()} />
 
                   {/* المسارات المحمية - تم تعطيلها مؤقتاً لأغراض التطوير */}
                   {/* للتطوير فقط: تم إزالة ProtectedRoute مؤقتاً */}
                   {/* <Route element={<ProtectedRoute />}> */}
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/dashboard" element={withMainLayout(Dashboard)()} />
+                  <Route path="/profile" element={withMainLayout(Profile)()} />
 
                   {/* Course Routes */}
-                  <Route path="/courses" element={<AllCoursesPage />} />
+                  <Route path="/courses" element={withMainLayout(AllCoursesPage)()} />
                   <Route
                     path="/courses/enrolled"
-                    element={<EnrolledCoursesPage />}
+                    element={withMainLayout(EnrolledCoursesPage)()}
                   />
                   {/* تغيير مسارات الكورس لتكون: */}
                   {/* 1. صفحة معلومات الكورس (الجديدة) */}
                   <Route
                     path="/courses/:courseId"
-                    element={<CourseInfoPage />}
+                    element={withMainLayout(CourseInfoPage)()}
                   />
                   {/* 2. صفحة محتوى الكورس (القديمة) */}
                   <Route
                     path="/courses/:courseId/content"
-                    element={<CourseDetailPage />}
+                    element={withMainLayout(CourseDetailPage)()}
                   />
 
                   {/* صفحات نظام الامتحانات */}
-                  <Route path="/exams" element={<MyExamsPage />} />
-                  <Route path="/exams/:examId" element={<ExamDetailsPage />} />
+                  <Route path="/exams" element={withMainLayout(MyExamsPage)()} />
+                  <Route path="/exams/:examId" element={withMainLayout(ExamDetailsPage)()} />
                   <Route
                     path="/exams/:examId/questions"
-                    element={<ExamQuestionsPage />}
+                    element={withMainLayout(ExamQuestionsPage)()}
                   />
                   <Route
                     path="/exams/:examId/results"
-                    element={<ExamResultsPage />}
+                    element={withMainLayout(ExamResultsPage)()}
                   />
                   {/* </Route> */}
 

@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import Navbar from "../../components/navigation/Navbar"; // Import the Navbar component
-import Footer from "../../components/layout/Footer";
 
 // Import icons
 import { 
@@ -960,48 +959,7 @@ const HomePage = () => {
       </section>
 
       {/* Footer */}
-      {/* <footer className={`py-8 px-4 ${isDarkMode ? 'bg-[#1E1E1E] text-gray-400' : 'bg-[#37474F] text-gray-300'}`}>
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center mb-4 md:mb-0">
-              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mr-2">
-                <span className="text-xl font-bold text-white">E</span>
-              </div>
-              <div>
-                <div className="flex items-baseline">
-                  <span className="text-xl font-bold text-white">اديورا</span>
-                  <span className="text-lg font-medium text-blue-400 ml-1"></span>
-                </div>
-                <p className="text-xs text-gray-400 mt-1">© 2025 {isArabic ? 'جميع الحقوق محفوظة' : 'All rights reserved'}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-6 rtl:space-x-reverse">
-              <a href="#" className="transition-colors hover:text-white">
-                <svg fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
-                  <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"></path>
-                </svg>
-              </a>
-              <a href="#" className="transition-colors hover:text-white">
-                <svg fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
-                  <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"></path>
-                </svg>
-              </a>
-              <a href="#" className="transition-colors hover:text-white">
-                <svg fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm-1-7a1 1 0 110-2 1 1 0 010 2zm8 7h-2v-3.25c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5V17h-2v-6h2v1.5h.03c.23-.34.99-.99 1.97-.99 2.07 0 3 1.27 3 3.25V17z"></path>
-                </svg>
-              </a>
-              <a href="#" className="transition-colors hover:text-white">
-                <svg fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
-                  <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm-1-11a1 1 0 112 0v4a1 1 0 01-2 0V9zm1-4a1 1 0 100 2 1 1 0 000-2z"></path>
-                </svg>
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer> */}
-      <Footer />
+      {/* Removed Footer component as requested */}
 
       {/* Add custom styles for animations */}
       <style jsx>{`

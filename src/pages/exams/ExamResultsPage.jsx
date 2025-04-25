@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTheme } from "../../contexts/ThemeContext";
 import { findExamById, sampleQuestions } from "../../data/ExamData";
+import Navbar from "../../components/navigation/Navbar";
 import {
   ClockIcon,
   CheckCircleIcon,
@@ -179,366 +180,254 @@ const ExamResultsPage = () => {
     navigate("/exams");
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        جاري التحميل...
-      </div>
-    );
-  }
-
-  if (!exam) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        لم يتم العثور على الامتحان
-      </div>
-    );
-  }
-
   // Filter valid questions
   const validQuestions = sampleQuestions.filter(
     (q) => q && q.id && q.text && q.options && Array.isArray(q.options)
   );
 
   return (
-    <div className="max-w-3xl mx-auto mt-6 pb-12">
-      <button
-        onClick={handleBackToExams}
-        className={`mb-4 flex items-center ${
-          isDarkMode
-            ? "text-primary-light hover:text-neutral-white"
-            : "text-primary-base hover:text-primary-dark"
-        } transition duration-200`}
-      >
-        <ArrowRightIcon />
-        <span className="mr-2">العودة إلى الامتحانات</span>
-      </button>
-
-      <div
-        className={`rounded-lg shadow-md overflow-hidden ${
-          isDarkMode ? "bg-primary-dark" : "bg-neutral-white"
-        } transition-colors duration-300 mb-6`}
-      >
-        {/* رأس الصفحة */}
-        <div
-          className={`px-6 py-5 ${
-            isDarkMode ? "border-primary-base border-b" : "border-b"
-          } transition-colors duration-300`}
-        >
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-            <div className="text-right mb-4 md:mb-0">
-              <h1
-                className={`text-2xl font-bold ${
-                  isDarkMode ? "text-neutral-white" : "text-neutral-dark"
-                } transition-colors duration-300`}
-              >
-                نتائج الامتحان
-              </h1>
-              <p
-                className={`mt-1 ${
-                  isDarkMode ? "text-primary-light" : "text-primary-base"
-                } transition-colors duration-300`}
-              >
-                {exam.title} - {exam.subject}
-              </p>
+    <div className="flex flex-col min-h-screen bg-[#F0F4F8]">
+      {/* Navbar/Header */}
+      <Navbar />
+      
+      {/* Main content with top margin to account for fixed navbar */}
+      <div className="mt-16 flex-grow">
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              جاري التحميل...
             </div>
-          </div>
-        </div>
-
-        {/* ملخص النتائج */}
-        <div className="p-6">
-          {/* النتيجة الإجمالية وشريط التقدم */}
-          <div
-            className={`mb-8 p-6 rounded-lg ${
-              isDarkMode ? "bg-primary-base bg-opacity-20" : "bg-neutral-light"
-            } transition-colors duration-300`}
-          >
-            <div className="flex flex-col md:flex-row justify-between items-center mb-4">
-              <div className="text-center md:text-right order-2 md:order-1">
-                <h2
-                  className={`text-3xl font-bold ${
-                    stats.score >= 70
-                      ? "text-green-500"
-                      : isDarkMode
-                      ? "text-red-400"
-                      : "text-red-500"
-                  } transition-colors duration-300`}
-                >
-                  {stats.score}%
-                </h2>
-                <p
-                  className={`${
-                    isDarkMode ? "text-primary-light" : "text-primary-base"
-                  } transition-colors duration-300`}
-                >
-                  {stats.score >= 70
-                    ? "مبروك! لقد اجتزت الامتحان بنجاح"
-                    : "للأسف، لم تتجاوز نسبة النجاح المطلوبة"}
-                </p>
-              </div>
-
-              <div
-                className={`h-28 w-28 rounded-full border-4 flex items-center justify-center mb-4 md:mb-0 order-1 md:order-2 ${
-                  stats.score >= 70
-                    ? "border-green-500"
-                    : isDarkMode
-                    ? "border-red-400"
-                    : "border-red-500"
-                } transition-colors duration-300`}
+          ) : !exam ? (
+            <div className="flex justify-center items-center h-64">
+              لم يتم العثور على الامتحان
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={handleBackToExams}
+                className="mb-4 flex items-center text-[#3949AB] hover:text-[#1A237E] transition duration-200"
               >
-                {stats.score >= 70 ? (
-                  <CheckCircleIcon
-                    className={`w-12 h-12 ${
-                      isDarkMode ? "text-green-400" : "text-green-500"
-                    }`}
-                  />
-                ) : (
-                  <XCircleIcon
-                    className={`w-12 h-12 ${
-                      isDarkMode ? "text-red-400" : "text-red-500"
-                    }`}
-                  />
-                )}
-              </div>
-            </div>
+                <ArrowRightIcon />
+                <span className="mr-2">العودة إلى الامتحانات</span>
+              </button>
 
-            {/* معلومات إضافية */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center md:text-right">
-              <div className="p-3 rounded-md bg-opacity-30 bg-primary-light">
-                <div className="text-sm font-medium text-neutral-white mb-1">
-                  الوقت المستغرق
+              <div className="rounded-lg shadow-md overflow-hidden bg-white mb-6">
+                {/* رأس الصفحة */}
+                <div className="px-6 py-5 border-b">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+                    <div className="text-right mb-4 md:mb-0">
+                      <h1 className="text-2xl font-bold text-[#37474F]">
+                        نتائج الامتحان
+                      </h1>
+                      <p className="mt-1 text-[#3949AB]">
+                        {exam.title} - {exam.subject}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-center md:justify-end">
-                  <ClockIcon className="ml-1" />
-                  <span className="text-lg font-bold text-neutral-white">
-                    {stats.timeTaken}
-                  </span>
-                </div>
-              </div>
 
-              <div className="p-3 rounded-md bg-opacity-30 bg-green-500">
-                <div className="text-sm font-medium text-neutral-white mb-1">
-                  الإجابات الصحيحة
-                </div>
-                <div className="flex items-center justify-center md:justify-end">
-                  <CheckCircleIcon className="ml-1 text-green-500" />
-                  <span className="text-lg font-bold text-neutral-white">
-                    {stats.correct} / {validQuestions.length}
-                  </span>
-                </div>
-              </div>
+                {/* ملخص النتائج */}
+                <div className="p-6">
+                  {/* النتيجة الإجمالية وشريط التقدم */}
+                  <div className="mb-8 p-6 rounded-lg bg-[#F0F4F8]">
+                    <div className="flex flex-col md:flex-row justify-between items-center mb-4">
+                      <div className="text-center md:text-right order-2 md:order-1">
+                        <h2 className={`text-3xl font-bold ${
+                          stats.score >= 70 ? "text-green-500" : "text-red-500"
+                        }`}>
+                          {stats.score}%
+                        </h2>
+                        <p className="text-[#3949AB]">
+                          {stats.score >= 70
+                            ? "مبروك! لقد اجتزت الامتحان بنجاح"
+                            : "للأسف، لم تتجاوز نسبة النجاح المطلوبة"}
+                        </p>
+                      </div>
 
-              <div className="p-3 rounded-md bg-opacity-30 bg-red-500">
-                <div className="text-sm font-medium text-neutral-white mb-1">
-                  الإجابات الخاطئة
-                </div>
-                <div className="flex items-center justify-center md:justify-end">
-                  <XCircleIcon className="ml-1 text-red-500" />
-                  <span className="text-lg font-bold text-neutral-white">
-                    {stats.incorrect} / {validQuestions.length}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* قائمة الأسئلة مع الإجابات الصحيحة والخاطئة */}
-          <h3
-            className={`text-xl font-bold mb-4 text-right ${
-              isDarkMode ? "text-neutral-white" : "text-neutral-dark"
-            } transition-colors duration-300`}
-          >
-            تفاصيل الإجابات
-          </h3>
-
-          <div className="space-y-6">
-            {validQuestions.map((question, index) => {
-              const answer = answers[question.id] || {
-                selectedOptionId: null,
-                isCorrect: false,
-              };
-
-              // Safely find selected option
-              let selectedOption = null;
-              if (answer.selectedOptionId) {
-                selectedOption = question.options.find(
-                  (opt) => opt.id === answer.selectedOptionId
-                );
-              }
-
-              // Safely find correct option
-              const correctOption = question.options.find(
-                (opt) => opt.isCorrect === true
-              );
-
-              return (
-                <div
-                  key={question.id}
-                  className={`p-4 rounded-lg border-r-4 ${
-                    !answer.selectedOptionId
-                      ? isDarkMode
-                        ? "border-gray-500 bg-gray-700 bg-opacity-30"
-                        : "border-gray-400 bg-gray-100"
-                      : answer.isCorrect
-                      ? isDarkMode
-                        ? "border-green-500 bg-green-900 bg-opacity-20"
-                        : "border-green-500 bg-green-50"
-                      : isDarkMode
-                      ? "border-red-500 bg-red-900 bg-opacity-20"
-                      : "border-red-500 bg-red-50"
-                  } transition-colors duration-300`}
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div
-                      className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                        !answer.selectedOptionId
-                          ? isDarkMode
-                            ? "bg-gray-600"
-                            : "bg-gray-300"
-                          : answer.isCorrect
-                          ? isDarkMode
-                            ? "bg-green-700"
-                            : "bg-green-100 text-green-800"
-                          : isDarkMode
-                          ? "bg-red-700"
-                          : "bg-red-100 text-red-800"
-                      } transition-colors duration-300`}
-                    >
-                      {!answer.selectedOptionId ? (
-                        <span className="text-white text-sm">؟</span>
-                      ) : answer.isCorrect ? (
-                        <CheckCircleIcon
-                          className={`w-5 h-5 ${
-                            isDarkMode ? "text-green-300" : "text-green-600"
-                          }`}
-                        />
-                      ) : (
-                        <XCircleIcon
-                          className={`w-5 h-5 ${
-                            isDarkMode ? "text-red-300" : "text-red-600"
-                          }`}
-                        />
-                      )}
+                      <div className={`h-28 w-28 rounded-full border-4 flex items-center justify-center mb-4 md:mb-0 order-1 md:order-2 ${
+                        stats.score >= 70 ? "border-green-500" : "border-red-500"
+                      }`}>
+                        {stats.score >= 70 ? (
+                          <CheckCircleIcon className="w-12 h-12 text-green-500" />
+                        ) : (
+                          <XCircleIcon className="w-12 h-12 text-red-500" />
+                        )}
+                      </div>
                     </div>
 
-                    <div
-                      className={`text-right ${
-                        isDarkMode ? "text-neutral-white" : "text-neutral-dark"
-                      } transition-colors duration-300 w-full mr-2`}
-                    >
-                      <div className="font-medium text-lg mb-1">
-                        السؤال {index + 1}
+                    {/* معلومات إضافية */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center md:text-right">
+                      <div className="p-3 rounded-md bg-[#7986CB] bg-opacity-30">
+                        <div className="text-sm font-medium text-white mb-1">
+                          الوقت المستغرق
+                        </div>
+                        <div className="flex items-center justify-center md:justify-end">
+                          <ClockIcon className="ml-1" />
+                          <span className="text-lg font-bold text-white">
+                            {stats.timeTaken}
+                          </span>
+                        </div>
                       </div>
-                      <div>{question.text}</div>
+
+                      <div className="p-3 rounded-md bg-green-500 bg-opacity-30">
+                        <div className="text-sm font-medium text-white mb-1">
+                          الإجابات الصحيحة
+                        </div>
+                        <div className="flex items-center justify-center md:justify-end">
+                          <CheckCircleIcon className="ml-1 text-green-500" />
+                          <span className="text-lg font-bold text-white">
+                            {stats.correct} / {validQuestions.length}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-md bg-red-500 bg-opacity-30">
+                        <div className="text-sm font-medium text-white mb-1">
+                          الإجابات الخاطئة
+                        </div>
+                        <div className="flex items-center justify-center md:justify-end">
+                          <XCircleIcon className="ml-1 text-red-500" />
+                          <span className="text-lg font-bold text-white">
+                            {stats.incorrect} / {validQuestions.length}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="mr-10">
-                    {/* إجابتك */}
-                    <div className="mb-2">
-                      <div
-                        className={`text-sm font-medium mb-1 ${
-                          !answer.selectedOptionId
-                            ? isDarkMode
-                              ? "text-gray-400"
-                              : "text-gray-500"
-                            : answer.isCorrect
-                            ? isDarkMode
-                              ? "text-green-300"
-                              : "text-green-600"
-                            : isDarkMode
-                            ? "text-red-300"
-                            : "text-red-600"
-                        } transition-colors duration-300`}
-                      >
-                        {!answer.selectedOptionId
-                          ? "لم تتم الإجابة"
-                          : "إجابتك:"}
-                      </div>
-                      {selectedOption && (
-                        <div
-                          className={`p-2 rounded-md ${
-                            answer.isCorrect
-                              ? isDarkMode
-                                ? "bg-green-800 bg-opacity-30"
-                                : "bg-green-100"
-                              : isDarkMode
-                              ? "bg-red-800 bg-opacity-30"
-                              : "bg-red-100"
-                          } transition-colors duration-300 text-right`}
-                        >
-                          {selectedOption.text}
-                        </div>
-                      )}
-                    </div>
+                  {/* قائمة الأسئلة مع الإجابات الصحيحة والخاطئة */}
+                  <h3 className="text-xl font-bold mb-4 text-right text-[#37474F]">
+                    تفاصيل الإجابات
+                  </h3>
 
-                    {/* الإجابة الصحيحة - تظهر فقط إذا كانت إجابتك خاطئة */}
-                    {selectedOption && !answer.isCorrect && correctOption && (
-                      <div>
-                        <div
-                          className={`text-sm font-medium mb-1 ${
-                            isDarkMode ? "text-green-300" : "text-green-600"
-                          } transition-colors duration-300`}
-                        >
-                          الإجابة الصحيحة:
-                        </div>
-                        <div
-                          className={`p-2 rounded-md ${
-                            isDarkMode
-                              ? "bg-green-800 bg-opacity-30"
-                              : "bg-green-100"
-                          } transition-colors duration-300 text-right`}
-                        >
-                          {correctOption.text}
-                        </div>
-                      </div>
-                    )}
+                  <div className="space-y-6">
+                    {validQuestions.map((question, index) => {
+                      const answer = answers[question.id] || {
+                        selectedOptionId: null,
+                        isCorrect: false,
+                      };
 
-                    {/* شرح الإجابة - إذا كان متوفراً */}
-                    {question.explanation && (
-                      <div className="mt-2">
+                      // Safely find selected option
+                      let selectedOption = null;
+                      if (answer.selectedOptionId) {
+                        selectedOption = question.options.find(
+                          (opt) => opt.id === answer.selectedOptionId
+                        );
+                      }
+
+                      // Safely find correct option
+                      const correctOption = question.options.find(
+                        (opt) => opt.isCorrect === true
+                      );
+
+                      return (
                         <div
-                          className={`text-sm font-medium mb-1 ${
-                            isDarkMode
-                              ? "text-primary-light"
-                              : "text-primary-base"
-                          } transition-colors duration-300`}
+                          key={question.id}
+                          className={`p-4 rounded-lg border-r-4 ${
+                            !answer.selectedOptionId
+                              ? "border-gray-400 bg-gray-100"
+                              : answer.isCorrect
+                              ? "border-green-500 bg-green-50"
+                              : "border-red-500 bg-red-50"
+                          }`}
                         >
-                          التوضيح:
+                          <div className="flex justify-between items-start mb-3">
+                            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                              !answer.selectedOptionId
+                                ? "bg-gray-300"
+                                : answer.isCorrect
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}>
+                              {!answer.selectedOptionId ? (
+                                <span className="text-white text-sm">؟</span>
+                              ) : answer.isCorrect ? (
+                                <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                              ) : (
+                                <XCircleIcon className="w-5 h-5 text-red-600" />
+                              )}
+                            </div>
+
+                            <div className="text-right text-[#37474F] w-full mr-2">
+                              <div className="font-medium text-lg mb-1">
+                                السؤال {index + 1}
+                              </div>
+                              <div>{question.text}</div>
+                            </div>
+                          </div>
+
+                          <div className="mr-10">
+                            {/* إجابتك */}
+                            <div className="mb-2">
+                              <div className={`text-sm font-medium mb-1 ${
+                                !answer.selectedOptionId
+                                  ? "text-gray-500"
+                                  : answer.isCorrect
+                                  ? "text-green-600"
+                                  : "text-red-600"
+                              }`}>
+                                {!answer.selectedOptionId
+                                  ? "لم تتم الإجابة"
+                                  : "إجابتك:"}
+                              </div>
+                              {selectedOption && (
+                                <div className={`p-2 rounded-md ${
+                                  answer.isCorrect
+                                    ? "bg-green-100"
+                                    : "bg-red-100"
+                                } text-right`}>
+                                  {selectedOption.text}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* الإجابة الصحيحة - تظهر فقط إذا كانت إجابتك خاطئة */}
+                            {selectedOption && !answer.isCorrect && correctOption && (
+                              <div>
+                                <div className="text-sm font-medium mb-1 text-green-600">
+                                  الإجابة الصحيحة:
+                                </div>
+                                <div className="p-2 rounded-md bg-green-100 text-right">
+                                  {correctOption.text}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* شرح الإجابة - إذا كان متوفراً */}
+                            {question.explanation && (
+                              <div className="mt-2">
+                                <div className="text-sm font-medium mb-1 text-[#3949AB]">
+                                  التوضيح:
+                                </div>
+                                <div className="p-2 rounded-md bg-[#F0F4F8] text-right">
+                                  {question.explanation}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div
-                          className={`p-2 rounded-md ${
-                            isDarkMode
-                              ? "bg-primary-base bg-opacity-20"
-                              : "bg-neutral-light"
-                          } transition-colors duration-300 text-right`}
-                        >
-                          {question.explanation}
-                        </div>
-                      </div>
-                    )}
+                      );
+                    })}
+                  </div>
+
+                  {/* أزرار الإجراءات */}
+                  <div className="mt-8 flex justify-center space-x-4 space-x-reverse">
+                    <button
+                      onClick={handleBackToExams}
+                      className="bg-[#3949AB] hover:bg-[#1A237E] text-white px-6 py-3 rounded-md transition duration-200 flex items-center"
+                    >
+                      <span className="ml-2">العودة إلى الامتحانات</span>
+                      <ArrowRightIcon />
+                    </button>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* أزرار الإجراءات */}
-          <div className="mt-8 flex justify-center space-x-4 space-x-reverse">
-            <button
-              onClick={handleBackToExams}
-              className={`${
-                isDarkMode
-                  ? "bg-primary-base hover:bg-primary-light"
-                  : "bg-primary-base hover:bg-primary-dark"
-              } text-neutral-white px-6 py-3 rounded-md transition duration-200 flex items-center`}
-            >
-              <span className="ml-2">العودة إلى الامتحانات</span>
-              <ArrowRightIcon />
-            </button>
-          </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
+      
+      {/* تم إزالة الفوتر بالكامل */}
     </div>
   );
 };
