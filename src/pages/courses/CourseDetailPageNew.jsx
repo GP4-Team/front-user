@@ -38,6 +38,18 @@ const CourseDetailPageNew = () => {
   // Helper function to get text based on language
   const getText = (ar, en) => language === 'ar' ? ar : en;
   
+  // Color palette
+  const colors = {
+    primaryDark: '#1A237F',    // Primary Dark
+    primaryBase: '#3949AB',    // Primary Base
+    primaryLight: '#7986CB',   // Primary Light
+    purple: '#6B3DD2',         // Purple (replacing blue)
+    accent: '#FFC107',         // Accent/Yellow
+    textDark: '#37474F',       // Text Dark
+    bgLight: '#ECEFF1',        // Background Light
+    white: '#FFFFFF',          // White
+  };
+  
   // محاكاة جلب بيانات المادة من API
   useEffect(() => {
     // في تطبيق حقيقي، هذا سيكون استدعاء API
@@ -89,7 +101,7 @@ const CourseDetailPageNew = () => {
                 },
                 duration: 45,
                 status: 'completed',
-                icon: <FileVideo size={20} className="text-blue-500" />
+                icon: <FileVideo size={20} className="text-purple-500" />
               },
               {
                 id: 'lesson-2',
@@ -152,7 +164,7 @@ const CourseDetailPageNew = () => {
                 },
                 duration: 30,
                 status: 'locked',
-                icon: <FileVideo size={20} className="text-blue-500" />
+                icon: <FileVideo size={20} className="text-purple-500" />
               }
             ]
           },
@@ -218,7 +230,7 @@ const CourseDetailPageNew = () => {
   if (isLoading) {
     return (
       <div className={`flex justify-center items-center h-screen ${isDarkMode ? 'bg-[#121212]' : 'bg-[#F0F4F8]'}`}>
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#3949AB]"></div>
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#6B3DD2]"></div>
       </div>
     );
   }

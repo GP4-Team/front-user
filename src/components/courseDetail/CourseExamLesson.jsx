@@ -12,6 +12,18 @@ const CourseExamLesson = ({ lesson }) => {
   
   const [showConfirmStart, setShowConfirmStart] = useState(false);
 
+  // Color scheme based on the color palette
+  const colors = {
+    primaryDark: '#1A237F',
+    primaryBase: '#3949AB',
+    primaryLight: '#7986CB',
+    purple: '#6B3DD2',     // Purple color for buttons
+    accent: '#FFC107',
+    textDark: '#37474F',
+    bgLight: '#ECEFF1',
+    white: '#FFFFFF',
+  };
+
   // Helper function to get text based on language
   const getText = (obj) => {
     if (!obj) return "";
@@ -51,7 +63,7 @@ const CourseExamLesson = ({ lesson }) => {
             <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-md">
               <div className="flex flex-col items-center">
                 <div className="mb-6">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-32 h-32 text-blue-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-32 h-32" style={{ color: colors.purple }}>
                     <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
                     <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                     <path d="M12 11h4"></path>
@@ -119,7 +131,7 @@ const CourseExamLesson = ({ lesson }) => {
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
                   <div className="text-center">
                     <div className="mb-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto h-12 w-12 text-blue-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto h-12 w-12" style={{ color: colors.purple }}>
                         <path d="M14.5 4h-5L7 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2h-3l-2.5-3z"></path>
                         <circle cx="12" cy="13" r="3"></circle>
                       </svg>
@@ -139,7 +151,8 @@ const CourseExamLesson = ({ lesson }) => {
                       </button>
                       <Link
                         to={`/exams/${lesson.id}/questions`}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                        className="px-4 py-2 rounded-md text-white hover:bg-opacity-90"
+                        style={{ backgroundColor: colors.purple }}
                       >
                         {language === "ar" ? "بدء" : "Start"}
                       </Link>
@@ -152,7 +165,7 @@ const CourseExamLesson = ({ lesson }) => {
             <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-md">
               <div className="flex flex-col items-center">
                 <div className="mb-6">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-32 h-32 text-blue-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-32 h-32" style={{ color: colors.purple }}>
                     <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
                     <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                     <path d="M12 11h4"></path>
@@ -208,7 +221,8 @@ const CourseExamLesson = ({ lesson }) => {
                 
                 <button 
                   onClick={() => setShowConfirmStart(true)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-8 rounded-md transition-colors"
+                  className="text-white font-medium py-2 px-8 rounded-md transition-colors hover:bg-opacity-90"
+                  style={{ backgroundColor: colors.purple }}
                 >
                   {language === "ar" ? "بدء الامتحان" : "Start Exam"}
                 </button>
@@ -273,10 +287,14 @@ const CourseExamLesson = ({ lesson }) => {
                           </td>
                           <td className="px-4 py-3 text-sm">
                             <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                              <button className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                              <button className="hover:text-opacity-90 dark:hover:text-opacity-90" style={{ color: colors.purple }}>
                                 <BarChart2 size={16} />
                               </button>
-                              <Link to={`/exams/${lesson.id}/results/${attempt.id}`} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                              <Link 
+                                to={`/exams/${lesson.id}/results/${attempt.id}`} 
+                                className="hover:text-opacity-90 dark:hover:text-opacity-90"
+                                style={{ color: colors.purple }}
+                              >
                                 {language === "ar" ? "عرض النتائج" : "View Results"}
                               </Link>
                             </div>
