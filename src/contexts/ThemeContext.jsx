@@ -4,21 +4,22 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  // Use localStorage to persist theme preference
+  // استخدام localStorage لحفظ تفضيل السمة
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
+    // التحقق من تفضيل السمة المحفوظ أو استخدام تفضيل النظام
     return (
       savedTheme === "dark" ||
       (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)
     );
   });
 
-  // Toggle theme function
+  // تبديل الوضع الداكن/الفاتح
   const toggleTheme = () => {
     setIsDarkMode((prevMode) => !prevMode);
   };
 
-  // Update document class and localStorage when theme changes
+  // تحديث class للعنصر html وتخزين التفضيل عند تغيير السمة
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");

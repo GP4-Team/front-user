@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { Loader2 } from 'lucide-react';
+import { Loader } from 'lucide-react';
 
 /**
  * مكون المسار المحمي
@@ -55,7 +55,7 @@ const ProtectedRoute = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader className="h-8 w-8 animate-spin text-primary-base dark:text-primary-light" />
       </div>
     );
   }

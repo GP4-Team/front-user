@@ -5,22 +5,56 @@
 
 export const colors = {
   // الألوان الأساسية
-  primaryDark: "#1A237E",   // أزرق داكن
-  primaryBase: "#3949AB",   // أزرق متوسط (اللون الرئيسي)
-  primaryLight: "#7986CB",  // أزرق فاتح
-  accent: "#FFC107",        // لون التمييز (أصفر)
+  primary: {
+    dark: "#1A237E",
+    base: "#3949AB",
+    light: "#7986CB",
+  },
+  secondary: {
+    dark: "#E65100",
+    base: "#FF9800",
+    light: "#FFB74D",
+  },
+  accent: "#FFC107",
+
+  // ألوان محايدة
+  neutral: {
+    50: "#F8FAFC",
+    100: "#F0F4F8",
+    200: "#E5E9F0",
+    300: "#D1D8E0",
+    400: "#A0AEC0",
+    500: "#718096",
+    600: "#4A5568",
+    700: "#2D3748",
+    800: "#1A202C",
+    900: "#0F1620",
+  },
   
-  // الألوان المحايدة
-  textDark: "#37474F",      // لون النص الداكن
-  backgroundLight: "#F0F4F8", // لون الخلفية الفاتح
-  white: "#FFFFFF",         // أبيض
+  // ألوان النص
+  text: {
+    dark: "#37474F",
+    light: "#FFFFFF",
+    muted: "#718096",
+  },
   
-  // ألوان الوضع الداكن
-  darkBackground: "#121212", // خلفية الوضع الداكن
-  darkSurface: "#1E1E1E",    // سطح العناصر في الوضع الداكن
-  darkBorder: "#333333",     // لون الحدود في الوضع الداكن
-  darkText: "#E0E0E0",       // لون النص في الوضع الداكن
-  darkTextMuted: "#AAAAAA"   // لون النص الثانوي في الوضع الداكن
+  // ألوان الخلفية
+  background: {
+    light: "#F5F7FA",
+    dark: "#121212",
+    card: {
+      light: "#FFFFFF",
+      dark: "#1E1E1E",
+    }
+  },
+  
+  // ألوان الحالة
+  state: {
+    success: "#4CAF50",
+    warning: "#FF9800",
+    error: "#F44336",
+    info: "#2196F3",
+  }
 };
 
 /**

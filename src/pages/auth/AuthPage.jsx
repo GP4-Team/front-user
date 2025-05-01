@@ -1,597 +1,131 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import AuthLayout from '../../layouts/AuthLayout';
+import LoginForm from '../../components/auth/LoginForm';
+import RegisterForm from '../../components/auth/RegisterForm';
+import gsap from 'gsap';
 
-const ModernAuth = () => {
-  const [activePanel, setActivePanel] = useState('login');
-  const [language, setLanguage] = useState('ar'); // Default to Arabic
-  const [formData, setFormData] = useState({
-    login: {
-      emailOrUsername: '',
-      password: '',
-      rememberMe: false
-    },
-    signup: {
-      fullName: '',
-      email: '',
-      phoneNo: '',
-      username: '',
-      password: '',
-      confirmPassword: '',
-      acceptTerms: false
-    }
-  });
-  const [errors, setErrors] = useState({
-    login: {},
-    signup: {}
-  });
-  const [showPassword, setShowPassword] = useState({
-    login: false,
-    signup: false
-  });
-  const [passwordStrength, setPasswordStrength] = useState(0);
-
-  // Apply RTL direction for Arabic
+const AuthPage = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { language } = useLanguage();
+  const { isDarkMode } = useTheme();
+  const isArabic = language === 'ar';
+  
+  // Get mode from URL query parameter
+  const queryParams = new URLSearchParams(location.search);
+  const mode = queryParams.get('mode') || 'login';
+  const returnTo = queryParams.get('returnTo') || '/dashboard';
+  
+  // Manage active mode (login or register)
+  const [activeMode, setActiveMode] = useState(mode);
+  const loginFormRef = useRef(null);
+  const registerFormRef = useRef(null);
+  
+  // Animation for switching between forms
   useEffect(() => {
-    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = language;
-  }, [language]);
-
-  // Toggle language
-  const toggleLanguage = () => {
-    setLanguage(language === 'ar' ? 'en' : 'ar');
-  };
-
-  const handleChange = (panel, e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [panel]: {
-        ...formData[panel],
-        [name]: type === 'checkbox' ? checked : value
+    if (loginFormRef.current && registerFormRef.current) {
+      if (activeMode === 'login') {
+        gsap.to(registerFormRef.current, { 
+          opacity: 0, 
+          x: 50,
+          pointerEvents: 'none',
+          position: 'absolute',
+          duration: 0.3
+        });
+        gsap.fromTo(
+          loginFormRef.current, 
+          { opacity: 0, x: -50, pointerEvents: 'none' },
+          { opacity: 1, x: 0, pointerEvents: 'auto', position: 'relative', duration: 0.3 }
+        );
+      } else {
+        gsap.to(loginFormRef.current, { 
+          opacity: 0, 
+          x: -50,
+          pointerEvents: 'none',
+          position: 'absolute',
+          duration: 0.3
+        });
+        gsap.fromTo(
+          registerFormRef.current, 
+          { opacity: 0, x: 50, pointerEvents: 'none' },
+          { opacity: 1, x: 0, pointerEvents: 'auto', position: 'relative', duration: 0.3 }
+        );
       }
-    });
-    
-    // Clear error when field is modified
-    if (errors[panel][name]) {
-      setErrors({
-        ...errors,
-        [panel]: {
-          ...errors[panel],
-          [name]: ''
-        }
-      });
+      
+      // Update URL query parameter
+      const params = new URLSearchParams(location.search);
+      params.set('mode', activeMode);
+      navigate({ search: params.toString() }, { replace: true });
     }
-
-    // Password strength calculation
-    if (panel === 'signup' && name === 'password') {
-      calculatePasswordStrength(value);
+  }, [activeMode, navigate, location.search]);
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(returnTo || '/dashboard');
     }
+  }, [isAuthenticated, navigate, returnTo]);
+  
+  // Translations
+  const translations = {
+    loginTitle: isArabic ? 'تسجيل الدخول' : 'Sign In',
+    loginSubtitle: isArabic 
+      ? 'أهلاً بك مرة أخرى! قم بتسجيل الدخول للوصول إلى حسابك' 
+      : 'Welcome back! Sign in to access your account',
+    registerTitle: isArabic ? 'إنشاء حساب جديد' : 'Create Account',
+    registerSubtitle: isArabic 
+      ? 'انضم إلينا اليوم وابدأ رحلة التعلم الخاصة بك' 
+      : 'Join us today and start your learning journey',
+    dontHaveAccount: isArabic ? 'ليس لديك حساب؟' : 'Don\'t have an account?',
+    createAccount: isArabic ? 'إنشاء حساب' : 'Create account',
+    alreadyHaveAccount: isArabic ? 'لديك حساب بالفعل؟' : 'Already have an account?',
+    signIn: isArabic ? 'تسجيل الدخول' : 'Sign in'
   };
-
-  const calculatePasswordStrength = (password) => {
-    let strength = 0;
-    
-    if (password.length >= 8) strength += 25;
-    if (/[A-Z]/.test(password)) strength += 25;
-    if (/[0-9]/.test(password)) strength += 25;
-    if (/[^A-Za-z0-9]/.test(password)) strength += 25;
-    
-    setPasswordStrength(strength);
-  };
-
-  const getPasswordStrengthColor = () => {
-    if (passwordStrength < 50) return '#f87171';
-    if (passwordStrength < 75) return '#fbbf24';
-    return '#81C784';
-  };
-
-  const validateForm = (panel) => {
-    const newErrors = {};
-    
-    if (panel === 'login') {
-      if (!formData.login.emailOrUsername.trim()) {
-        newErrors.emailOrUsername = language === 'ar' ? 'البريد الإلكتروني أو اسم المستخدم مطلوب' : 'Email or username is required';
-      }
-      
-      if (!formData.login.password) {
-        newErrors.password = language === 'ar' ? 'كلمة المرور مطلوبة' : 'Password is required';
-      }
-    } else if (panel === 'signup') {
-      if (!formData.signup.fullName.trim()) {
-        newErrors.fullName = language === 'ar' ? 'الاسم الكامل مطلوب' : 'Full name is required';
-      }
-      
-      if (!formData.signup.email.trim()) {
-        newErrors.email = language === 'ar' ? 'البريد الإلكتروني مطلوب' : 'Email is required';
-      } else if (!/\S+@\S+\.\S+/.test(formData.signup.email)) {
-        newErrors.email = language === 'ar' ? 'عنوان البريد الإلكتروني غير صالح' : 'Invalid email address';
-      }
-      
-      if (!formData.signup.phoneNo.trim()) {
-        newErrors.phoneNo = language === 'ar' ? 'رقم الهاتف مطلوب' : 'Phone number is required';
-      } else if (!/^\d{10,}$/.test(formData.signup.phoneNo.trim())) {
-        newErrors.phoneNo = language === 'ar' ? 'رقم هاتف غير صالح' : 'Invalid phone number';
-      }
-      
-      if (!formData.signup.username.trim()) {
-        newErrors.username = language === 'ar' ? 'اسم المستخدم مطلوب' : 'Username is required';
-      } else if (formData.signup.username.length < 4) {
-        newErrors.username = language === 'ar' ? 'يجب أن يكون اسم المستخدم 4 أحرف على الأقل' : 'Username must be at least 4 characters';
-      }
-      
-      if (!formData.signup.password) {
-        newErrors.password = language === 'ar' ? 'كلمة المرور مطلوبة' : 'Password is required';
-      } else if (formData.signup.password.length < 8) {
-        newErrors.password = language === 'ar' ? 'يجب أن تكون كلمة المرور 8 أحرف على الأقل' : 'Password must be at least 8 characters';
-      }
-      
-      if (!formData.signup.confirmPassword) {
-        newErrors.confirmPassword = language === 'ar' ? 'يرجى تأكيد كلمة المرور الخاصة بك' : 'Please confirm your password';
-      } else if (formData.signup.confirmPassword !== formData.signup.password) {
-        newErrors.confirmPassword = language === 'ar' ? 'كلمات المرور غير متطابقة' : 'Passwords do not match';
-      }
-      
-      if (!formData.signup.acceptTerms) {
-        newErrors.acceptTerms = language === 'ar' ? 'يجب عليك قبول شروط الخدمة' : 'You must accept the terms of service';
-      }
-    }
-    
-    setErrors({
-      ...errors,
-      [panel]: newErrors
-    });
-    
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (panel, e) => {
-    e.preventDefault();
-    
-    if (validateForm(panel)) {
-      if (panel === 'login') {
-        console.log('Login with:', formData.login);
-        
-        // Here you would typically make an API call to authenticate
-        const token = 'simulated-jwt-token';
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('userData', JSON.stringify({
-          emailOrUsername: formData.login.emailOrUsername,
-          rememberMe: formData.login.rememberMe
-        }));
-        
-        // Redirect to home page or dashboard
-        window.location.href = '/'; // أو window.location.href = '/dashboard';
-      } else if (panel === 'signup') {
-        console.log('Sign up with:', formData.signup);
-        
-        // Here you would typically make an API call to register
-        const token = 'simulated-jwt-token';
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('userData', JSON.stringify({
-          fullName: formData.signup.fullName,
-          email: formData.signup.email,
-          username: formData.signup.username
-        }));
-        
-        alert(language === 'ar' ? 'تم إنشاء الحساب بنجاح!' : 'Account created successfully!');
-      }
-    }
-  };
-
-  const toggleShowPassword = (panel) => {
-    setShowPassword({
-      ...showPassword,
-      [panel]: !showPassword[panel]
-    });
-  };
-
-  // Simplified Logo component with new colors
-  const EduaraLogo = () => (
-    <div className="flex items-center">
-      <div className={`${language === 'ar' ? 'ml-2' : 'mr-2'}`}>
-        <div className="w-3 h-3 rounded-full bg-[#FFC107]"></div>
-      </div>
-      <h2 className="text-white text-2xl font-bold">Eduara</h2>
-      <div className={`${language === 'ar' ? 'mr-1' : 'ml-1'} w-16 h-1 bg-[#FFC107] mt-6`}></div>
-    </div>
-  );
-
+  
+  // Determine title and subtitle based on active mode
+  const title = activeMode === 'login' ? translations.loginTitle : translations.registerTitle;
+  const subtitle = activeMode === 'login' ? translations.loginSubtitle : translations.registerSubtitle;
+  
   return (
-    <div className="fixed inset-0 flex items-center justify-center overflow-y-auto z-50" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-      {/* Background with educational pattern in logo colors */}
-      <div className="fixed inset-0 bg-f0f4f8">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cdefs%3E%3Cpattern id='eduPattern' x='0' y='0' width='300' height='300' patternUnits='userSpaceOnUse'%3E%3C!-- Books --%3E%3Cpath d='M50,80 L80,70 L80,120 L50,130 Z' fill='none' stroke='%233949AB' stroke-width='1.5' opacity='0.15'/%3E%3Cpath d='M80,70 L110,80 L110,130 L80,120 Z' fill='none' stroke='%233949AB' stroke-width='1.5' opacity='0.15'/%3E%3C!-- Pencil --%3E%3Cpath d='M150,50 L170,30 L180,40 L160,60 Z' fill='none' stroke='%23FFC107' stroke-width='1.5' opacity='0.2'/%3E%3Cline x1='160' y1='60' x2='190' y2='90' stroke='%23FFC107' stroke-width='1.5' opacity='0.2'/%3E%3C!-- Atom --%3E%3Ccircle cx='250' cy='100' r='5' fill='none' stroke='%231A237E' stroke-width='1.5' opacity='0.2'/%3E%3Cellipse cx='250' cy='100' rx='35' ry='18' fill='none' stroke='%231A237E' stroke-width='1.5' opacity='0.2'/%3E%3Cellipse cx='250' cy='100' rx='35' ry='18' fill='none' stroke='%231A237E' stroke-width='1.5' opacity='0.2' transform='rotate(60,250,100)'/%3E%3Cellipse cx='250' cy='100' rx='35' ry='18' fill='none' stroke='%231A237E' stroke-width='1.5' opacity='0.2' transform='rotate(120,250,100)'/%3E%3C!-- Lab Flask --%3E%3Cpath d='M360,50 L360,90 L350,130 L370,130 Z' fill='none' stroke='%23FFC107' stroke-width='1.5' opacity='0.2'/%3E%3Cline x1='350' y1='50' x2='370' y2='50' stroke='%23FFC107' stroke-width='1.5' opacity='0.2'/%3E%3C!-- Triangle --%3E%3Cpath d='M120,170 L150,200 L90,200 Z' fill='none' stroke='%233949AB' stroke-width='1.5' opacity='0.15'/%3E%3C!-- Globe --%3E%3Ccircle cx='220' cy='200' r='30' fill='none' stroke='%23FFC107' stroke-width='1.5' opacity='0.15'/%3E%3Cellipse cx='220' cy='200' rx='30' ry='15' fill='none' stroke='%23FFC107' stroke-width='1.5' opacity='0.15'/%3E%3Cline x1='190' y1='200' x2='250' y2='200' stroke='%23FFC107' stroke-width='1.5' opacity='0.15'/%3E%3Cline x1='220' y1='170' x2='220' y2='230' stroke='%23FFC107' stroke-width='1.5' opacity='0.15'/%3E%3C!-- Graduation Cap --%3E%3Cpath d='M280,180 L320,160 L360,180 L320,200 Z' fill='none' stroke='%231A237E' stroke-width='1.5' opacity='0.2'/%3E%3Cline x1='320' y1='200' x2='320' y2='220' stroke='%231A237E' stroke-width='1.5' opacity='0.2'/%3E%3Ccircle cx='320' cy='220' r='3' fill='none' stroke='%231A237E' stroke-width='1.5' opacity='0.2'/%3E%3C!-- Calculator --%3E%3Crect x='50' y='230' width='60' height='80' rx='3' fill='none' stroke='%233949AB' stroke-width='1.5' opacity='0.15'/%3E%3Crect x='60' y='240' width='40' height='15' rx='2' fill='none' stroke='%233949AB' stroke-width='1.5' opacity='0.15'/%3E%3Ccircle cx='65' cy='270' r='4' fill='none' stroke='%233949AB' stroke-width='1.5' opacity='0.15'/%3E%3Ccircle cx='85' cy='270' r='4' fill='none' stroke='%233949AB' stroke-width='1.5' opacity='0.15'/%3E%3Ccircle cx='65' cy='290' r='4' fill='none' stroke='%233949AB' stroke-width='1.5' opacity='0.15'/%3E%3Ccircle cx='85' cy='290' r='4' fill='none' stroke='%233949AB' stroke-width='1.5' opacity='0.15'/%3E%3C!-- DNA --%3E%3Cpath d='M150,250 Q170,270 150,290 Q130,310 150,330' fill='none' stroke='%23FFC107' stroke-width='1.5' opacity='0.2'/%3E%3Cpath d='M190,250 Q170,270 190,290 Q210,310 190,330' fill='none' stroke='%23FFC107' stroke-width='1.5' opacity='0.2'/%3E%3Cline x1='150' y1='260' x2='190' y2='260' stroke='%23FFC107' stroke-width='1.5' opacity='0.2'/%3E%3Cline x1='150' y1='280' x2='190' y2='280' stroke='%23FFC107' stroke-width='1.5' opacity='0.2'/%3E%3Cline x1='150' y1='300' x2='190' y2='300' stroke='%23FFC107' stroke-width='1.5' opacity='0.2'/%3E%3Cline x1='150' y1='320' x2='190' y2='320' stroke='%23FFC107' stroke-width='1.5' opacity='0.2'/%3E%3C!-- Math Symbols --%3E%3Cpath d='M240,260 L270,260 M255,245 L255,275' fill='none' stroke='%231A237E' stroke-width='2' opacity='0.15'/%3E%3Cpath d='M240,310 L270,310' fill='none' stroke='%231A237E' stroke-width='2' opacity='0.15'/%3E%3Cpath d='M320,260 L340,280 M340,260 L320,280' fill='none' stroke='%231A237E' stroke-width='2' opacity='0.15'/%3E%3Cpath d='M320,310 L340,310 L330,295 L320,310 L340,310 L330,325 Z' fill='none' stroke='%231A237E' stroke-width='1.5' opacity='0.15'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23eduPattern)'/%3E%3C/svg%3E")`,
-          backgroundSize: '800px'
-        }}></div>
-      </div>
-      
-      {/* Language Toggle Button - Floating at top right/left based on language */}
-      <button 
-        onClick={toggleLanguage}
-        className={`absolute ${language === 'ar' ? 'left-4' : 'right-4'} top-4 bg-white p-2 rounded-full shadow-md text-3949ab hover:bg-f0f4f8 transition-colors z-20`}
-        aria-label={language === 'ar' ? "Switch to English" : "التبديل إلى العربية"}
-      >
-        {language === 'ar' ? 'EN' : 'عربي'}
-      </button>
-      
-      {/* Auth Container */}
-      <div className="relative z-10 w-full max-w-4xl flex flex-col md:flex-row shadow-2xl rounded-lg overflow-hidden bg-white my-8 mx-4" style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-        {/* Left Side - Branding Area */}
-        <div className="w-full md:w-5/12 bg-[#3949AB] p-8 md:p-12 flex flex-col justify-between relative overflow-hidden">
-          {/* Add subtle pattern overlay */}
-          <div className="absolute inset-0 opacity-10">
-            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-              <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="white" strokeWidth="0.5" />
-              </pattern>
-              <rect width="100%" height="100%" fill="url(#smallGrid)" />
-            </svg>
-          </div>
+    <AuthLayout title={title} subtitle={subtitle}>
+      <div className="relative">
+        <div ref={loginFormRef} className={activeMode === 'login' ? 'block' : 'hidden'}>
+          <LoginForm returnTo={returnTo} />
           
-          <div className="relative z-10">
-            <div className="mb-12">
-              <EduaraLogo />
-            </div>
-            <h1 className="text-white text-2xl md:text-3xl font-bold mt-8">
-              {language === 'ar' ? 'مرحبًا بك في رحلة التعلم' : 'Welcome to Your Learning Journey'}
-            </h1>
-            <p className="text-white text-opacity-80 mt-4 max-w-sm">
-              {language === 'ar' 
-                ? 'توفر Eduara منصة شاملة لإدارة التعلم للطلاب والمعلمين والمؤسسات لتحقيق التميز الأكاديمي.'
-                : 'Eduara provides a comprehensive learning management platform for students, instructors, and institutions to achieve academic excellence.'}
+          <div className={`mt-8 text-center ${isDarkMode ? 'text-neutral-400' : 'text-neutral-600'}`}>
+            <p>{translations.dontHaveAccount}{' '}
+              <button 
+                onClick={() => setActiveMode('register')}
+                className={`font-medium ${isDarkMode ? 'text-primary-light hover:text-primary-base' : 'text-primary-base hover:text-primary-dark'}`}
+              >
+                {translations.createAccount}
+              </button>
             </p>
           </div>
-          
-          <div className="hidden md:block">
-            <div className="flex items-center mb-6">
-              <div className={`w-8 h-8 bg-[#7986CB] bg-opacity-20 rounded-full flex items-center justify-center ${language === 'ar' ? 'ml-4' : 'mr-4'}`}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#FFC107]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <span className="text-white">
-                {language === 'ar' ? 'مسارات تعليمية مخصصة' : 'Personalized Learning Paths'}
-              </span>
-            </div>
-            
-            <div className="flex items-center mb-6">
-              <div className={`w-8 h-8 bg-[#7986CB] bg-opacity-20 rounded-full flex items-center justify-center ${language === 'ar' ? 'ml-4' : 'mr-4'}`}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#FFC107]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <span className="text-white">
-                {language === 'ar' ? 'تقييمات تفاعلية' : 'Interactive Assessments'}
-              </span>
-            </div>
-            
-            <div className="flex items-center">
-              <div className={`w-8 h-8 bg-[#7986CB] bg-opacity-20 rounded-full flex items-center justify-center ${language === 'ar' ? 'ml-4' : 'mr-4'}`}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#FFC107]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <span className="text-white">
-                {language === 'ar' ? 'تحليلات الأداء في الوقت الفعلي' : 'Real-time Performance Analytics'}
-              </span>
-            </div>
-          </div>
         </div>
         
-        {/* Right Side - Auth Forms */}
-        <div className="w-full md:w-7/12 p-8 md:p-12 bg-white">
-          {/* Toggle Between Login and Signup */}
-          <div className="flex mb-8 bg-f0f4f8 rounded-lg p-1 max-w-xs">
-            <button
-              onClick={() => setActivePanel('login')}
-              className={`flex-1 py-2 px-4 rounded-md transition duration-200 font-medium text-sm ${
-                activePanel === 'login'
-                  ? 'bg-white shadow-sm text-[#37474F]'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {language === 'ar' ? 'تسجيل الدخول' : 'Sign In'}
-            </button>
-            <button
-              onClick={() => setActivePanel('signup')}
-              className={`flex-1 py-2 px-4 rounded-md transition duration-200 font-medium text-sm ${
-                activePanel === 'signup'
-                  ? 'bg-white shadow-sm text-[#37474F]'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {language === 'ar' ? 'إنشاء حساب' : 'Sign Up'}
-            </button>
+        <div ref={registerFormRef} className={activeMode === 'register' ? 'block' : 'hidden'}>
+          <RegisterForm returnTo={returnTo} />
+          
+          <div className={`mt-8 text-center ${isDarkMode ? 'text-neutral-400' : 'text-neutral-600'}`}>
+            <p>{translations.alreadyHaveAccount}{' '}
+              <button 
+                onClick={() => setActiveMode('login')}
+                className={`font-medium ${isDarkMode ? 'text-primary-light hover:text-primary-base' : 'text-primary-base hover:text-primary-dark'}`}
+              >
+                {translations.signIn}
+              </button>
+            </p>
           </div>
-          
-          <h2 className="text-[#37474F] text-2xl font-bold mb-6">
-            {activePanel === 'login' 
-              ? (language === 'ar' ? 'تسجيل الدخول إلى حسابك' : 'Sign in to your account')
-              : (language === 'ar' ? 'إنشاء حسابك الجديد' : 'Create your account')}
-          </h2>
-          
-          {/* Login Form */}
-          {activePanel === 'login' && (
-            <form onSubmit={(e) => handleSubmit('login', e)}>
-              <div className="mb-4">
-                <input
-                  type="text"
-                  name="emailOrUsername"
-                  value={formData.login.emailOrUsername}
-                  onChange={(e) => handleChange('login', e)}
-                  placeholder={language === 'ar' ? "البريد الإلكتروني أو اسم المستخدم" : "Email or username"}
-                  className={`w-full p-3 rounded-lg bg-f0f4f8 border ${
-                    errors.login.emailOrUsername ? 'border-red-500' : 'border-gray-200'
-                  } focus:border-[#3949AB] focus:ring focus:ring-[#7986CB] focus:ring-opacity-50`}
-                />
-                {errors.login.emailOrUsername && (
-                  <p className="mt-1 text-sm text-red-500">{errors.login.emailOrUsername}</p>
-                )}
-              </div>
-              
-              <div className="mb-5 relative">
-                <input
-                  type={showPassword.login ? 'text' : 'password'}
-                  name="password"
-                  value={formData.login.password}
-                  onChange={(e) => handleChange('login', e)}
-                  placeholder={language === 'ar' ? "كلمة المرور" : "Password"}
-                  className={`w-full p-3 rounded-lg bg-f0f4f8 border ${
-                    errors.login.password ? 'border-red-500' : 'border-gray-200'
-                  } focus:border-[#3949AB] focus:ring focus:ring-[#7986CB] focus:ring-opacity-50`}
-                />
-                <button
-                  type="button"
-                  onClick={() => toggleShowPassword('login')}
-                  className={`absolute ${language === 'ar' ? 'left-3' : 'right-3'} top-3 text-gray-400 hover:text-gray-600`}
-                >
-                  {showPassword.login ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  )}
-                </button>
-                {errors.login.password && (
-                  <p className="mt-1 text-sm text-red-500">{errors.login.password}</p>
-                )}
-              </div>
-              
-              <div className="flex items-center justify-between mb-6">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="rememberMe"
-                    checked={formData.login.rememberMe}
-                    onChange={(e) => handleChange('login', e)}
-                    className="rounded border-gray-300 text-[#3949AB] focus:ring-[#3949AB]"
-                  />
-                  <span className={`${language === 'ar' ? 'mr-2' : 'ml-2'} text-sm text-gray-600`}>
-                    {language === 'ar' ? 'تذكرني' : 'Remember me'}
-                  </span>
-                </label>
-                
-                <a href="#" className="text-sm text-gray-500 hover:text-[#FFC107] hover:underline">
-                  {language === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
-                </a>
-              </div>
-              
-              <button
-                type="submit"
-                className="w-full bg-[#3949AB] hover:bg-[#1A237E] text-white font-medium py-3 px-4 rounded-md transition duration-200 mb-4"
-              >
-                {language === 'ar' ? 'تسجيل الدخول' : 'Sign In'}
-              </button>
-              
-              <div className="text-center mt-4">
-                <span className="text-gray-500 text-sm">
-                  {language === 'ar' ? 'ليس لديك حساب؟ ' : "Don't have an account? "}
-                  <button
-                    type="button"
-                    onClick={() => setActivePanel('signup')}
-                    className="text-[#FFC107] hover:text-[#FFCA28] font-medium hover:underline"
-                  >
-                    {language === 'ar' ? 'إنشاء حساب' : 'Sign Up'}
-                  </button>
-                </span>
-              </div>
-            </form>
-          )}
-          
-          {/* Sign Up Form */}
-          {activePanel === 'signup' && (
-            <form onSubmit={(e) => handleSubmit('signup', e)}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={formData.signup.fullName}
-                    onChange={(e) => handleChange('signup', e)}
-                    placeholder={language === 'ar' ? "الاسم الكامل" : "Full name"}
-                    className={`w-full p-3 rounded-lg bg-f0f4f8 border ${
-                      errors.signup.fullName ? 'border-red-500' : 'border-gray-200'
-                    } focus:border-[#3949AB] focus:ring focus:ring-[#7986CB] focus:ring-opacity-50`}
-                  />
-                  {errors.signup.fullName && (
-                    <p className="mt-1 text-sm text-red-500">{errors.signup.fullName}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.signup.email}
-                    onChange={(e) => handleChange('signup', e)}
-                    placeholder={language === 'ar' ? "البريد الإلكتروني" : "Email address"}
-                    className={`w-full p-3 rounded-lg bg-f0f4f8 border ${
-                      errors.signup.email ? 'border-red-500' : 'border-gray-200'
-                    } focus:border-[#3949AB] focus:ring focus:ring-[#7986CB] focus:ring-opacity-50`}
-                  />
-                  {errors.signup.email && (
-                    <p className="mt-1 text-sm text-red-500">{errors.signup.email}</p>
-                  )}
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <input
-                    type="tel"
-                    name="phoneNo"
-                    value={formData.signup.phoneNo}
-                    onChange={(e) => handleChange('signup', e)}
-                    placeholder={language === 'ar' ? "رقم الهاتف" : "Phone number"}
-                    className={`w-full p-3 rounded-lg bg-f0f4f8 border ${
-                      errors.signup.phoneNo ? 'border-red-500' : 'border-gray-200'
-                    } focus:border-[#3949AB] focus:ring focus:ring-[#7986CB] focus:ring-opacity-50`}
-                  />
-                  {errors.signup.phoneNo && (
-                    <p className="mt-1 text-sm text-red-500">{errors.signup.phoneNo}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <input
-                    type="text"
-                    name="username"
-                    value={formData.signup.username}
-                    onChange={(e) => handleChange('signup', e)}
-                    placeholder={language === 'ar' ? "اسم المستخدم" : "Username"}
-                    className={`w-full p-3 rounded-lg bg-f0f4f8 border ${
-                      errors.signup.username ? 'border-red-500' : 'border-gray-200'
-                    } focus:border-[#3949AB] focus:ring focus:ring-[#7986CB] focus:ring-opacity-50`}
-                  />
-                  {errors.signup.username && (
-                    <p className="mt-1 text-sm text-red-500">{errors.signup.username}</p>
-                  )}
-                </div>
-              </div>
-              
-              <div className="mb-4 relative">
-                <input
-                  type={showPassword.signup ? 'text' : 'password'}
-                  name="password"
-                  value={formData.signup.password}
-                  onChange={(e) => handleChange('signup', e)}
-                  placeholder={language === 'ar' ? "كلمة المرور" : "Password"}
-                  className={`w-full p-3 rounded-lg bg-f0f4f8 border ${
-                    errors.signup.password ? 'border-red-500' : 'border-gray-200'
-                  } focus:border-[#3949AB] focus:ring focus:ring-[#7986CB] focus:ring-opacity-50`}
-                />
-                <button
-                  type="button"
-                  onClick={() => toggleShowPassword('signup')}
-                  className={`absolute ${language === 'ar' ? 'left-3' : 'right-3'} top-3 text-gray-400 hover:text-gray-600`}
-                >
-                  {showPassword.signup ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  )}
-                </button>
-                {errors.signup.password && (
-                  <p className="mt-1 text-sm text-red-500">{errors.signup.password}</p>
-                )}
-              </div>
-              
-              {formData.signup.password && (
-                <div className="mb-4">
-                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full rounded-full transition-all duration-300"
-                      style={{ 
-                        width: `${passwordStrength}%`,
-                        backgroundColor: getPasswordStrengthColor()
-                      }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {passwordStrength < 50 && (language === 'ar' ? 'كلمة مرور ضعيفة' : 'Weak password')}
-                    {passwordStrength >= 50 && passwordStrength < 75 && (language === 'ar' ? 'كلمة مرور متوسطة' : 'Medium password')}
-                    {passwordStrength >= 75 && (language === 'ar' ? 'كلمة مرور قوية' : 'Strong password')}
-                  </p>
-                </div>
-              )}
-              
-              <div className="mb-5 relative">
-                <input
-                  type={showPassword.signup ? 'text' : 'password'}
-                  name="confirmPassword"
-                  value={formData.signup.confirmPassword}
-                  onChange={(e) => handleChange('signup', e)}
-                  placeholder={language === 'ar' ? "تأكيد كلمة المرور" : "Confirm password"}
-                  className={`w-full p-3 rounded-lg bg-f0f4f8 border ${
-                    errors.signup.confirmPassword ? 'border-red-500' : 'border-gray-200'
-                  } focus:border-[#3949AB] focus:ring focus:ring-[#7986CB] focus:ring-opacity-50`}
-                />
-                {errors.signup.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-500">{errors.signup.confirmPassword}</p>
-                )}
-              </div>
-              
-              <div className="mb-6">
-                <label className="flex items-start">
-                  <input
-                    type="checkbox"
-                    name="acceptTerms"
-                    checked={formData.signup.acceptTerms}
-                    onChange={(e) => handleChange('signup', e)}
-                    className={`mt-1 rounded border-gray-300 text-[#3949AB] focus:ring-[#3949AB] ${
-                      errors.signup.acceptTerms ? 'border-red-500' : ''
-                    }`}
-                  />
-                  <span className={`${language === 'ar' ? 'mr-2' : 'ml-2'} text-sm text-gray-600`}>
-                    {language === 'ar' 
-                      ? <>أوافق على <a href="#" className="text-[#FFC107] hover:text-[#FFCA28] hover:underline">شروط الخدمة</a> و <a href="#" className="text-[#FFC107] hover:text-[#FFCA28] hover:underline">سياسة الخصوصية</a></>
-                      : <>I agree to the <a href="#" className="text-[#FFC107] hover:text-[#FFCA28] hover:underline">Terms of Service</a> and <a href="#" className="text-[#FFC107] hover:text-[#FFCA28] hover:underline">Privacy Policy</a></>
-                    }
-                  </span>
-                </label>
-                {errors.signup.acceptTerms && (
-                  <p className="mt-1 text-sm text-red-500">{errors.signup.acceptTerms}</p>
-                )}
-              </div>
-              
-              <button
-                type="submit"
-                className="w-full bg-[#3949AB] hover:bg-[#1A237E] text-white font-medium py-3 px-4 rounded-md transition duration-200 mb-4"
-              >
-                {language === 'ar' ? 'إنشاء حساب' : 'Create Account'}
-              </button>
-              
-              <p className="text-center text-gray-500 text-sm">
-                {language === 'ar' ? 'لا تحتاج إلى بطاقة ائتمان' : 'No credit card required'}
-              </p>
-              
-              <div className="text-center mt-4">
-                <span className="text-gray-500 text-sm">
-                  {language === 'ar' ? 'لديك حساب بالفعل؟ ' : 'Already have an account? '}
-                  <button
-                    type="button"
-                    onClick={() => setActivePanel('login')}
-                    className="text-[#FFC107] hover:text-[#FFCA28] font-medium hover:underline"
-                  >
-                    {language === 'ar' ? 'تسجيل الدخول' : 'Sign In'}
-                  </button>
-                </span>
-              </div>
-            </form>
-          )}
         </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 };
 
-export default ModernAuth;
+export default AuthPage;

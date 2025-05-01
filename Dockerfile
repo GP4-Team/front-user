@@ -10,7 +10,7 @@ COPY package*.json ./
 # Install dependencies with caching
 RUN npm install --frozen-lockfile
 
-# Copy all project files
+# Copy project files except those in .dockerignore
 COPY . .
 
 # Build the React app

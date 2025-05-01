@@ -1,91 +1,74 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { useLanguage } from "../../contexts/LanguageContext";
-import {
-  Facebook,
-  Twitter,
-  Instagram,
-  Youtube,
-  Linkedin,
-  GraduationCap,
-} from "lucide-react";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const SimpleFooter = () => {
-  const { language, isRTL } = useLanguage();
-  const isArabic = language === "ar";
-
-  const year = new Date().getFullYear();
-
+  const { isDarkMode } = useTheme();
+  const { language } = useLanguage();
+  const isArabic = language === 'ar';
+  
+  const currentYear = new Date().getFullYear();
+  
   return (
-    <footer className="bg-white dark:bg-black text-text-dark dark:text-white shadow-md py-4">
-      <div className="container mx-auto px-4">
+    <footer 
+      className={`py-6 px-4 ${
+        isDarkMode 
+          ? 'bg-background-card-dark text-neutral-400' 
+          : 'bg-background-card-light text-neutral-600'
+      }`}
+    >
+      <div className="container mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-center">
-          <div className={`flex items-center mb-2 md:mb-0`}>
-            {/* Logo Added Here */}
-            <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#3949AB]/10 dark:bg-white/10 mr-2">
-                <GraduationCap size={16} className="text-[#1A237E] dark:text-white" />
-              </div>
-              <div>
-                <span className="font-bold text-lg">Eduara</span>
-                <p className="text-xs">
-                  © {year}{" "}
-                  {isArabic ? "جميع الحقوق محفوظة" : "All rights reserved"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className={`flex items-center space-x-3 ${
-              isRTL ? "space-x-reverse" : ""
-            }`}
-          >
-            <div className={`flex space-x-3 ${isRTL ? "space-x-reverse" : ""}`}>
-              <a
-                href="https://www.facebook.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Facebook"
-                className="text-[#1A237E] dark:text-white hover:text-[#FFC107] transition-colors"
+          <div className="flex items-center mb-4 md:mb-0">
+            <div className={`${isDarkMode ? 'bg-neutral-800' : 'bg-white'} rounded-full h-8 w-8 flex items-center justify-center mr-2 rtl:ml-2 rtl:mr-0 shadow-sm`}>
+              <svg 
+                width="20" 
+                height="20" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
               >
-                <Facebook size={18} />
-              </a>
-              <a
-                href="https://twitter.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Twitter"
-                className="text-[#1A237E] dark:text-white hover:text-[#FFC107] transition-colors"
-              >
-                <Twitter size={18} />
-              </a>
-              <a
-                href="https://www.instagram.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="text-[#1A237E] dark:text-white hover:text-[#FFC107] transition-colors"
-              >
-                <Instagram size={18} />
-              </a>
-            </div>
-            <span className="mx-2 text-[#7986CB] dark:text-[#7986CB]">|</span>
-            <p
-              className={`text-xs flex items-center ${
-                isRTL ? "flex-row-reverse" : ""
-              }`}
-            >
-              <svg
-                className={`w-3 h-3 ${
-                  isRTL ? "ml-1" : "mr-1"
-                } fill-current text-[#FFC107]`}
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                <path 
+                  d="M12 2L5 6V10C5 15.5 8.1 20.6 12 22C15.9 20.6 19 15.5 19 10V6L12 2ZM16 10C16 14.1 13.9 18 12 19.5C10.1 18 8 14.1 8 10V7.3L12 5L16 7.3V10Z" 
+                  fill={isDarkMode ? "#7986CB" : "#3949AB"} 
+                />
+                <path 
+                  d="M11 10H13V16H11V10ZM11 6H13V8H11V6Z" 
+                  fill={isDarkMode ? "#7986CB" : "#3949AB"} 
+                />
               </svg>
-              {isArabic ? "صُنع بكل حب" : "Made with love"}
+            </div>
+            <p className="text-sm">
+              &copy; {currentYear} Eduara. {isArabic ? 'جميع الحقوق محفوظة' : 'All rights reserved'}.
             </p>
+          </div>
+          
+          <div className="flex space-x-4 rtl:space-x-reverse text-sm">
+            <Link 
+              to="/about" 
+              className={`hover:${isDarkMode ? 'text-primary-light' : 'text-primary-base'}`}
+            >
+              {isArabic ? 'من نحن' : 'About'}
+            </Link>
+            <Link 
+              to="/privacy" 
+              className={`hover:${isDarkMode ? 'text-primary-light' : 'text-primary-base'}`}
+            >
+              {isArabic ? 'سياسة الخصوصية' : 'Privacy Policy'}
+            </Link>
+            <Link 
+              to="/terms" 
+              className={`hover:${isDarkMode ? 'text-primary-light' : 'text-primary-base'}`}
+            >
+              {isArabic ? 'شروط الاستخدام' : 'Terms of Service'}
+            </Link>
+            <Link 
+              to="/contact" 
+              className={`hover:${isDarkMode ? 'text-primary-light' : 'text-primary-base'}`}
+            >
+              {isArabic ? 'اتصل بنا' : 'Contact'}
+            </Link>
           </div>
         </div>
       </div>

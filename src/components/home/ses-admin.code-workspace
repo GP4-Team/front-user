@@ -1,0 +1,28 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../ses-admin/ses-admin"
+		},
+		{
+			"path": "C:/Users/the first/Downloads/profypal-master/profypal-master"
+		},
+		{
+			"path": "../../../../../ess-user"
+		},
+		{
+			"path": "../../.."
+		},
+		{
+			"path": "../../../.."
+		},
+		{
+			"path": "../../../../../becaitech/Projects"
+		},
+		{
+			"path": "../../../../../becaitech/dowaishan"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "dowaishan"
+	}
+}

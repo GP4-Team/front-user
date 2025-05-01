@@ -19,13 +19,14 @@ export const AuthProvider = ({ children }) => {
 
   // التحقق من حالة المصادقة عند تحميل التطبيق
   useEffect(() => {
+    let isMounted = true;
     const initAuth = async () => {
       setIsLoading(true);
       try {
         if (AuthService.isLoggedIn()) {
           // محاولة استعادة المستخدم من التخزين المحلي أولاً
           const storedUser = AuthService.getStoredUser();
-          if (storedUser) {
+          if (storedUser && isMounted) {
             setUser(storedUser);
             setIsAuthenticated(true);
           }
@@ -33,22 +34,33 @@ export const AuthProvider = ({ children }) => {
           // ثم تحديث البيانات من الخادم (في الخلفية)
           try {
             const userData = await AuthService.getCurrentUser();
-            setUser(userData);
-            setIsAuthenticated(true);
+            if (isMounted) {
+              setUser(userData);
+              setIsAuthenticated(true);
+            }
           } catch (error) {
             // إذا فشلت عملية جلب البيانات من الخادم، نقوم بتسجيل الخروج
             console.error('فشل التحقق من المستخدم الحالي:', error);
-            handleLogout();
+            if (isMounted) {
+              handleLogout('/auth', false); // Add a second parameter to avoid navigation during cleanup
+            }
           }
         }
       } catch (error) {
         console.error('خطأ أثناء تهيئة المصادقة:', error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     initAuth();
+    
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   /**
@@ -76,14 +88,17 @@ export const AuthProvider = ({ children }) => {
   /**
    * تسجيل الخروج
    * @param {string} redirectPath - مسار إعادة التوجيه بعد تسجيل الخروج
+   * @param {boolean} doNavigate - هل يجب إعادة التوجيه
    */
-  const handleLogout = (redirectPath = '/auth') => {
+  const handleLogout = (redirectPath = '/auth', doNavigate = true) => {
     AuthService.logout();
     setUser(null);
     setIsAuthenticated(false);
     
-    // توجيه المستخدم إلى صفحة تسجيل الدخول
-    navigate(redirectPath);
+    // توجيه المستخدم إلى صفحة تسجيل الدخول إذا كان مسموحًا
+    if (doNavigate) {
+      navigate(redirectPath);
+    }
   };
 
   /**

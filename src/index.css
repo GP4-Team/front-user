@@ -1,55 +1,88 @@
 /* src/index.css */
 
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --primary-dark: #546E7A;
-  --primary-base: #607D8B;
-  --primary-light: #78909C;
-  --primary-lightest: #B0BEC5;
-  --accent-primary: #A5D6A7;
-  --accent-secondary: #81C784;
-  --text-dark: #455A64;
-  --bg-light: #ECEFF1;
-}
-
-.dark {
-  --primary-dark: #455A64;
-  --primary-base: #546E7A;
-  --primary-light: #607D8B;
-  --primary-lightest: #78909C;
-  --accent-primary: #81C784;
-  --accent-secondary: #66BB6A;
-  --text-dark: #ECEFF1;
-  --bg-light: #263238;
+  --primary-dark: #1A237E;
+  --primary-base: #3949AB;
+  --primary-light: #7986CB;
+  --secondary-dark: #E65100;
+  --secondary-base: #FF9800;
+  --secondary-light: #FFB74D;
+  --accent: #FFC107;
+  --text-dark: #37474F;
+  --text-light: #FFFFFF;
+  --text-muted: #718096;
+  --bg-light: #F5F7FA;
+  --bg-dark: #121212;
+  --card-light: #FFFFFF;
+  --card-dark: #1E1E1E;
+  --success: #4CAF50;
+  --warning: #FF9800;
+  --error: #F44336;
+  --info: #2196F3;
 }
 
 /* Global styles */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  transition: background-color 0.3s, color 0.3s;
+  @apply font-poppins bg-background-light text-text-dark transition-colors duration-300;
+}
+
+.dark body {
+  @apply bg-background-dark text-text-light;
+}
+
+.font-tajawal {
+  font-family: 'Tajawal', sans-serif;
+}
+
+.font-cairo {
+  font-family: 'Cairo', sans-serif;
 }
 
 /* Apply smooth transitions to elements */
 a, button, input, select {
-  transition: all 0.2s ease-in-out;
+  @apply transition-all duration-200;
 }
 
-/* Dark mode card styles */
-.dark .card {
-  background-color: #37474F;
-  border-color: #455A64;
+/* Custom button styles */
+.btn-primary {
+  @apply bg-primary-base text-white hover:bg-primary-dark transition-colors px-4 py-2 rounded-md;
 }
 
-/* Dark mode button styles */
 .dark .btn-primary {
-  background-color: #546E7A;
+  @apply bg-primary-light text-background-dark hover:bg-primary-base;
 }
 
-.dark .btn-primary:hover {
-  background-color: #607D8B;
+.btn-secondary {
+  @apply bg-secondary-base text-text-dark hover:bg-secondary-dark hover:text-white transition-colors px-4 py-2 rounded-md;
+}
+
+.dark .btn-secondary {
+  @apply bg-secondary-light text-background-dark hover:bg-secondary-base;
+}
+
+.btn-outline {
+  @apply border border-primary-base text-primary-base hover:bg-primary-base hover:text-white transition-colors px-4 py-2 rounded-md;
+}
+
+.dark .btn-outline {
+  @apply border-primary-light text-primary-light hover:bg-primary-light hover:text-background-dark;
+}
+
+/* Card styles */
+.card {
+  @apply bg-background-card-light rounded-xl shadow-md p-4 transition-all duration-300;
+}
+
+.dark .card {
+  @apply bg-background-card-dark border-neutral-700;
 }
 
 /* Direction support for RTL languages */
@@ -58,6 +91,17 @@ a, button, input, select {
   margin-left: 0;
 }
 
+[dir="rtl"] .space-x-2 > * + * {
+  margin-right: 0.5rem;
+  margin-left: 0;
+}
+
+[dir="rtl"] .space-x-6 > * + * {
+  margin-right: 1.5rem;
+  margin-left: 0;
+}
+
+/* Fix for text direction in RTL mode - replace @apply with direct rules */
 [dir="rtl"] .text-left {
   text-align: right;
 }
@@ -65,18 +109,56 @@ a, button, input, select {
 [dir="rtl"] .text-right {
   text-align: left;
 }
+
+/* Animation classes */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.4; }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s ease-in-out infinite;
+}
+
+/* Common layout classes */
+.page-container {
+  @apply w-full min-h-screen pt-16;
+}
+
+/* Container styles */
+.container {
+  @apply px-4 mx-auto;
+}
+
 html, body {
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #ECEFF1; /* أو أي لون تفضله للخلفية الداكنة */
   overflow-x: hidden;
 }
 
-/* للتأكد من أن الحاوية الرئيسية تمتد بكامل العرض */
-.main-container {
-  width: 100%;
-  min-height: 100vh;
-  background-color: #37474F;
+/* Grid background pattern */
+.bg-grid-pattern {
+  background-size: 20px 20px;
+  background-image: linear-gradient(to right, rgba(128, 128, 128, 0.1) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(128, 128, 128, 0.1) 1px, transparent 1px);
 }

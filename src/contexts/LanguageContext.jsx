@@ -1,25 +1,41 @@
-// src/contexts/LanguageContext.js
+// src/contexts/LanguageContext.jsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
 
-// Create a context for language
+// إنشاء سياق اللغة
 const LanguageContext = createContext();
 
-// Create a provider component
+// إنشاء مزود السياق
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = useState('ar'); // Default to Arabic
+  // استخدام التخزين المحلي لحفظ تفضيل اللغة
+  const [language, setLanguage] = useState(() => {
+    const savedLanguage = localStorage.getItem('language');
+    return savedLanguage || 'ar'; // الافتراضي هو العربية
+  });
 
-  // Apply RTL direction for Arabic whenever language changes
+  // تطبيق اتجاه RTL للعربية عند تغيير اللغة
   useEffect(() => {
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
+    
+    // تخزين اللغة المحددة
+    localStorage.setItem('language', language);
+    
+    // تطبيق الخط المناسب للغة
+    if (language === 'ar') {
+      document.documentElement.classList.add('font-tajawal');
+      document.documentElement.classList.remove('font-poppins');
+    } else {
+      document.documentElement.classList.add('font-poppins');
+      document.documentElement.classList.remove('font-tajawal');
+    }
   }, [language]);
 
-  // Toggle between Arabic and English
+  // تبديل بين العربية والإنجليزية
   const toggleLanguage = () => {
     setLanguage(language === 'ar' ? 'en' : 'ar');
   };
 
-  // Check if the document is in RTL mode
+  // التحقق من أن اتجاه النص هو RTL
   const isRTL = language === 'ar';
 
   return (
@@ -29,7 +45,7 @@ export const LanguageProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use the language context
+// Hook مخصص لاستخدام سياق اللغة
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
   if (!context) {

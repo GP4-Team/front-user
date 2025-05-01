@@ -10,6 +10,7 @@ import { ThemeProvider } from "./contexts/ThemeContext.jsx";
 import { LanguageProvider } from "./contexts/LanguageContext.jsx";
 import { ToastProvider } from "./contexts/ToastContext.jsx";
 import ErrorBoundary from "./components/ui/feedback/ErrorBoundary";
+import PageTransition from "./components/ui/PageTransition";
 
 // Layout components
 import MainLayout from "./components/layout/MainLayout";
@@ -42,69 +43,74 @@ import ExamResultsPage from "./pages/exams/ExamResultsPage.jsx";
 // Protected route component
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 
-// Wrap component with MainLayout
+// Wrap component with MainLayout - الكود المعدل لتجنب مشاكل الراوتر
 const withMainLayout = (Component) => {
-  return (props) => (
-    <MainLayout>
-      <Component {...props} />
-    </MainLayout>
-  );
+  // سنقوم بإنشاء مكون جديد بدون استخدام مكون MainLayout مباشرة
+  return function WrappedComponent(props) {
+    return (
+      <MainLayout>
+        <Component {...props} />
+      </MainLayout>
+    );
+  };
 };
 
 function App() {
   return (
-    <ErrorBoundary>
-      <ThemeProvider>
-        <LanguageProvider>
-          <Router>
+    <Router>
+      <ErrorBoundary>
+        <ThemeProvider>
+          <LanguageProvider>
             <ToastProvider>
               <AuthProvider>
+                {/* Page Transition Component */}
+                <PageTransition />
+                
                 <Routes>
-                  {/* تغيير المسار الرئيسي لعرض الصفحة الرئيسية */}
-                  <Route path="/" element={withMainLayout(Home)()} />
+                  {/* الصفحة الرئيسية */}
+                  <Route path="/" element={<MainLayout><Home /></MainLayout>} />
 
-                  {/* نقل مسار تسجيل الدخول */}
-                  <Route path="/auth" element={withMainLayout(AuthPage)()} />
+                  {/* صفحة تسجيل الدخول - بدون MainLayout */}
+                  <Route path="/auth" element={<AuthPage />} />
 
-                  {/* باقي المسارات */}
-                  <Route path="/unauthorized" element={withMainLayout(Unauthorized)()} />
-                  <Route path="/server-error" element={withMainLayout(ServerError)()} />
-                  <Route path="/not-found" element={withMainLayout(NotFound)()} />
+                  {/* صفحات الخطأ */}
+                  <Route path="/unauthorized" element={<MainLayout><Unauthorized /></MainLayout>} />
+                  <Route path="/server-error" element={<MainLayout><ServerError /></MainLayout>} />
+                  <Route path="/not-found" element={<MainLayout><NotFound /></MainLayout>} />
 
                   {/* المسارات المحمية - تم تعطيلها مؤقتاً لأغراض التطوير */}
                   {/* للتطوير فقط: تم إزالة ProtectedRoute مؤقتاً */}
                   {/* <Route element={<ProtectedRoute />}> */}
-                  <Route path="/dashboard" element={withMainLayout(Dashboard)()} />
-                  <Route path="/profile" element={withMainLayout(Profile)()} />
+                  <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />
+                  <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
 
-                  {/* Course Routes */}
-                  <Route path="/courses" element={withMainLayout(AllCoursesPage)()} />
+                  {/* مسارات الكورسات */}
+                  <Route path="/courses" element={<MainLayout><AllCoursesPage /></MainLayout>} />
                   <Route
                     path="/courses/enrolled"
-                    element={withMainLayout(EnrolledCoursesPage)()}
+                    element={<MainLayout><EnrolledCoursesPage /></MainLayout>}
                   />
-                  {/* تغيير مسارات الكورس لتكون: */}
-                  {/* 1. صفحة معلومات الكورس (الجديدة) */}
+                  {/* صفحة معلومات الكورس */}
                   <Route
                     path="/courses/:courseId"
-                    element={withMainLayout(CourseInfoPage)()}
+                    element={<MainLayout><CourseInfoPage /></MainLayout>}
                   />
-                  {/* 2. صفحة محتوى الكورس (القديمة) */}
+                  {/* صفحة محتوى الكورس */}
                   <Route
                     path="/courses/:courseId/content"
-                    element={withMainLayout(CourseDetailPage)()}
+                    element={<MainLayout><CourseDetailPage /></MainLayout>}
                   />
 
                   {/* صفحات نظام الامتحانات */}
-                  <Route path="/exams" element={withMainLayout(MyExamsPage)()} />
-                  <Route path="/exams/:examId" element={withMainLayout(ExamDetailsPage)()} />
+                  <Route path="/exams" element={<MainLayout><MyExamsPage /></MainLayout>} />
+                  <Route path="/exams/:examId" element={<MainLayout><ExamDetailsPage /></MainLayout>} />
                   <Route
                     path="/exams/:examId/questions"
-                    element={withMainLayout(ExamQuestionsPage)()}
+                    element={<MainLayout><ExamQuestionsPage /></MainLayout>}
                   />
                   <Route
                     path="/exams/:examId/results"
-                    element={withMainLayout(ExamResultsPage)()}
+                    element={<MainLayout><ExamResultsPage /></MainLayout>}
                   />
                   {/* </Route> */}
 
@@ -116,10 +122,10 @@ function App() {
                 </Routes>
               </AuthProvider>
             </ToastProvider>
-          </Router>
-        </LanguageProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
+          </LanguageProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
+    </Router>
   );
 }
 
