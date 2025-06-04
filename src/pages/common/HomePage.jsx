@@ -6,12 +6,15 @@ import { useAuth } from "../../contexts/AuthContext";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
+import Navbar from "../../components/navigation/Navbar";
 import HeroSection from "../../components/home/HeroSection";
 import UserCoursesSection from "../../components/home/UserCoursesSection";
 import SubjectsSection from "../../components/home/SubjectsSection";
 import FeaturedCoursesSection from "../../components/home/FeaturedCoursesSection";
 import ExamsSection from "../../components/home/ExamsSection";
-import { FEATURED_COURSES, TOP_EXAMS } from "../../data/mockData";
+import HomeController from "../../controllers/HomeController";
+import { FEATURED_COURSES, TOP_EXAMS } from "../../data/mockData"; // للدعم في حالة فشل الـAPI
+import { debugFeaturedCourses } from "../../utils/debugHelper"; // Debug helper
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
@@ -23,42 +26,138 @@ const HomePage = () => {
   const { isAuthenticated, user } = useAuth();
   const { language, isRTL } = useLanguage();
   const { isDarkMode } = useTheme();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [featuredCourses, setFeaturedCourses] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [exams, setExams] = useState([]);
   const [userCourses, setUserCourses] = useState([]);
   const isArabic = language === "ar";
-  
-  // Check if TOP_EXAMS data exists
-  const hasExamsData = Array.isArray(TOP_EXAMS) && TOP_EXAMS.length > 0;
   
   // Ref for page animations
   const pageRef = useRef(null);
   
-  // Check if user is logged in on component mount
+  // جلب بيانات الهوم من الـAPI عند تحميل المكون
   useEffect(() => {
-    // In a real app, this would check auth status from context
-    if (isAuthenticated && user) {
-      // Mock user courses for now
-      const mockUserCourses = [
-        {...FEATURED_COURSES[0], progress: 65},
-        {...FEATURED_COURSES[2], progress: 32}
-      ];
-      setUserCourses(mockUserCourses);
-    } else {
-      setUserCourses([]);
-    }
+    const fetchHomeData = async () => {
+      setLoading(true);
+      try {
+        // إضافة debug لفحص المشكلة
+        if (DEBUG) {
+          console.log('🔍 === DEBUGGING FEATURED COURSES ===');
+          const debugHelper = debugFeaturedCourses();
+          await debugHelper.runAllTests();
+        }
+        
+        // استدعاء الخدمة لجلب بيانات الصفحة الرئيسية
+        const result = await HomeController.getHomePageData();
+        
+        if (DEBUG) {
+          console.log('Home API Response:', result);
+        }
+        
+        if (result.success) {
+          // تعيين البيانات إذا تم جلبها بنجاح
+          if (result.featuredCourses.success) {
+            setFeaturedCourses(result.featuredCourses.data);
+            console.log('✅ Featured courses set from API:', result.featuredCourses.data);
+          } else {
+            // في حالة فشل جلب الدورات المميزة، استخدم البيانات الوهمية
+            console.warn('Using mock featured courses due to API failure');
+            setFeaturedCourses(FEATURED_COURSES);
+            console.log('⚠️ Featured courses set from MOCK data:', FEATURED_COURSES);
+          }
+          
+          if (result.categories.success) {
+            setCategories(result.categories.data);
+          }
+          
+          if (result.featuredExams.success) {
+            setExams(result.featuredExams.data);
+          } else {
+            // في حالة فشل جلب الاختبارات، استخدم البيانات الوهمية
+            console.warn('Using mock exams due to API failure');
+            setExams(TOP_EXAMS);
+          }
+          
+          setError(null);
+        } else {
+          setError(result.error);
+          // في حالة فشل الـAPI، استخدم البيانات الوهمية
+          console.warn('Using mock data due to API failure');
+          setFeaturedCourses(FEATURED_COURSES);
+          setExams(TOP_EXAMS);
+          console.log('🛠️ Fallback: Featured courses set from MOCK data:', FEATURED_COURSES);
+        }
+      } catch (err) {
+        console.error('Error fetching home page data:', err);
+        setError('حدث خطأ أثناء جلب بيانات الصفحة الرئيسية');
+        
+        // في حالة حدوث استثناء، استخدم البيانات الوهمية
+        setFeaturedCourses(FEATURED_COURSES);
+        setExams(TOP_EXAMS);
+        console.log('🊑 Exception: Featured courses set from MOCK data:', FEATURED_COURSES);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchHomeData();
+  }, []);
+  
+  // جلب دورات المستخدم إذا كان مسجل دخول
+  useEffect(() => {
+    const fetchUserCourses = async () => {
+      if (isAuthenticated && user) {
+        try {
+          // استدعاء خدمة دورات المستخدم
+          const result = await HomeController.getUserCoursesData();
+          
+          if (DEBUG) {
+            console.log('User Courses API Response:', result);
+          }
+          
+          if (result.success) {
+            setUserCourses(result.data);
+          } else {
+            // في حالة فشل جلب دورات المستخدم، استخدم البيانات الوهمية
+            console.warn('Using mock user courses due to API failure');
+            const mockUserCourses = [
+              {...FEATURED_COURSES[0], progress: 65},
+              {...FEATURED_COURSES[2], progress: 32}
+            ];
+            setUserCourses(mockUserCourses);
+          }
+        } catch (err) {
+          console.error('Error fetching user courses:', err);
+          
+          // في حالة حدوث استثناء، استخدم البيانات الوهمية
+          const mockUserCourses = [
+            {...FEATURED_COURSES[0], progress: 65},
+            {...FEATURED_COURSES[2], progress: 32}
+          ];
+          setUserCourses(mockUserCourses);
+        }
+      } else {
+        setUserCourses([]);
+      }
+    };
+    
+    fetchUserCourses();
   }, [isAuthenticated, user]);
 
-  // Component mount log for debugging
+  // تسجيل بيانات للتصحيح
   useEffect(() => {
     if (DEBUG) {
       console.log('HomePage mounted');
       console.log('Language:', language);
       console.log('Is Arabic:', isArabic);
-      console.log('Exams data available:', hasExamsData);
-      console.log('TOP_EXAMS data:', TOP_EXAMS);
-      console.log('TOP_EXAMS length:', TOP_EXAMS.length);
-      console.log('FEATURED_COURSES data:', FEATURED_COURSES);
+      console.log('Featured Courses:', featuredCourses);
+      console.log('Exams:', exams);
+      console.log('Categories:', categories);
+      console.log('User Courses:', userCourses);
     }
-  }, [hasExamsData, language, isArabic]);
+  }, [language, isArabic, featuredCourses, exams, categories, userCourses]);
 
   // Page-level animations
   useEffect(() => {
@@ -198,6 +297,14 @@ const HomePage = () => {
     onlineTests: {
       en: "Online Tests",
       ar: "الاختبارات عبر الإنترنت"
+    },
+    loading: {
+      en: "Loading...",
+      ar: "جاري التحميل..."
+    },
+    error: {
+      en: "An error occurred while loading data. Please try again later.",
+      ar: "حدث خطأ أثناء تحميل البيانات. يرجى المحاولة مرة أخرى لاحقاً."
     }
   };
 
@@ -232,11 +339,21 @@ const HomePage = () => {
     upcomingExams: getText(UI.upcomingExams),
     registerForExam: getText(UI.registerForExam),
     startExam: getText(UI.startExam),
-    viewResults: getText(UI.viewResults)
+    viewResults: getText(UI.viewResults),
+    loading: getText(UI.loading),
+    error: getText(UI.error)
   };
 
-  if (DEBUG) {
-    console.log('Rendering HomePage with translations:', translations);
+  // رسالة التحميل
+  if (loading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-background-dark text-text-light' : 'bg-background-light text-text-dark'}`}>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-base mb-4"></div>
+          <p className="text-lg">{translations.loading}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -244,24 +361,44 @@ const HomePage = () => {
       ref={pageRef}
       className={`min-h-screen ${isDarkMode ? 'bg-background-dark text-text-light' : 'bg-background-light text-text-dark'}`}
     >
+      {/* Using the same Navbar component as in the courses page */}
+      <Navbar />
+      
+      {/* Add space to prevent content from being hidden under the navbar */}
+      <div className="pt-16"></div>
+      
+      {/* Error Message (if any) */}
+      {error && (
+        <div className="container mx-auto px-4 py-4">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className="font-bold mr-1">خطأ:</strong>
+            <span className="block sm:inline">{error}</span>
+          </div>
+        </div>
+      )}
+      
       {/* Hero Section */}
       <HeroSection translations={translations} />
 
       {/* User's Courses Section (if logged in) */}
-      <UserCoursesSection userCourses={userCourses} translations={translations} />
+      {userCourses.length > 0 && (
+        <UserCoursesSection userCourses={userCourses} translations={translations} />
+      )}
 
       {/* Subject Categories Section */}
       <SubjectsSection translations={translations} />
 
       {/* Featured Courses Section */}
       <div id="featured-courses-wrapper">
-        <FeaturedCoursesSection courses={FEATURED_COURSES} translations={translations} />
+        <FeaturedCoursesSection courses={featuredCourses} translations={translations} />
       </div>
 
-      {/* Exams Section - removing conditional rendering to ensure it always appears */}
-      <div id="exams-section-wrapper">
-        <ExamsSection exams={TOP_EXAMS} translations={translations} />
-      </div>
+      {/* Exams Section */}
+      {exams && exams.length > 0 && (
+        <div id="exams-section-wrapper">
+          <ExamsSection exams={exams} translations={translations} />
+        </div>
+      )}
     </div>
   );
 };

@@ -1,13 +1,40 @@
 // src/services/api/index.js
-import AuthService from './auth.service';
-import CoursesService from './courses.service';
-import ExamsService from './exams.service';
-import apiClient from './client';
+/**
+ * Central API services export
+ */
 
-// تصدير جميع خدمات API كحزمة واحدة
+// Import all API services
+import coursesService from './courses.service';
+import authService from './auth.service';
+import materialsService from './materials.service';
+import userService from './user.service';
+import examsService from './exams.service';
+
+// Import utilities
+import { handleApiError, handleAuthError, retryApiCall } from '../utils/errorHandler';
+
+// Export all services
 export {
-  AuthService,
-  CoursesService,
-  ExamsService,
-  apiClient
+  coursesService,
+  authService,
+  materialsService,
+  userService,
+  examsService,
+  handleApiError,
+  handleAuthError,
+  retryApiCall
+};
+
+// Default export with all services
+export default {
+  courses: coursesService,
+  auth: authService,
+  materials: materialsService,
+  user: userService,
+  exams: examsService,
+  utils: {
+    handleApiError,
+    handleAuthError,
+    retryApiCall
+  }
 };

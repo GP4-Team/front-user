@@ -1,11 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import gsap from 'gsap';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 
-const PageTransition = () => {
-  const location = useLocation();
+/**
+ * PageTransition component - Provides animated transitions between pages
+ * Modified to NOT depend on useLocation() - now takes pathname as a prop
+ * 
+ * @param {Object} props - Component props
+ * @param {string} props.pathname - Current path from Router
+ * @returns {JSX.Element|null} - Transition overlay or null
+ */
+const PageTransition = ({ pathname = '' }) => {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
   const [isVisible, setIsVisible] = useState(false);
@@ -13,27 +19,36 @@ const PageTransition = () => {
   const logoRef = useRef(null);
   const textRef = useRef(null);
   const dotsRef = useRef([]);
+  const lastPathRef = useRef('');
   
-  // إظهار شاشة الانتقال عند تغيير المسار
+  // Show transition screen when path changes
   useEffect(() => {
+    // Skip if path hasn't changed
+    if (pathname === lastPathRef.current) {
+      return;
+    }
+    
+    // Update last path
+    lastPathRef.current = pathname;
+    
     let timeoutId = null;
     let animation = null;
     let isMounted = true;
     
-    // دالة للتحقق من أن المكون ما زال مثبتًا
+    // Function to check if component is still mounted
     const checkMounted = () => isMounted && overlayRef.current;
     
-    // إظهار شاشة الانتقال
-    if (overlayRef.current && !location.pathname.startsWith('/auth')) {
+    // Show transition screen
+    if (overlayRef.current && !pathname.startsWith('/auth')) {
       if (isMounted) {
         setIsVisible(true);
       }
       
-      // إنشاء تأثير الانتقال
+      // Create transition effect
       try {
         const tl = gsap.timeline({
           onComplete: () => {
-            // إلغاء التحريك إذا تم إلغاء تحميل المكون
+            // Cancel animation if component is unmounted
             if (!checkMounted()) return;
           }
         });
@@ -77,7 +92,7 @@ const PageTransition = () => {
           );
         }
       
-        // تأثير النقاط المتحركة
+        // Animated dots effect
         if (dotsRef.current.length > 0 && checkMounted()) {
           animation = gsap.to(dotsRef.current, {
             y: -10,
@@ -92,7 +107,7 @@ const PageTransition = () => {
         console.error('Animation error:', error);
       }
       
-      // إخفاء شاشة الانتقال بعد وقت محدد
+      // Hide transition screen after delay
       timeoutId = setTimeout(() => {
         if (checkMounted()) {
           try {
@@ -117,7 +132,7 @@ const PageTransition = () => {
       }, 1000);
     }
     
-    // تنظيف الموارد عند إلغاء تحميل المكون
+    // Clean up resources when component unmounts
     return () => {
       isMounted = false;
       
@@ -142,10 +157,10 @@ const PageTransition = () => {
         }
       }
     };
-  }, [location.pathname]);
+  }, [pathname]);
   
-  // لا نعرض شاشة الانتقال لصفحات المصادقة
-  if (location.pathname.startsWith('/auth') || !isVisible) {
+  // Don't show transition for auth pages
+  if (pathname.startsWith('/auth') || !isVisible) {
     return null;
   }
 

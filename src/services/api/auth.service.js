@@ -1,134 +1,254 @@
 // src/services/api/auth.service.js
-import apiClient from './client';
+import api from '../api';
+import { handleAuthError } from '../utils/errorHandler';
+import { setToken, removeToken, getToken } from '../../utils/tokenHelpers';
 
 /**
- * خدمات المصادقة - تتعامل مع تسجيل الدخول، التسجيل، وإدارة المستخدم
+ * Authentication Service - Handle all authentication operations
  */
-const AuthService = {
+class AuthService {
   /**
-   * تسجيل الدخول بالبريد الإلكتروني وكلمة المرور
-   * @param {string} email - البريد الإلكتروني
-   * @param {string} password - كلمة المرور
-   * @returns {Promise} - Promise مع بيانات المستخدم والتوكن
+   * User login
+   * @param {string} login - Email or username
+   * @param {string} password - User password
+   * @param {boolean} remember - Remember login
+   * @returns {Promise<Object>} Login response
    */
-  login: async (email, password) => {
+  async login(login, password, remember = false) {
     try {
-      const response = await apiClient.post('/auth/login', { email, password });
-      if (response.data.token) {
-        localStorage.setItem('authToken', response.data.token);
-        localStorage.setItem('userData', JSON.stringify(response.data.user));
-      }
-      return response.data;
-    } catch (error) {
-      throw handleAuthError(error, 'تسجيل الدخول');
-    }
-  },
-
-  /**
-   * إنشاء حساب جديد
-   * @param {Object} userData - بيانات المستخدم للتسجيل
-   * @returns {Promise} - Promise مع بيانات المستخدم المسجل
-   */
-  register: async (userData) => {
-    try {
-      const response = await apiClient.post('/auth/register', userData);
-      return response.data;
-    } catch (error) {
-      throw handleAuthError(error, 'التسجيل');
-    }
-  },
-
-  /**
-   * تسجيل الخروج - مسح بيانات الجلسة
-   */
-  logout: () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
-    // اختياري: إخطار الخادم بتسجيل الخروج
-    apiClient.post('/auth/logout').catch(console.error);
-  },
-
-  /**
-   * الحصول على بيانات المستخدم الحالي
-   * @returns {Promise} - Promise مع بيانات المستخدم الكاملة
-   */
-  getCurrentUser: async () => {
-    try {
-      const response = await apiClient.get('/auth/me');
-      // تحديث بيانات المستخدم المخزنة محليا
-      localStorage.setItem('userData', JSON.stringify(response.data));
-      return response.data;
-    } catch (error) {
-      throw handleAuthError(error, 'جلب بيانات المستخدم');
-    }
-  },
-
-  /**
-   * تحديث الملف الشخصي للمستخدم
-   * @param {Object} userData - بيانات المستخدم المحدثة
-   * @returns {Promise} - Promise مع بيانات المستخدم المحدثة
-   */
-  updateProfile: async (userData) => {
-    try {
-      const response = await apiClient.put('/auth/profile', userData);
-      // تحديث بيانات المستخدم المخزنة محليا
-      localStorage.setItem('userData', JSON.stringify(response.data));
-      return response.data;
-    } catch (error) {
-      throw handleAuthError(error, 'تحديث الملف الشخصي');
-    }
-  },
-
-  /**
-   * تغيير كلمة المرور
-   * @param {string} currentPassword - كلمة المرور الحالية
-   * @param {string} newPassword - كلمة المرور الجديدة
-   * @returns {Promise} - Promise مع رسالة نجاح
-   */
-  changePassword: async (currentPassword, newPassword) => {
-    try {
-      const response = await apiClient.post('/auth/change-password', {
-        currentPassword,
-        newPassword
+      const response = await api.post('/login', {
+        login,
+        password,
+        remember
       });
+
+      // Extract user data and token from response
+      const { data } = response;
+      let userData, token;
+
+      if (data && data.data) {
+        // Standard response structure
+        userData = data.data.user;
+        token = data.data.token;
+      } else if (data && data.token) {
+        // Alternative response structure
+        userData = data.user;
+        token = data.token;
+      } else if (data && data.access_token) {
+        // OAuth-style response
+        userData = data.user;
+        token = data.access_token;
+      }
+
+      // Store token and user data if available
+      if (token) {
+        setToken(token);
+        
+        if (userData) {
+          localStorage.setItem('userData', JSON.stringify(userData));
+        }
+      }
+
+      return data;
+    } catch (error) {
+      throw handleAuthError(error);
+    }
+  }
+
+  /**
+   * User registration
+   * @param {Object} userData - Registration data
+   * @returns {Promise<Object>} Registration response
+   */
+  async register(userData) {
+    try {
+      const requestData = {
+        name: userData.name,
+        email: userData.email,
+        password: userData.password
+      };
+
+      // Add optional fields if provided
+      if (userData.phone && userData.phone.trim() !== '') {
+        requestData.phone = userData.phone;
+      }
+
+      if (userData.type && ['moderator', 'instructor', 'student'].includes(userData.type)) {
+        requestData.type = userData.type;
+      }
+
+      const response = await api.post('/register', requestData);
+
+      // Extract user data and token from response
+      const { data } = response;
+      let userData_response, token;
+
+      if (data && data.data) {
+        userData_response = data.data.user;
+        token = data.data.token;
+      } else if (data && data.token) {
+        userData_response = data.user;
+        token = data.token;
+      } else if (data && data.access_token) {
+        userData_response = data.user;
+        token = data.access_token;
+      }
+
+      // Store token and user data if available
+      if (token) {
+        setToken(token);
+        
+        if (userData_response) {
+          localStorage.setItem('userData', JSON.stringify(userData_response));
+        }
+      }
+
+      return data;
+    } catch (error) {
+      throw handleAuthError(error);
+    }
+  }
+
+  /**
+   * User logout
+   * @returns {Promise<Object>} Logout response
+   */
+  async logout() {
+    try {
+      // Call logout endpoint
+      await api.post('/logout');
+      
+      // Always clear local storage
+      removeToken();
+      localStorage.removeItem('userData');
+      
+      return { success: true, message: 'Logged out successfully' };
+    } catch (error) {
+      // Even if API call fails, clear local storage
+      removeToken();
+      localStorage.removeItem('userData');
+      
+      // Don't throw error for logout, just log it
+      console.warn('Logout API call failed:', error);
+      return { success: true, message: 'Logged out locally' };
+    }
+  }
+
+  /**
+   * Get current user data
+   * @returns {Promise<Object>} Current user data
+   */
+  async getCurrentUser() {
+    try {
+      const response = await api.get('/me');
       return response.data;
     } catch (error) {
-      throw handleAuthError(error, 'تغيير كلمة المرور');
+      if (error.response && error.response.status === 401) {
+        // Token is invalid or expired, clear it
+        removeToken();
+        localStorage.removeItem('userData');
+      }
+      throw handleAuthError(error);
     }
-  },
+  }
 
   /**
-   * التحقق مما إذا كان المستخدم مسجل الدخول
-   * @returns {boolean} - حالة تسجيل الدخول
+   * Verify email
+   * @param {Object} verificationData - Email verification data
+   * @returns {Promise<Object>} Verification response
    */
-  isLoggedIn: () => {
-    return !!localStorage.getItem('authToken');
-  },
+  async verifyEmail(verificationData = {}) {
+    try {
+      const response = await api.post('/email/verify', verificationData);
+      return response.data;
+    } catch (error) {
+      throw handleAuthError(error);
+    }
+  }
 
   /**
-   * الحصول على بيانات المستخدم المخزنة محليا
-   * @returns {Object|null} - بيانات المستخدم أو null
+   * Resend email verification
+   * @returns {Promise<Object>} Resend response
    */
-  getStoredUser: () => {
-    const userData = localStorage.getItem('userData');
-    return userData ? JSON.parse(userData) : null;
-  },
-};
+  async resendEmailVerification() {
+    try {
+      const response = await api.post('/email/resend');
+      return response.data;
+    } catch (error) {
+      throw handleAuthError(error);
+    }
+  }
 
-/**
- * معالجة أخطاء المصادقة وتنسيقها
- * @param {Error} error - خطأ الاستجابة
- * @param {string} operation - نوع العملية التي فشلت
- * @returns {Error} - خطأ منسق
- */
-const handleAuthError = (error, operation) => {
-  const errorMessage = error.response?.data?.message || `حدث خطأ أثناء ${operation}`;
-  const errorCode = error.response?.status || 'UNKNOWN';
-  
-  const formattedError = new Error(errorMessage);
-  formattedError.code = errorCode;
-  
-  return formattedError;
-};
+  /**
+   * Verify phone number
+   * @param {Object} verificationData - Phone verification data
+   * @returns {Promise<Object>} Verification response
+   */
+  async verifyPhone(verificationData = {}) {
+    try {
+      const response = await api.post('/phone/verify', verificationData);
+      return response.data;
+    } catch (error) {
+      throw handleAuthError(error);
+    }
+  }
 
-export default AuthService;
+  /**
+   * Resend phone verification
+   * @returns {Promise<Object>} Resend response
+   */
+  async resendPhoneVerification() {
+    try {
+      const response = await api.post('/phone/resend');
+      return response.data;
+    } catch (error) {
+      throw handleAuthError(error);
+    }
+  }
+
+  /**
+   * Check if user is authenticated
+   * @returns {boolean} Authentication status
+   */
+  isAuthenticated() {
+    const token = getToken();
+    return !!token;
+  }
+
+  /**
+   * Get stored user data
+   * @returns {Object|null} User data or null
+   */
+  getStoredUser() {
+    try {
+      const userData = localStorage.getItem('userData');
+      return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+      console.error('Error parsing stored user data:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update stored user data
+   * @param {Object} userData - Updated user data
+   */
+  updateStoredUser(userData) {
+    try {
+      localStorage.setItem('userData', JSON.stringify(userData));
+    } catch (error) {
+      console.error('Error storing user data:', error);
+    }
+  }
+
+  /**
+   * Clear all authentication data
+   */
+  clearAuthData() {
+    removeToken();
+    localStorage.removeItem('userData');
+  }
+}
+
+// Export single instance of the service
+export default new AuthService();

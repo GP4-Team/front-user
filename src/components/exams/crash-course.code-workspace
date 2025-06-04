@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../learn-mern/crash-course"
+		},
+		{
+			"path": "../../.."
+		},
+		{
+			"path": "../../../../../project-file-repository-frontend/gp-project-lms-user"
+		}
+	],
+	"settings": {}
+}

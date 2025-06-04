@@ -1,0 +1,297 @@
+/* styles/ExamStyles.css */
+
+/* Full white background for exam pages with educational pattern - UPDATED */
+.exam-page-background {
+  position: relative;
+  background-color: white;
+}
+
+/* Dark mode background */
+.dark-mode .exam-page-background {
+  background-color: #1F2937;
+}
+
+/* Background pattern with even more subtle visibility - further reduced opacity */
+.exam-page-background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160' fill='none'%3E%3Cpath d='M40 60L55 45L70 60L55 75L40 60Z' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Ccircle cx='95' cy='35' r='12' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M25 25L15 35M25 35L15 25' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M125 125L135 135M125 135L135 125' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Ccircle cx='35' cy='95' r='7' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Crect x='90' y='90' width='20' height='20' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M80 30L90 25L100 30L90 35L80 30Z' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M42 125L47 115L57 120L52 130L42 125Z' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Ccircle cx='130' cy='65' r='10' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M70 110C70 107.791 71.7909 106 74 106H86C88.2091 106 90 107.791 90 110V122C90 124.209 88.2091 126 86 126H74C71.7909 126 70 124.209 70 122V110Z' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M120 50L115 55L120 60L125 55L120 50Z' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M15 75H25M20 70V80' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M115 80L118 77M118 83L115 80M115 80L112 77M115 80L112 83' stroke='%236B3DD2' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  opacity: 0.15; 
+  z-index: 0;
+  animation: patternAnimation 180s linear infinite;
+}
+
+/* Dark mode pattern */
+.dark-mode .exam-page-background::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160' fill='none'%3E%3Cpath d='M40 60L55 45L70 60L55 75L40 60Z' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Ccircle cx='95' cy='35' r='12' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M25 25L15 35M25 35L15 25' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M125 125L135 135M125 135L135 125' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Ccircle cx='35' cy='95' r='7' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Crect x='90' y='90' width='20' height='20' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M80 30L90 25L100 30L90 35L80 30Z' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M42 125L47 115L57 120L52 130L42 125Z' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Ccircle cx='130' cy='65' r='10' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M70 110C70 107.791 71.7909 106 74 106H86C88.2091 106 90 107.791 90 110V122C90 124.209 88.2091 126 86 126H74C71.7909 126 70 124.209 70 122V110Z' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M120 50L115 55L120 60L125 55L120 50Z' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M15 75H25M20 70V80' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M115 80L118 77M118 83L115 80M115 80L112 77M115 80L112 83' stroke='%237C4DFF' stroke-width='1.5'/%3E%3C/svg%3E");
+  opacity: 0.10;
+}
+
+/* Animations for background elements */
+@keyframes patternAnimation {
+  0% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 80px 40px;
+  }
+  100% {
+    background-position: 0 80px;
+  }
+}
+
+/* Educational pattern background - used in other areas when needed */
+.bg-pattern-educational {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160' fill='none'%3E%3Cpath d='M40 60L55 45L70 60L55 75L40 60Z' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Ccircle cx='95' cy='35' r='12' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M25 25L15 35M25 35L15 25' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M125 125L135 135M125 135L135 125' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Ccircle cx='35' cy='95' r='7' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Crect x='90' y='90' width='20' height='20' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M80 30L90 25L100 30L90 35L80 30Z' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M42 125L47 115L57 120L52 130L42 125Z' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Ccircle cx='130' cy='65' r='10' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M70 110C70 107.791 71.7909 106 74 106H86C88.2091 106 90 107.791 90 110V122C90 124.209 88.2091 126 86 126H74C71.7909 126 70 124.209 70 122V110Z' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M120 50L115 55L120 60L125 55L120 50Z' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M15 75H25M20 70V80' stroke='%236B3DD2' stroke-width='1.5'/%3E%3Cpath d='M115 80L118 77M118 83L115 80M115 80L112 77M115 80L112 83' stroke='%236B3DD2' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  opacity: 0.15;
+  animation: patternAnimation 180s linear infinite;
+}
+
+.dark-mode .bg-pattern-educational {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160' fill='none'%3E%3Cpath d='M40 60L55 45L70 60L55 75L40 60Z' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Ccircle cx='95' cy='35' r='12' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M25 25L15 35M25 35L15 25' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M125 125L135 135M125 135L135 125' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Ccircle cx='35' cy='95' r='7' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Crect x='90' y='90' width='20' height='20' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M80 30L90 25L100 30L90 35L80 30Z' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M42 125L47 115L57 120L52 130L42 125Z' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Ccircle cx='130' cy='65' r='10' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M70 110C70 107.791 71.7909 106 74 106H86C88.2091 106 90 107.791 90 110V122C90 124.209 88.2091 126 86 126H74C71.7909 126 70 124.209 70 122V110Z' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M120 50L115 55L120 60L125 55L120 50Z' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M15 75H25M20 70V80' stroke='%237C4DFF' stroke-width='1.5'/%3E%3Cpath d='M115 80L118 77M118 83L115 80M115 80L112 77M115 80L112 83' stroke='%237C4DFF' stroke-width='1.5'/%3E%3C/svg%3E");
+  opacity: 0.10;
+}
+
+/* Styling for RTL (Arabic) mode */
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Headers alignment based on language */
+.rtl h1, .rtl h2, .rtl h3, .rtl .card-header, .rtl .section-title {
+  text-align: right;
+  margin-right: 0;
+  padding-right: 0;
+}
+
+.ltr h1, .ltr h2, .ltr h3, .ltr .card-header, .ltr .section-title {
+  text-align: left;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+/* Performance summary styling */
+.performance-summary {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  background-color: white;
+  position: relative;
+  z-index: 1;
+}
+
+/* Dark mode styling for components */
+.dark-mode .performance-summary,
+.dark-mode .search-bar,
+.dark-mode .card,
+.dark-mode .question-card, 
+.dark-mode .exam-info-card,
+.dark-mode .question-container {
+  background-color: #1F2937;
+  color: #F9FAFB;
+  border-color: #374151;
+}
+
+.stats-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #32CD32;
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+
+.stats-label {
+  font-size: 0.875rem;
+  color: #6B7280;
+  text-align: center;
+}
+
+.dark-mode .stats-label {
+  color: #D1D5DB;
+}
+
+/* Search bar styling */
+.search-bar {
+  background-color: white;
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.search-input {
+  flex-grow: 1;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+}
+
+.dark-mode .search-input {
+  border-color: #4B5563;
+  background-color: #374151;
+  color: #F9FAFB;
+}
+
+.filter-button {
+  background-color: #4338CA;
+  color: white;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Animation classes */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float 8s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Section titles alignment */
+.rtl .section-title {
+  padding-right: 0;
+  text-align: right;
+}
+
+.ltr .section-title {
+  padding-left: 0;
+  text-align: left;
+}
+
+/* Card styling */
+.card, .question-card, .exam-info-card {
+  background-color: white;
+  position: relative;
+  z-index: 1;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+/* Question container styling */
+.question-container {
+  background-color: white;
+  position: relative;
+  z-index: 1;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Improved heading styles */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.rtl h1, .rtl h2, .rtl h3, .rtl h4, .rtl h5, .rtl h6 {
+  text-align: right;
+}
+
+.ltr h1, .ltr h2, .ltr h3, .ltr h4, .ltr h5, .ltr h6 {
+  text-align: left;
+}
+
+/* Improved button styles */
+button, .btn {
+  transition: all 0.3s ease;
+}
+
+button:hover, .btn:hover {
+  transform: translateY(-2px);
+}
+
+button:active, .btn:active {
+  transform: translateY(0);
+}
+
+/* Fix RTL layout issues */
+.rtl .flex-row {
+  flex-direction: row-reverse;
+}
+
+.rtl .mr-2 {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+.rtl .ml-2 {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+/* Dark mode text colors */
+.dark-mode {
+  color: #F9FAFB;
+}
+
+.dark-mode .text-gray-700 {
+  color: #D1D5DB;
+}
+
+.dark-mode .text-gray-600 {
+  color: #E5E7EB;
+}
+
+.dark-mode .text-gray-500 {
+  color: #9CA3AF;
+}
+
+.dark-mode .border-gray-200 {
+  border-color: #374151;
+}
+
+.dark-mode input::placeholder {
+  color: #9CA3AF;
+}

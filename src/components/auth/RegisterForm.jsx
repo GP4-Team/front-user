@@ -1,542 +1,541 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { authService } from '../../services/api/index';
+import { initCsrfToken } from '../../services/api';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Eye, EyeOff, User, Lock, Mail, Loader, Check, X } from 'lucide-react';
-import gsap from 'gsap';
+import { useAuth } from '../../contexts/AuthContext';
 
+/**
+ * RegisterForm component for user registration
+ * Supports multi-language and dark mode
+ * Sends exact API fields as required: name, email, phone, password, type
+ * 
+ * @param {Object} props - Component props
+ * @param {string} props.returnTo - Path to redirect after successful registration
+ * @returns {JSX.Element} - Register form component
+ */
 const RegisterForm = ({ returnTo = '/dashboard' }) => {
-  const { register } = useAuth();
-  const { language } = useLanguage();
+  const navigate = useNavigate();
+  const { language, isRTL } = useLanguage();
   const { isDarkMode } = useTheme();
-  const isArabic = language === 'ar';
+  const { setUser, setIsAuthenticated } = useAuth();
   
-  // Form state
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [agreed, setAgreed] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  // Form state with exact API fields
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    password_confirmation: '',
+    type: 'student',
+  });
   
-  // Password strength and validation
-  const [passwordFocus, setPasswordFocus] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState(0);
-  const passwordRequirements = [
-    { id: 'length', label: isArabic ? '8 أحرف على الأقل' : 'At least 8 characters', met: false },
-    { id: 'uppercase', label: isArabic ? 'حرف كبير واحد' : 'One uppercase letter', met: false },
-    { id: 'lowercase', label: isArabic ? 'حرف صغير واحد' : 'One lowercase letter', met: false },
-    { id: 'number', label: isArabic ? 'رقم واحد' : 'One number', met: false },
-    { id: 'special', label: isArabic ? 'رمز خاص واحد' : 'One special character', met: false },
-  ];
+  // UI state
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState({ text: '', type: '' });
   
-  // Update password requirements whenever password changes
+  // Initialize CSRF token when component mounts
   useEffect(() => {
-    const updatedRequirements = [
-      { id: 'length', label: passwordRequirements[0].label, met: password.length >= 8 },
-      { id: 'uppercase', label: passwordRequirements[1].label, met: /[A-Z]/.test(password) },
-      { id: 'lowercase', label: passwordRequirements[2].label, met: /[a-z]/.test(password) },
-      { id: 'number', label: passwordRequirements[3].label, met: /[0-9]/.test(password) },
-      { id: 'special', label: passwordRequirements[4].label, met: /[^A-Za-z0-9]/.test(password) },
-    ];
-    
-    // Update requirements state
-    passwordRequirements.forEach((req, i) => {
-      req.met = updatedRequirements[i].met;
-    });
-    
-    // Calculate strength (0-5)
-    const meetsCount = updatedRequirements.filter(req => req.met).length;
-    setPasswordStrength(meetsCount);
-  }, [password]);
-  
-  // Refs for animation
-  const formRef = useRef(null);
-  const nameFieldsRef = useRef(null);
-  const emailFieldRef = useRef(null);
-  const passwordFieldRef = useRef(null);
-  const confirmPasswordFieldRef = useRef(null);
-  const submitBtnRef = useRef(null);
-  const errorRef = useRef(null);
-  
-  // Initialize animations
-  useEffect(() => {
-    const tl = gsap.timeline();
-    
-    tl.fromTo(
-      [nameFieldsRef.current, emailFieldRef.current, passwordFieldRef.current, confirmPasswordFieldRef.current],
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, stagger: 0.1, duration: 0.4, ease: 'power2.out', delay: 0.2 }
-    ).fromTo(
-      submitBtnRef.current,
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' },
-      '-=0.2'
-    );
-    
-    return () => {
-      tl.kill();
+    // Fetch CSRF token on mount
+    const fetchCsrfToken = async () => {
+      try {
+        console.log('Initializing CSRF token on form mount...');
+        await initCsrfToken();
+      } catch (error) {
+        console.error('Error initializing CSRF token on form mount:', error);
+      }
     };
+    
+    fetchCsrfToken();
   }, []);
   
-  // Error animation
-  useEffect(() => {
-    if (error && errorRef.current) {
-      gsap.fromTo(
-        errorRef.current,
-        { opacity: 0, y: -20 },
-        { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }
-      );
+  /**
+   * Handle input changes
+   * 
+   * @param {Event} e - Input change event
+   */
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: null
+      }));
     }
-  }, [error]);
+  };
   
-  // Handle form submission
+  /**
+   * Handle form submission to API
+   * 
+   * @param {Event} e - Form submit event
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage({ text: '', type: '' });
     
-    // Validate form
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
-      setError(isArabic ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
+    // Client-side validation
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
     
-    if (password !== confirmPassword) {
-      setError(isArabic ? 'كلمات المرور غير متطابقة' : 'Passwords do not match');
-      return;
+    // Create API payload with exact field names required by the API
+    const apiData = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      type: formData.type
+    };
+    
+    // Only include phone if provided and not empty
+    if (formData.phone && formData.phone.trim() !== '') {
+      apiData.phone = formData.phone;
     }
     
-    if (passwordStrength < 3) {
-      setError(isArabic ? 'كلمة المرور ضعيفة جدًا' : 'Password is too weak');
-      return;
-    }
-    
-    if (!agreed) {
-      setError(isArabic ? 'يرجى الموافقة على الشروط والأحكام' : 'Please agree to terms and conditions');
-      return;
-    }
+    setLoading(true);
     
     try {
-      setIsLoading(true);
-      setError('');
+      // Get fresh CSRF token before registration
+      console.log('Getting fresh CSRF token before registration...');
+      await initCsrfToken();
       
-      // Simulate button animation
-      gsap.to(submitBtnRef.current, {
-        scale: 0.95,
-        duration: 0.1,
-        yoyo: true,
-        repeat: 1
-      });
+      // Log the data being sent for debugging
+      console.log('Sending registration data:', apiData);
       
-      // Call register API
-      await register(
-        {
-          firstName,
-          lastName,
-          email,
-          password
-        },
-        true,  // Login after registration
-        returnTo
-      );
+      // Call the registration API
+      const response = await authService.register(apiData);
       
-      // Registration successful
-      gsap.to(formRef.current, {
-        y: -20,
-        opacity: 0,
-        duration: 0.3,
-        ease: 'power2.in'
-      });
-    } catch (err) {
-      console.error('Registration error:', err);
-      setError(isArabic 
-        ? 'فشل التسجيل: قد يكون البريد الإلكتروني مستخدمًا بالفعل' 
-        : 'Registration failed: Email might be already in use');
+      console.log('Registration response:', response);
+      
+      // Handle success
+      if (response && response.token) {
+        // If user data is also returned, update auth context
+        if (response.user) {
+          setUser(response.user);
+          setIsAuthenticated(true);
+        }
         
-      // Shake animation for error
-      gsap.to(formRef.current, {
-        x: 10,
-        duration: 0.1,
-        repeat: 3,
-        yoyo: true,
-      });
+        // Handle success
+        setMessage({
+          text: response.message || (language === 'ar' ? 'تم التسجيل بنجاح!' : 'Registration successful!'),
+          type: 'success'
+        });
+        
+        // Redirect after short delay
+        setTimeout(() => {
+          navigate(returnTo);
+        }, 1500);
+      } else {
+        // Handle success without token (e.g., email verification required)
+        setMessage({
+          text: response.message || (language === 'ar' ? 'تم التسجيل بنجاح! يرجى تأكيد بريدك الإلكتروني.' : 'Registration successful! Please verify your email.'),
+          type: 'success'
+        });
+        
+        // Redirect to login after short delay
+        setTimeout(() => {
+          navigate('/auth?mode=login');
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      
+      // Handle API errors
+      if (error.errors) {
+        // Format validation errors from backend
+        setErrors(error.errors);
+      } else if (error.statusCode === 500) {
+        // Special handling for server errors
+        setMessage({
+          text: language === 'ar' ? 
+            'خطأ في إعدادات الخادم. يرجى التواصل مع الدعم الفني.' : 
+            'Server configuration error. Please contact support.',
+          type: 'error'
+        });
+      } else if (error.csrf) {
+        // Special handling for CSRF errors
+        console.log('CSRF error detected, retrying with new token...');
+        setMessage({
+          text: language === 'ar' ? 'حدث خطأ في المصادقة. جاري إعادة المحاولة...' : 'Authentication error. Retrying...',
+          type: 'error'
+        });
+        
+        // Wait a moment then try again
+        setTimeout(() => {
+          handleSubmit(e);
+        }, 1000);
+        return;
+      } else {
+        // General error message
+        setMessage({
+          text: error.message || (language === 'ar' ? 'فشل التسجيل. يرجى المحاولة مرة أخرى.' : 'Registration failed. Please try again.'),
+          type: 'error'
+        });
+      }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
   
-  // Translations
-  const translations = {
-    firstName: isArabic ? 'الاسم الأول' : 'First Name',
-    lastName: isArabic ? 'اسم العائلة' : 'Last Name',
-    email: isArabic ? 'البريد الإلكتروني' : 'Email',
-    password: isArabic ? 'كلمة المرور' : 'Password',
-    confirmPassword: isArabic ? 'تأكيد كلمة المرور' : 'Confirm Password',
-    agree: isArabic ? 'أوافق على' : 'I agree to',
-    termsConditions: isArabic ? 'الشروط والأحكام' : 'Terms and Conditions',
-    register: isArabic ? 'إنشاء حساب' : 'Create Account',
-    orContinueWith: isArabic ? 'أو متابعة باستخدام' : 'Or continue with',
-    google: isArabic ? 'جوجل' : 'Google',
-    firstNamePlaceholder: isArabic ? 'أدخل اسمك الأول' : 'Enter your first name',
-    lastNamePlaceholder: isArabic ? 'أدخل اسم عائلتك' : 'Enter your last name',
-    emailPlaceholder: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email',
-    passwordPlaceholder: isArabic ? 'أدخل كلمة المرور' : 'Enter your password',
-    confirmPasswordPlaceholder: isArabic ? 'أدخل كلمة المرور مرة أخرى' : 'Enter your password again',
-    passwordStrength: isArabic ? 'قوة كلمة المرور' : 'Password strength',
-    weak: isArabic ? 'ضعيفة' : 'Weak',
-    medium: isArabic ? 'متوسطة' : 'Medium',
-    strong: isArabic ? 'قوية' : 'Strong',
-    veryStrong: isArabic ? 'قوية جدًا' : 'Very strong',
+  /**
+   * Validate form data
+   * 
+   * @returns {Object} Validation errors if any
+   */
+  const validateForm = () => {
+    const errors = {};
+    
+    // Name validation
+    if (!formData.name.trim()) {
+      errors.name = language === 'ar' ? 'الاسم مطلوب' : 'Full name is required';
+    } else if (formData.name.length > 255) {
+      errors.name = language === 'ar' ? 'يجب أن لا يتجاوز الاسم 255 حرف' : 'Name must be less than 255 characters';
+    }
+    
+    // Email validation
+    if (!formData.email.trim()) {
+      errors.email = language === 'ar' ? 'البريد الإلكتروني مطلوب' : 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = language === 'ar' ? 'يرجى إدخال بريد إلكتروني صالح' : 'Please enter a valid email address';
+    } else if (formData.email.length > 255) {
+      errors.email = language === 'ar' ? 'يجب أن لا يتجاوز البريد الإلكتروني 255 حرف' : 'Email must be less than 255 characters';
+    }
+    
+    // Password validation
+    if (!formData.password) {
+      errors.password = language === 'ar' ? 'كلمة المرور مطلوبة' : 'Password is required';
+    } else if (formData.password.length < 8) {
+      errors.password = language === 'ar' ? 'يجب أن تكون كلمة المرور 8 أحرف على الأقل' : 'Password must be at least 8 characters';
+    }
+    
+    // Password confirmation
+    if (formData.password !== formData.password_confirmation) {
+      errors.password_confirmation = language === 'ar' ? 'كلمات المرور غير متطابقة' : 'Passwords do not match';
+    }
+    
+    // Phone validation (optional)
+    if (formData.phone && formData.phone.trim() !== '') {
+      if (!/^[0-9]+$/.test(formData.phone)) {
+        errors.phone = language === 'ar' ? 'يجب أن يحتوي رقم الهاتف على أرقام فقط' : 'Phone number must contain only numbers';
+      }
+    }
+    
+    // Type validation
+    if (!['student', 'instructor', 'moderator'].includes(formData.type)) {
+      errors.type = language === 'ar' ? 'نوع المستخدم غير صالح' : 'Invalid user type';
+    }
+    
+    return errors;
   };
   
-  // Password strength indicator text and color
-  const getStrengthText = () => {
-    if (passwordStrength <= 1) return { text: translations.weak, color: 'text-red-500' };
-    if (passwordStrength <= 3) return { text: translations.medium, color: 'text-yellow-500' };
-    if (passwordStrength === 4) return { text: translations.strong, color: 'text-green-500' };
-    return { text: translations.veryStrong, color: 'text-emerald-500' };
+  // Function to retry registration on CSRF error
+  const retryRegistration = async () => {
+    try {
+      setLoading(true);
+      setMessage({ text: language === 'ar' ? 'جاري إعادة المحاولة...' : 'Retrying...', type: 'info' });
+      
+      // Get fresh CSRF token
+      await initCsrfToken();
+      
+      // Wait a moment for CSRF token to be set in cookies
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Create API payload again
+      const apiData = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        type: formData.type
+      };
+      
+      if (formData.phone && formData.phone.trim() !== '') {
+        apiData.phone = formData.phone;
+      }
+      
+      // Retry registration
+      const response = await authService.register(apiData);
+      
+      // Handle success
+      if (response.data && response.data.token) {
+        if (response.data.user) {
+          setUser(response.data.user);
+          setIsAuthenticated(true);
+        }
+        
+        setMessage({
+          text: response.message || (language === 'ar' ? 'تم التسجيل بنجاح!' : 'Registration successful!'),
+          type: 'success'
+        });
+        
+        setTimeout(() => {
+          navigate(returnTo);
+        }, 1500);
+      } else {
+        setMessage({
+          text: response.message || (language === 'ar' ? 'تم التسجيل بنجاح! يرجى تأكيد بريدك الإلكتروني.' : 'Registration successful! Please verify your email.'),
+          type: 'success'
+        });
+        
+        setTimeout(() => {
+          navigate('/auth?mode=login');
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Retry registration error:', error);
+      setMessage({
+        text: error.message || (language === 'ar' ? 'فشل التسجيل مرة أخرى. يرجى المحاولة لاحقاً.' : 'Registration failed again. Please try later.'),
+        type: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Labels and text based on selected language
+  const labels = {
+    fullName: language === 'ar' ? 'الاسم الكامل' : 'Full Name',
+    email: language === 'ar' ? 'البريد الإلكتروني' : 'Email',
+    phone: language === 'ar' ? 'رقم الهاتف' : 'Phone Number',
+    password: language === 'ar' ? 'كلمة المرور' : 'Password',
+    confirmPassword: language === 'ar' ? 'تأكيد كلمة المرور' : 'Confirm Password',
+    accountType: language === 'ar' ? 'نوع الحساب' : 'Account Type',
+    passwordHint: language === 'ar' ? 'يجب أن تكون كلمة المرور 8 أحرف على الأقل' : 'Password must be at least 8 characters long',
+    student: language === 'ar' ? 'طالب' : 'Student',
+    instructor: language === 'ar' ? 'معلم' : 'Instructor',
+    moderator: language === 'ar' ? 'مشرف' : 'Moderator',
+    createAccount: language === 'ar' ? 'إنشاء حساب' : 'Create Account',
+    registering: language === 'ar' ? 'جاري التسجيل...' : 'Registering...',
+    haveAccount: language === 'ar' ? 'لديك حساب بالفعل؟' : 'Already have an account?',
+    signIn: language === 'ar' ? 'تسجيل الدخول' : 'Sign in',
+    required: language === 'ar' ? 'مطلوب' : 'required',
+    retryRegistration: language === 'ar' ? 'إعادة المحاولة' : 'Retry Registration',
+    csrfError: language === 'ar' ? 'حدث خطأ في المصادقة. يرجى المحاولة مرة أخرى.' : 'Authentication error. Please try again.'
   };
   
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="space-y-5">
-      {/* Error message */}
-      {error && (
+    <div className={`p-6 rounded-lg w-full ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      {message.text && (
         <div 
-          ref={errorRef}
-          className={`p-3 ${isDarkMode ? 'bg-red-900/20 text-red-400' : 'bg-red-50 text-red-600'} rounded-md text-sm`}
+          className={`mb-6 p-3 rounded-md ${
+            message.type === 'success' 
+              ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' 
+              : message.type === 'info'
+                ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100'
+                : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
+          }`}
         >
-          {error}
+          {message.text}
+          
+          {/* Retry button for CSRF errors */}
+          {message.type === 'error' && message.text.includes('CSRF') && (
+            <button
+              onClick={retryRegistration}
+              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors block w-full"
+            >
+              {labels.retryRegistration}
+            </button>
+          )}
         </div>
       )}
       
-      {/* Name Fields */}
-      <div ref={nameFieldsRef} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* First Name */}
-        <div className="space-y-2">
-          <label 
-            htmlFor="firstName" 
-            className={`block text-sm font-medium ${isDarkMode ? 'text-neutral-300' : 'text-neutral-700'}`}
-          >
-            {translations.firstName}
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+        {/* Full Name Field */}
+        <div>
+          <label htmlFor="name" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-1`}>
+            {labels.fullName} <span className="text-red-500">*</span>
           </label>
           <input
-            id="firstName"
-            name="firstName"
+            id="name"
+            name="name"
             type="text"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
             required
-            placeholder={translations.firstNamePlaceholder}
-            className={`block w-full py-3 px-4 ${
-              isDarkMode 
-                ? 'bg-neutral-800 border-neutral-700 text-white placeholder-neutral-500' 
-                : 'bg-white border-neutral-300 text-neutral-900 placeholder-neutral-400'
-            } border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-base`}
+            value={formData.name}
+            onChange={handleChange}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+              errors.name 
+                ? 'border-red-300 dark:border-red-500' 
+                : isDarkMode 
+                  ? 'border-gray-600 bg-gray-700 text-white' 
+                  : 'border-gray-300 bg-white text-gray-900'
+            }`}
+            placeholder={language === 'ar' ? 'أدخل اسمك الكامل' : 'Enter your full name'}
           />
+          {errors.name && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name}</p>
+          )}
         </div>
         
-        {/* Last Name */}
-        <div className="space-y-2">
-          <label 
-            htmlFor="lastName" 
-            className={`block text-sm font-medium ${isDarkMode ? 'text-neutral-300' : 'text-neutral-700'}`}
-          >
-            {translations.lastName}
+        {/* Email Field */}
+        <div>
+          <label htmlFor="email" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-1`}>
+            {labels.email} <span className="text-red-500">*</span>
           </label>
           <input
-            id="lastName"
-            name="lastName"
-            type="text"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            required
-            placeholder={translations.lastNamePlaceholder}
-            className={`block w-full py-3 px-4 ${
-              isDarkMode 
-                ? 'bg-neutral-800 border-neutral-700 text-white placeholder-neutral-500' 
-                : 'bg-white border-neutral-300 text-neutral-900 placeholder-neutral-400'
-            } border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-base`}
-          />
-        </div>
-      </div>
-      
-      {/* Email input */}
-      <div ref={emailFieldRef} className="space-y-2">
-        <label 
-          htmlFor="registerEmail" 
-          className={`block text-sm font-medium ${isDarkMode ? 'text-neutral-300' : 'text-neutral-700'}`}
-        >
-          {translations.email}
-        </label>
-        <div className={`relative rounded-md shadow-sm`}>
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Mail size={16} className={`${isDarkMode ? 'text-neutral-500' : 'text-neutral-400'}`} />
-          </div>
-          <input
-            id="registerEmail"
+            id="email"
             name="email"
             type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             required
-            placeholder={translations.emailPlaceholder}
-            className={`block w-full pl-10 py-3 ${
-              isDarkMode 
-                ? 'bg-neutral-800 border-neutral-700 text-white placeholder-neutral-500' 
-                : 'bg-white border-neutral-300 text-neutral-900 placeholder-neutral-400'
-            } border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-base`}
+            value={formData.email}
+            onChange={handleChange}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+              errors.email 
+                ? 'border-red-300 dark:border-red-500' 
+                : isDarkMode 
+                  ? 'border-gray-600 bg-gray-700 text-white' 
+                  : 'border-gray-300 bg-white text-gray-900'
+            }`}
+            placeholder="example@example.com"
+            dir="ltr"
           />
-        </div>
-      </div>
-      
-      {/* Password input */}
-      <div ref={passwordFieldRef} className="space-y-2">
-        <label 
-          htmlFor="registerPassword" 
-          className={`block text-sm font-medium ${isDarkMode ? 'text-neutral-300' : 'text-neutral-700'}`}
-        >
-          {translations.password}
-        </label>
-        <div className={`relative rounded-md shadow-sm`}>
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Lock size={16} className={`${isDarkMode ? 'text-neutral-500' : 'text-neutral-400'}`} />
-          </div>
-          <input
-            id="registerPassword"
-            name="password"
-            type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onFocus={() => setPasswordFocus(true)}
-            onBlur={() => setPasswordFocus(false)}
-            autoComplete="new-password"
-            required
-            placeholder={translations.passwordPlaceholder}
-            className={`block w-full pl-10 pr-10 py-3 ${
-              isDarkMode 
-                ? 'bg-neutral-800 border-neutral-700 text-white placeholder-neutral-500' 
-                : 'bg-white border-neutral-300 text-neutral-900 placeholder-neutral-400'
-            } border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-base`}
-          />
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-            <button
-              type="button"
-              className="text-gray-400 hover:text-gray-500 focus:outline-none"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? (
-                <EyeOff size={16} className="text-gray-500" />
-              ) : (
-                <Eye size={16} className="text-gray-500" />
-              )}
-            </button>
-          </div>
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email}</p>
+          )}
         </div>
         
-        {/* Password strength indicator */}
-        {password && (
-          <div>
-            <div className="flex items-center justify-between mt-1 mb-1">
-              <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
-                <div 
-                  className={`h-1.5 rounded-full ${
-                    passwordStrength <= 1 ? 'bg-red-500' : 
-                    passwordStrength <= 3 ? 'bg-yellow-500' : 
-                    passwordStrength === 4 ? 'bg-green-500' :
-                    'bg-emerald-500'
-                  }`} 
-                  style={{ width: `${(passwordStrength / 5) * 100}%` }}
-                ></div>
-              </div>
-              <span className={`ml-2 text-xs ${getStrengthText().color}`}>
-                {getStrengthText().text}
-              </span>
-            </div>
-            
-            {/* Password requirements */}
-            {passwordFocus && (
-              <div className={`mt-2 text-xs ${isDarkMode ? 'bg-neutral-800 border-neutral-700' : 'bg-neutral-50 border-neutral-200'} p-2 rounded-md border`}>
-                <p className={`mb-1 font-medium ${isDarkMode ? 'text-neutral-200' : 'text-neutral-700'}`}>
-                  {translations.passwordStrength}:
-                </p>
-                <ul className="space-y-1">
-                  {passwordRequirements.map((req) => (
-                    <li key={req.id} className="flex items-center">
-                      {req.met ? (
-                        <Check size={12} className="text-green-500 mr-1" />
-                      ) : (
-                        <X size={12} className="text-red-500 mr-1" />
-                      )}
-                      <span className={req.met ? (isDarkMode ? 'text-green-400' : 'text-green-600') : (isDarkMode ? 'text-neutral-400' : 'text-neutral-600')}>
-                        {req.label}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-      
-      {/* Confirm Password input */}
-      <div ref={confirmPasswordFieldRef} className="space-y-2">
-        <label 
-          htmlFor="confirmPassword" 
-          className={`block text-sm font-medium ${isDarkMode ? 'text-neutral-300' : 'text-neutral-700'}`}
-        >
-          {translations.confirmPassword}
-        </label>
-        <div className={`relative rounded-md shadow-sm`}>
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Lock size={16} className={`${isDarkMode ? 'text-neutral-500' : 'text-neutral-400'}`} />
-          </div>
+        {/* Phone Field (Optional) */}
+        <div>
+          <label htmlFor="phone" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-1`}>
+            {labels.phone}
+          </label>
           <input
-            id="confirmPassword"
-            name="confirmPassword"
-            type={showConfirmPassword ? 'text' : 'password'}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            autoComplete="new-password"
-            required
-            placeholder={translations.confirmPasswordPlaceholder}
-            className={`block w-full pl-10 pr-10 py-3 ${
-              isDarkMode 
-                ? 'bg-neutral-800 border-neutral-700 text-white placeholder-neutral-500' 
-                : 'bg-white border-neutral-300 text-neutral-900 placeholder-neutral-400'
-            } border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-base ${
-              confirmPassword && password !== confirmPassword ? 'border-red-500 ring-red-500' : ''
+            id="phone"
+            name="phone"
+            type="tel"
+            value={formData.phone}
+            onChange={handleChange}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+              errors.phone 
+                ? 'border-red-300 dark:border-red-500' 
+                : isDarkMode 
+                  ? 'border-gray-600 bg-gray-700 text-white' 
+                  : 'border-gray-300 bg-white text-gray-900'
             }`}
+            placeholder="01xxxxxxxxx"
+            dir="ltr"
           />
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-            <button
-              type="button"
-              className="text-gray-400 hover:text-gray-500 focus:outline-none"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            >
-              {showConfirmPassword ? (
-                <EyeOff size={16} className="text-gray-500" />
-              ) : (
-                <Eye size={16} className="text-gray-500" />
-              )}
-            </button>
-          </div>
-        </div>
-        {/* Password match indicator */}
-        {confirmPassword && (
-          <div className="mt-1 text-xs flex items-center">
-            {password === confirmPassword ? (
-              <>
-                <Check size={12} className="text-green-500 mr-1" />
-                <span className={isDarkMode ? 'text-green-400' : 'text-green-600'}>
-                  {isArabic ? 'كلمات المرور متطابقة' : 'Passwords match'}
-                </span>
-              </>
-            ) : (
-              <>
-                <X size={12} className="text-red-500 mr-1" />
-                <span className={isDarkMode ? 'text-red-400' : 'text-red-600'}>
-                  {isArabic ? 'كلمات المرور غير متطابقة' : 'Passwords do not match'}
-                </span>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Terms Checkbox */}
-      <div className="flex items-center">
-        <input
-          id="terms"
-          name="terms"
-          type="checkbox"
-          checked={agreed}
-          onChange={(e) => setAgreed(e.target.checked)}
-          className={`h-4 w-4 rounded ${isDarkMode ? 'bg-neutral-800 border-neutral-600' : 'bg-white border-neutral-300'} focus:ring-primary-base text-primary-base`}
-        />
-        <label 
-          htmlFor="terms" 
-          className={`ml-2 block text-sm ${isDarkMode ? 'text-neutral-400' : 'text-neutral-600'}`}
-        >
-          {translations.agree}{' '}
-          <a 
-            href="#" 
-            className={`font-medium underline ${isDarkMode ? 'text-primary-light hover:text-primary-base' : 'text-primary-base hover:text-primary-dark'}`}
-          >
-            {translations.termsConditions}
-          </a>
-        </label>
-      </div>
-
-      {/* Submit button */}
-      <div ref={submitBtnRef}>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className={`w-full py-3 px-4 flex justify-center items-center rounded-md shadow-sm text-sm font-medium text-white bg-primary-base hover:bg-primary-dark focus:outline-none transition-all duration-300 transform active:scale-95 ${
-            isLoading ? 'opacity-80 cursor-not-allowed' : ''
-          }`}
-        >
-          {isLoading ? (
-            <Loader size={18} className="animate-spin" />
-          ) : (
-            translations.register
+          {errors.phone && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.phone}</p>
           )}
-        </button>
-      </div>
-
-      {/* Social registration */}
-      <div className="mt-6">
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className={`w-full border-t ${isDarkMode ? 'border-neutral-700' : 'border-neutral-300'}`}></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className={`px-2 ${isDarkMode ? 'bg-background-dark text-neutral-400' : 'bg-white text-neutral-500'}`}>
-              {translations.orContinueWith}
-            </span>
-          </div>
         </div>
-
-        <div className="mt-6">
-          <button
-            type="button"
-            className={`w-full flex justify-center items-center py-3 px-4 border ${
-              isDarkMode 
-                ? 'border-neutral-700 bg-neutral-800 hover:bg-neutral-700' 
-                : 'border-neutral-300 bg-white hover:bg-neutral-50'
-            } rounded-md shadow-sm text-sm font-medium transition-colors`}
+        
+        {/* Password Field */}
+        <div>
+          <label htmlFor="password" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-1`}>
+            {labels.password} <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            required
+            value={formData.password}
+            onChange={handleChange}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+              errors.password 
+                ? 'border-red-300 dark:border-red-500' 
+                : isDarkMode 
+                  ? 'border-gray-600 bg-gray-700 text-white' 
+                  : 'border-gray-300 bg-white text-gray-900'
+            }`}
+            placeholder="********"
+            dir="ltr"
+          />
+          {errors.password && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.password}</p>
+          )}
+          <p className={`mt-1 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            {labels.passwordHint}
+          </p>
+        </div>
+        
+        {/* Password Confirmation Field */}
+        <div>
+          <label htmlFor="password_confirmation" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-1`}>
+            {labels.confirmPassword} <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="password_confirmation"
+            name="password_confirmation"
+            type="password"
+            required
+            value={formData.password_confirmation}
+            onChange={handleChange}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+              errors.password_confirmation 
+                ? 'border-red-300 dark:border-red-500' 
+                : isDarkMode 
+                  ? 'border-gray-600 bg-gray-700 text-white' 
+                  : 'border-gray-300 bg-white text-gray-900'
+            }`}
+            placeholder="********"
+            dir="ltr"
+          />
+          {errors.password_confirmation && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.password_confirmation}</p>
+          )}
+        </div>
+        
+        {/* User Type Field */}
+        <div>
+          <label htmlFor="type" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-1`}>
+            {labels.accountType}
+          </label>
+          <select
+            id="type"
+            name="type"
+            value={formData.type}
+            onChange={handleChange}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+              errors.type 
+                ? 'border-red-300 dark:border-red-500' 
+                : isDarkMode 
+                  ? 'border-gray-600 bg-gray-700 text-white' 
+                  : 'border-gray-300 bg-white text-gray-900'
+            }`}
           >
-            <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
-              <path
-                d="M12.545 10.239v3.821h5.445c-0.712 2.315-2.647 3.972-5.445 3.972-3.332 0-6.033-2.701-6.033-6.032s2.701-6.032 6.033-6.032c1.498 0 2.866 0.549 3.921 1.453l2.814-2.814c-1.871-1.752-4.370-2.825-7.035-2.825-5.696 0-10.318 4.622-10.318 10.318s4.622 10.318 10.318 10.318c8.834 0 10.761-8.104 9.788-13.134z"
-                fill="#4285F4"
-              />
-              <path
-                d="M12.545 10.239v3.821h5.445c-0.712 2.315-2.647 3.972-5.445 3.972-3.332 0-6.033-2.701-6.033-6.032s2.701-6.032 6.033-6.032c1.498 0 2.866 0.549 3.921 1.453l2.814-2.814c-1.871-1.752-4.370-2.825-7.035-2.825-5.696 0-10.318 4.622-10.318 10.318s4.622 10.318 10.318 10.318c8.834 0 10.761-8.104 9.788-13.134z"
-                fill="#34A853"
-                clipPath="polygon(0 0, 24 0, 24 24, 0 24)"
-              />
-              <path
-                d="M12.545 10.239v3.821h5.445c-0.712 2.315-2.647 3.972-5.445 3.972-3.332 0-6.033-2.701-6.033-6.032s2.701-6.032 6.033-6.032c1.498 0 2.866 0.549 3.921 1.453l2.814-2.814c-1.871-1.752-4.370-2.825-7.035-2.825-5.696 0-10.318 4.622-10.318 10.318s4.622 10.318 10.318 10.318c8.834 0 10.761-8.104 9.788-13.134z"
-                fill="#FBBC05"
-                clipPath="polygon(0 0, 24 0, 24 24, 0 24)"
-              />
-              <path
-                d="M12.545 10.239v3.821h5.445c-0.712 2.315-2.647 3.972-5.445 3.972-3.332 0-6.033-2.701-6.033-6.032s2.701-6.032 6.033-6.032c1.498 0 2.866 0.549 3.921 1.453l2.814-2.814c-1.871-1.752-4.370-2.825-7.035-2.825-5.696 0-10.318 4.622-10.318 10.318s4.622 10.318 10.318 10.318c8.834 0 10.761-8.104 9.788-13.134z"
-                fill="#EA4335"
-                clipPath="polygon(0 0, 24 0, 24 24, 0 24)"
-              />
-            </svg>
-            {translations.google}
+            <option value="student">{labels.student}</option>
+            <option value="instructor">{labels.instructor}</option>
+            <option value="moderator">{labels.moderator}</option>
+          </select>
+          {errors.type && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.type}</p>
+          )}
+        </div>
+        
+        {/* Submit Button */}
+        <div>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+              loading ? 'opacity-75 cursor-not-allowed' : ''
+            }`}
+          >
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {labels.registering}
+              </div>
+            ) : (
+              labels.createAccount
+            )}
           </button>
         </div>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 };
 

@@ -1,0 +1,145 @@
+// src/services/homeApiService.js
+import { materialsService, coursesService, examsService } from './api/index';
+import api from './api';
+
+/**
+ * خدمة صفحة الهوم للتعامل مع APIs الحقيقية
+ */
+const HomeApiService = {
+  /**
+   * الحصول على الدورات المميزة
+   * @returns {Promise} - Promise مع قائمة الدورات المميزة
+   */
+  getFeaturedCourses: async () => {
+    try {
+      return await coursesService.getFeaturedCourses();
+    } catch (error) {
+      console.error('Error fetching featured courses:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * الحصول على فئات الدورات
+   * @returns {Promise} - Promise مع قائمة الفئات
+   */
+  getCategories: async () => {
+    try {
+      return await coursesService.getCategories();
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * الحصول على مستويات التعليم
+   * @returns {Promise} - Promise مع قائمة المستويات
+   */
+  getLevels: async () => {
+    try {
+      return await coursesService.getEducationLevels();
+    } catch (error) {
+      console.error('Error fetching education levels:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * الحصول على جميع الدورات (مع إمكانية التصفية)
+   * @param {Object} params - معلمات التصفية
+   * @returns {Promise} - Promise مع قائمة الدورات
+   */
+  getAllCourses: async (params = {}) => {
+    try {
+      return await coursesService.getAllCourses(params);
+    } catch (error) {
+      console.error('Error fetching all courses:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * البحث عن الدورات
+   * @param {string} query - نص البحث
+   * @returns {Promise} - Promise مع نتائج البحث
+   */
+  searchCourses: async (query) => {
+    try {
+      return await coursesService.searchCourses(query);
+    } catch (error) {
+      console.error('Error searching courses:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * الحصول على الدورات حسب المستوى
+   * @param {number} levelId - معرف المستوى
+   * @returns {Promise} - Promise مع قائمة الدورات
+   */
+  getCoursesByLevel: async (levelId) => {
+    try {
+      return await coursesService.getCoursesByLevel(levelId);
+    } catch (error) {
+      console.error('Error fetching courses by level:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * الحصول على محتوى الدورة
+   * @param {number} courseId - معرف الدورة
+   * @returns {Promise} - Promise مع محتوى الدورة
+   */
+  getCourseContent: async (courseId) => {
+    try {
+      return await coursesService.getCourseContent(courseId);
+    } catch (error) {
+      console.error('Error fetching course content:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * الحصول على تفاصيل مادة تعليمية محددة
+   * @param {number} materialId - معرف المادة التعليمية
+   * @returns {Promise} - Promise مع تفاصيل المادة
+   */
+  getMaterial: async (materialId) => {
+    try {
+      return await materialsService.getMaterialById(materialId);
+    } catch (error) {
+      console.error('Error fetching material:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * الحصول على الاختبارات المميزة
+   * @returns {Promise} - Promise مع قائمة الاختبارات
+   */
+  getFeaturedExams: async () => {
+    try {
+      return await examsService.getFeaturedExams();
+    } catch (error) {
+      console.error('Error fetching featured exams:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * الحصول على الدورات المسجل فيها المستخدم
+   * @returns {Promise} - Promise مع قائمة الدورات
+   */
+  getEnrolledCourses: async () => {
+    try {
+      return await coursesService.getEnrolledCourses();
+    } catch (error) {
+      console.error('Error fetching enrolled courses:', error);
+      throw error;
+    }
+  }
+};
+
+export default HomeApiService;

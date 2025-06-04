@@ -1,13 +1,10 @@
 import React, { Component } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 
-// This wrapper is needed to use hooks with class components
-function ErrorBoundaryWrapper(props) {
-  const navigate = useNavigate();
-  return <ErrorBoundaryClass {...props} navigate={navigate} />;
-}
-
-class ErrorBoundaryClass extends Component {
+/**
+ * Error Boundary component that catches JavaScript errors anywhere in the child component tree
+ * and displays a fallback UI instead of crashing the whole app
+ */
+class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
     this.state = { 
@@ -70,11 +67,7 @@ class ErrorBoundaryClass extends Component {
               <button
                 onClick={() => {
                   this.setState({ hasError: false, error: null, errorInfo: null });
-                  if (this.props.navigate) {
-                    this.props.navigate('/');
-                  } else {
-                    window.location.href = '/';
-                  }
+                  window.location.href = '/';
                 }}
                 className="inline-flex items-center justify-center px-5 py-2 border border-transparent text-base font-medium rounded-md text-primary-base bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-primary-light dark:hover:bg-neutral-700 mx-2"
               >
@@ -103,4 +96,4 @@ class ErrorBoundaryClass extends Component {
   }
 }
 
-export default ErrorBoundaryWrapper;
+export default ErrorBoundary;

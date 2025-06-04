@@ -26,10 +26,21 @@ const FeaturedCoursesSection = ({ courses, translations }) => {
   // For debugging
   useEffect(() => {
     if (DEBUG) {
+      console.log('📋 FeaturedCoursesSection Props:');
+      console.log('- courses:', courses);
+      console.log('- courses type:', typeof courses);
+      console.log('- courses isArray:', Array.isArray(courses));
+      console.log('- courses length:', courses?.length);
+      console.log('- translations:', translations);
+      
       if (courses && courses.length > 0) {
-        console.log('FeaturedCoursesSection received courses:', courses);
+        console.log('✅ FeaturedCoursesSection received courses:', courses);
+        courses.forEach((course, index) => {
+          console.log(`Course ${index}:`, course);
+        });
       } else {
-        console.warn('FeaturedCoursesSection received empty courses array');
+        console.warn('⚠️ FeaturedCoursesSection received empty or invalid courses');
+        console.log('courses value:', courses);
       }
     }
   }, [courses]);
@@ -166,8 +177,68 @@ const FeaturedCoursesSection = ({ courses, translations }) => {
 
   // Check if courses data is valid
   if (!courses || !Array.isArray(courses) || courses.length === 0) {
-    if (DEBUG) console.warn('FeaturedCoursesSection: Invalid or empty courses data');
-    return null; // Don't render anything if no courses
+    if (DEBUG) {
+      console.warn('FeaturedCoursesSection: Invalid or empty courses data');
+      console.log('Attempting to use fallback mock data...');
+    }
+    
+    // Try to use mock data as fallback
+    try {
+      const { FEATURED_COURSES } = require('../../data/mockData');
+      if (FEATURED_COURSES && FEATURED_COURSES.length > 0) {
+        console.log('🛠️ Using fallback mock data in FeaturedCoursesSection:', FEATURED_COURSES);
+        
+        return (
+          <section 
+            ref={sectionRef}
+            id="featured-courses-section"
+            className={`py-12 px-4 ${isDarkMode ? 'bg-background-card-dark' : 'bg-background-card-light'}`}
+          >
+            <div className="container mx-auto">
+              <div className="flex justify-between items-center mb-8">
+                <h2 
+                  ref={headingRef}
+                  className={`text-2xl font-bold ${isDarkMode ? 'text-text-light' : 'text-text-dark'}`}
+                >
+                  {translations.featuredCourses || 'الدورات المميزة'}
+                </h2>
+                <Link 
+                  to="/courses" 
+                  className={`text-sm font-medium ${isDarkMode ? 'text-primary-light' : 'text-primary-base'} flex items-center hover:underline`}
+                >
+                  {isArabic ? 'عرض الكل' : 'View All'}
+                  {isRTL ? (
+                    <ChevronLeft size={16} className="mr-1" />
+                  ) : (
+                    <ChevronRight size={16} className="ml-1" />
+                  )}
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {FEATURED_COURSES.map((course, idx) => (
+                  <div 
+                    key={idx} 
+                    ref={el => cardsRef.current[idx] = el}
+                    className="card-wrapper"
+                  >
+                    <CourseCard 
+                      course={course} 
+                      translations={translations}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      }
+    } catch (error) {
+      console.error('Failed to load fallback mock data:', error);
+    }
+    
+    // If everything fails, don't render anything
+    return null;
   }
 
   return (

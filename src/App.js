@@ -1,21 +1,31 @@
+// src/App.js - Fixed version for React Router v6
 import React from "react";
 import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
+  createBrowserRouter,
+  RouterProvider,
+  useLocation,
+  Outlet,
+  Navigate
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext.jsx";
 import { ThemeProvider } from "./contexts/ThemeContext.jsx";
 import { LanguageProvider } from "./contexts/LanguageContext.jsx";
 import { ToastProvider } from "./contexts/ToastContext.jsx";
+import { TenantProvider } from "./contexts/TenantContext.jsx";
 import ErrorBoundary from "./components/ui/feedback/ErrorBoundary";
 import PageTransition from "./components/ui/PageTransition";
 
+// Import styles
+import "./App.css";
+import "./styles/ExamStyles.css"; // Import the exam styles CSS
+
 // Layout components
 import MainLayout from "./components/layout/MainLayout";
+import GuestLayout from "./layouts/GuestLayout";
 
 // Auth pages
+import Login from "./pages/auth/Login.jsx";
+import Register from "./pages/auth/Register.jsx";
 import AuthPage from "./pages/auth/AuthPage.jsx";
 
 // Main pages
@@ -40,92 +50,157 @@ import ExamDetailsPage from "./pages/exams/ExamDetailsPage.jsx";
 import ExamQuestionsPage from "./pages/exams/ExamQuestionsPage.jsx";
 import ExamResultsPage from "./pages/exams/ExamResultsPage.jsx";
 
-// Protected route component
-import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
+// Testing page
+import ApiTestPage from "./pages/testing/ApiTestPage.jsx";
 
-// Wrap component with MainLayout - الكود المعدل لتجنب مشاكل الراوتر
-const withMainLayout = (Component) => {
-  // سنقوم بإنشاء مكون جديد بدون استخدام مكون MainLayout مباشرة
-  return function WrappedComponent(props) {
-    return (
-      <MainLayout>
-        <Component {...props} />
-      </MainLayout>
-    );
-  };
+// Protected route component
+import PrivateRoute from "./middleware/PrivateRoute.jsx";
+
+/**
+ * Root layout component with page transition
+ * This wraps all context providers in the correct order
+ * Ensuring PageTransition has access to the Router context
+ */
+const RootLayout = () => {
+  const location = useLocation();
+  return (
+    <ThemeProvider>
+      <LanguageProvider>
+        <TenantProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <PageTransition pathname={location.pathname} />
+              <Outlet />
+            </AuthProvider>
+          </ToastProvider>
+        </TenantProvider>
+      </LanguageProvider>
+    </ThemeProvider>
+  );
 };
 
+// Create router with routes configuration and enable all v7 future flags
+const router = createBrowserRouter([
+  {
+    element: <RootLayout />,
+    children: [
+      // Authentication Routes
+      {
+        path: "/auth",
+        element: <AuthPage />
+      },
+      // Redirect old routes to auth page
+      {
+        path: "/login",
+        element: <Navigate to="/auth?mode=login" replace />
+      },
+      {
+        path: "/register",
+        element: <Navigate to="/auth?mode=register" replace />
+      },
+      
+      // Public Routes with Guest Layout
+      {
+        path: "/",
+        element: <GuestLayout><Home /></GuestLayout>
+      },
+      {
+        path: "/courses",
+        element: <GuestLayout><AllCoursesPage /></GuestLayout>
+      },
+      {
+        path: "/courses/:courseId",
+        element: <GuestLayout><CourseInfoPage /></GuestLayout>
+      },
+      {
+        path: "/exams",
+        element: <GuestLayout><div className="exam-page-background"><MyExamsPage /></div></GuestLayout>
+      },
+      
+      // Testing Routes (Make it accessible to everyone for testing)
+      {
+        path: "/api-test",
+        element: <GuestLayout><ApiTestPage /></GuestLayout>
+      },
+      
+      // Protected Routes
+      {
+        path: "/dashboard",
+        element: <PrivateRoute><MainLayout><Dashboard /></MainLayout></PrivateRoute>
+      },
+      {
+        path: "/profile",
+        element: <PrivateRoute><MainLayout><Profile /></MainLayout></PrivateRoute>
+      },
+      {
+        path: "/courses/enrolled",
+        element: <PrivateRoute><MainLayout><EnrolledCoursesPage /></MainLayout></PrivateRoute>
+      },
+      {
+        path: "/courses/:courseId/content",
+        element: <PrivateRoute><MainLayout><CourseDetailPage /></MainLayout></PrivateRoute>
+      },
+      {
+        path: "/exams/:examId",
+        element: <PrivateRoute><MainLayout><div className="exam-page-background"><ExamDetailsPage /></div></MainLayout></PrivateRoute>
+      },
+      {
+        path: "/exams/:examId/questions",
+        element: <PrivateRoute><MainLayout><div className="exam-page-background"><ExamQuestionsPage /></div></MainLayout></PrivateRoute>
+      },
+      {
+        path: "/exams/:examId/results",
+        element: <PrivateRoute><MainLayout><div className="exam-page-background"><ExamResultsPage /></div></MainLayout></PrivateRoute>
+      },
+      
+      // Error Routes
+      {
+        path: "/unauthorized",
+        element: <MainLayout><Unauthorized /></MainLayout>
+      },
+      {
+        path: "/server-error",
+        element: <MainLayout><ServerError /></MainLayout>
+      },
+      {
+        path: "/not-found",
+        element: <MainLayout><NotFound /></MainLayout>
+      },
+      
+      // Catch all route
+      {
+        path: "*",
+        element: <MainLayout><NotFound /></MainLayout>
+      },
+    ]
+  }
+], {
+  // Enable all future flags to remove warnings
+  future: {
+    v7_startTransition: true,
+    v7_normalizeFormMethod: true,
+    v7_prependBasename: true,
+    v7_relativeSplatPath: true
+  }
+});
+
+/**
+ * Main App component
+ * Uses Context Providers in the correct order to ensure Router context is available
+ */
 function App() {
   return (
-    <Router>
-      <ErrorBoundary>
-        <ThemeProvider>
-          <LanguageProvider>
-            <ToastProvider>
-              <AuthProvider>
-                {/* Page Transition Component */}
-                <PageTransition />
-                
-                <Routes>
-                  {/* الصفحة الرئيسية */}
-                  <Route path="/" element={<MainLayout><Home /></MainLayout>} />
-
-                  {/* صفحة تسجيل الدخول - بدون MainLayout */}
-                  <Route path="/auth" element={<AuthPage />} />
-
-                  {/* صفحات الخطأ */}
-                  <Route path="/unauthorized" element={<MainLayout><Unauthorized /></MainLayout>} />
-                  <Route path="/server-error" element={<MainLayout><ServerError /></MainLayout>} />
-                  <Route path="/not-found" element={<MainLayout><NotFound /></MainLayout>} />
-
-                  {/* المسارات المحمية - تم تعطيلها مؤقتاً لأغراض التطوير */}
-                  {/* للتطوير فقط: تم إزالة ProtectedRoute مؤقتاً */}
-                  {/* <Route element={<ProtectedRoute />}> */}
-                  <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />
-                  <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
-
-                  {/* مسارات الكورسات */}
-                  <Route path="/courses" element={<MainLayout><AllCoursesPage /></MainLayout>} />
-                  <Route
-                    path="/courses/enrolled"
-                    element={<MainLayout><EnrolledCoursesPage /></MainLayout>}
-                  />
-                  {/* صفحة معلومات الكورس */}
-                  <Route
-                    path="/courses/:courseId"
-                    element={<MainLayout><CourseInfoPage /></MainLayout>}
-                  />
-                  {/* صفحة محتوى الكورس */}
-                  <Route
-                    path="/courses/:courseId/content"
-                    element={<MainLayout><CourseDetailPage /></MainLayout>}
-                  />
-
-                  {/* صفحات نظام الامتحانات */}
-                  <Route path="/exams" element={<MainLayout><MyExamsPage /></MainLayout>} />
-                  <Route path="/exams/:examId" element={<MainLayout><ExamDetailsPage /></MainLayout>} />
-                  <Route
-                    path="/exams/:examId/questions"
-                    element={<MainLayout><ExamQuestionsPage /></MainLayout>}
-                  />
-                  <Route
-                    path="/exams/:examId/results"
-                    element={<MainLayout><ExamResultsPage /></MainLayout>}
-                  />
-                  {/* </Route> */}
-
-                  {/* مسار احتياطي لتوجيه المسارات غير الموجودة */}
-                  <Route
-                    path="*"
-                    element={<Navigate to="/not-found" replace />}
-                  />
-                </Routes>
-              </AuthProvider>
-            </ToastProvider>
-          </LanguageProvider>
-        </ThemeProvider>
-      </ErrorBoundary>
-    </Router>
+    <ErrorBoundary>
+      {/* Router Provider should be placed at the top level for context access */}
+      <RouterProvider 
+        router={router} 
+        fallbackElement={
+          <div className="flex justify-center items-center h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+          </div>
+        }
+      />
+    </ErrorBoundary>
   );
 }
 

@@ -1,53 +1,82 @@
 // src/contexts/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AuthService } from '../services/api/index';
+import authService from '../services/api/auth.service';
+import { getToken, setToken, removeToken } from '../utils/tokenHelpers';
+import api, { initCsrfToken, testApiConnection } from '../services/api';
+import { addDebugCommands } from '../utils/apiDebugger';
 
-// إنشاء السياق
+// Create the context
 export const AuthContext = createContext();
 
 /**
- * مزود سياق المصادقة - يدير حالة المستخدم وعمليات المصادقة
- * @param {Object} props - خصائص المكون
- * @returns {JSX.Element} - مكون مزود سياق المصادقة
+ * AuthProvider component - Manages user state and authentication operations
+ * Modified to not use useNavigate()
+ * 
+ * @param {Object} props - Component props
+ * @returns {JSX.Element} - Auth provider component
  */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
 
-  // التحقق من حالة المصادقة عند تحميل التطبيق
+  // Initialize CSRF token and debugging tools on component mount
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        console.log('🚀 Initializing application...');
+        
+        // Add debug commands in development mode
+        addDebugCommands();
+        
+        // Test API connection and initialize CSRF token
+        console.log('🔧 Testing API connection...');
+        await testApiConnection();
+        
+        console.log('✅ Application initialized successfully');
+      } catch (error) {
+        console.error('❌ Application initialization failed:', error);
+      }
+    };
+    
+    initializeApp();
+  }, []);
+
+  // Check authentication status on app load
   useEffect(() => {
     let isMounted = true;
     const initAuth = async () => {
       setIsLoading(true);
       try {
-        if (AuthService.isLoggedIn()) {
-          // محاولة استعادة المستخدم من التخزين المحلي أولاً
-          const storedUser = AuthService.getStoredUser();
-          if (storedUser && isMounted) {
+        const token = getToken();
+        if (token) {
+          // Try to restore user from local storage first
+          const storedUserJson = localStorage.getItem('userData');
+          if (storedUserJson && isMounted) {
+            const storedUser = JSON.parse(storedUserJson);
             setUser(storedUser);
             setIsAuthenticated(true);
           }
 
-          // ثم تحديث البيانات من الخادم (في الخلفية)
+          // Then update data from server (in background)
           try {
-            const userData = await AuthService.getCurrentUser();
+            const userData = await authService.getCurrentUser();
             if (isMounted) {
               setUser(userData);
               setIsAuthenticated(true);
+              // Update stored user data
+              localStorage.setItem('userData', JSON.stringify(userData));
             }
           } catch (error) {
-            // إذا فشلت عملية جلب البيانات من الخادم، نقوم بتسجيل الخروج
-            console.error('فشل التحقق من المستخدم الحالي:', error);
+            // If fetching from server fails, log out
+            console.error('Failed to verify current user:', error);
             if (isMounted) {
-              handleLogout('/auth', false); // Add a second parameter to avoid navigation during cleanup
+              handleLogout(false); // Don't navigate during cleanup
             }
           }
         }
       } catch (error) {
-        console.error('خطأ أثناء تهيئة المصادقة:', error);
+        console.error('Error during auth initialization:', error);
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -64,101 +93,139 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   /**
-   * تسجيل الدخول
-   * @param {string} email - البريد الإلكتروني
-   * @param {string} password - كلمة المرور
-   * @param {string} redirectPath - مسار إعادة التوجيه بعد تسجيل الدخول
-   * @returns {Promise} - Promise مع بيانات المستخدم
+   * Login
+   * Returns data without navigation - navigation should be handled by component
+   * 
+   * @param {string} email - Email
+   * @param {string} password - Password
+   * @param {boolean} remember - Whether to remember the login
+   * @returns {Promise} - Promise with user data
    */
-  const login = async (email, password, redirectPath = '/dashboard') => {
+  const login = async (email, password, remember = false) => {
     try {
-      const data = await AuthService.login(email, password);
-      setUser(data.user);
-      setIsAuthenticated(true);
+      // Make sure we have a fresh CSRF token
+      await initCsrfToken();
       
-      // توجيه المستخدم إلى الصفحة المطلوبة بعد تسجيل الدخول
-      navigate(redirectPath);
-      return data;
+      const response = await authService.login(email, password, remember);
+      if (response.data && response.data.user) {
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+      } else if (response.user) {
+        setUser(response.user);
+        setIsAuthenticated(true);
+      }
+      return response;
     } catch (error) {
-      console.error('خطأ في تسجيل الدخول:', error);
+      console.error('Login error:', error);
       throw error;
     }
   };
 
   /**
-   * تسجيل الخروج
-   * @param {string} redirectPath - مسار إعادة التوجيه بعد تسجيل الخروج
-   * @param {boolean} doNavigate - هل يجب إعادة التوجيه
+   * Logout
+   * Modified to not use navigation directly - navigation should be handled by component
+   * 
+   * @param {boolean} clearStorage - Whether to clear storage
    */
-  const handleLogout = (redirectPath = '/auth', doNavigate = true) => {
-    AuthService.logout();
+  const handleLogout = async (clearStorage = true) => {
+    if (clearStorage) {
+      try {
+        // Make sure we have a fresh CSRF token
+        await initCsrfToken();
+        await authService.logout();
+      } catch (error) {
+        console.error('Error during logout:', error);
+      }
+    } else {
+      // Just clear local state without API call
+      removeToken();
+      localStorage.removeItem('userData');
+    }
     setUser(null);
     setIsAuthenticated(false);
-    
-    // توجيه المستخدم إلى صفحة تسجيل الدخول إذا كان مسموحًا
-    if (doNavigate) {
-      navigate(redirectPath);
-    }
   };
 
   /**
-   * التسجيل
-   * @param {Object} userData - بيانات المستخدم
-   * @param {boolean} loginAfterRegister - هل تسجيل الدخول بعد التسجيل؟
-   * @param {string} redirectPath - مسار إعادة التوجيه بعد التسجيل
-   * @returns {Promise} - Promise مع بيانات المستخدم المسجل
+   * Register
+   * Returns data without navigation - navigation should be handled by component
+   * 
+   * @param {Object} userData - User data
+   * @param {boolean} loginAfterRegister - Whether to login after register
+   * @returns {Promise} - Promise with registered user data
    */
-  const register = async (userData, loginAfterRegister = true, redirectPath = '/dashboard') => {
+  const register = async (userData, loginAfterRegister = true) => {
     try {
-      const data = await AuthService.register(userData);
+      // Make sure we have a fresh CSRF token
+      await initCsrfToken();
       
-      // تسجيل الدخول تلقائياً بعد التسجيل إذا طُلب ذلك
-      if (loginAfterRegister && data.email) {
-        await login(data.email, userData.password, redirectPath);
+      const response = await authService.register(userData);
+      
+      // Auto login after registration if requested
+      if (loginAfterRegister && response.user && response.user.email) {
+        await login(response.user.email, userData.password);
       }
       
-      return data;
+      return response;
     } catch (error) {
-      console.error('خطأ في التسجيل:', error);
+      console.error('Registration error:', error);
       throw error;
     }
   };
 
   /**
-   * تحديث بيانات المستخدم
-   * @param {Object} userData - بيانات المستخدم المحدثة
-   * @returns {Promise} - Promise مع بيانات المستخدم المحدثة
+   * Update user data
+   * 
+   * @param {Object} userData - Updated user data
+   * @returns {Promise} - Promise with updated user data
    */
   const updateUserData = async (userData) => {
     try {
-      const updatedUser = await AuthService.updateProfile(userData);
+      // Make sure we have a fresh CSRF token
+      await initCsrfToken();
+      
+      // Call the profile update API - we'll need to implement this
+      const response = await api.put('/profile', userData);
+      const updatedUser = response.data;
       setUser(updatedUser);
+      // Update local storage
+      localStorage.setItem('userData', JSON.stringify(updatedUser));
       return updatedUser;
     } catch (error) {
-      console.error('خطأ في تحديث بيانات المستخدم:', error);
+      console.error('Error updating user data:', error);
       throw error;
     }
   };
 
   /**
-   * تغيير كلمة المرور
-   * @param {string} currentPassword - كلمة المرور الحالية
-   * @param {string} newPassword - كلمة المرور الجديدة
-   * @returns {Promise} - Promise مع رسالة نجاح
+   * Change password
+   * 
+   * @param {string} currentPassword - Current password
+   * @param {string} newPassword - New password
+   * @returns {Promise} - Promise with success message
    */
   const changePassword = async (currentPassword, newPassword) => {
     try {
-      return await AuthService.changePassword(currentPassword, newPassword);
+      // Make sure we have a fresh CSRF token
+      await initCsrfToken();
+      
+      // Call the change password API - we'll need to implement this
+      const response = await api.post('/change-password', {
+        current_password: currentPassword,
+        password: newPassword,
+        password_confirmation: newPassword
+      });
+      return response.data;
     } catch (error) {
-      console.error('خطأ في تغيير كلمة المرور:', error);
+      console.error('Error changing password:', error);
       throw error;
     }
   };
 
   /**
-   * التحقق مما إذا كان المستخدم يمتلك دوراً معيناً
-   * @param {string} role - الدور المطلوب التحقق منه
-   * @returns {boolean} - هل يمتلك المستخدم هذا الدور؟
+   * Check if user has a specific role
+   * 
+   * @param {string} role - Role to check
+   * @returns {boolean} - Whether user has the role
    */
   const hasRole = (role) => {
     if (!user || !user.roles) return false;
@@ -166,16 +233,26 @@ export const AuthProvider = ({ children }) => {
   };
 
   /**
-   * التحقق مما إذا كان المستخدم يمتلك إذناً معيناً
-   * @param {string} permission - الإذن المطلوب التحقق منه
-   * @returns {boolean} - هل يمتلك المستخدم هذا الإذن؟
+   * Check if user has a specific permission
+   * 
+   * @param {string} permission - Permission to check
+   * @returns {boolean} - Whether user has the permission
    */
   const hasPermission = (permission) => {
     if (!user || !user.permissions) return false;
     return user.permissions.includes(permission);
   };
+  
+  /**
+   * Check if user is logged in
+   * 
+   * @returns {boolean} - Whether user is logged in
+   */
+  const isLoggedIn = () => {
+    return !!getToken() && isAuthenticated;
+  };
 
-  // توفير القيم للسياق
+  // Provide context value
   const contextValue = {
     user,
     setUser,
@@ -188,7 +265,8 @@ export const AuthProvider = ({ children }) => {
     updateUserData,
     changePassword,
     hasRole,
-    hasPermission
+    hasPermission,
+    isLoggedIn
   };
 
   return (
@@ -198,11 +276,11 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// هوك مخصص لاستخدام سياق المصادقة
+// Custom hook to use auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth يجب استخدامه داخل AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };

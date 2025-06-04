@@ -1,300 +1,272 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import authService from '../../services/api/auth.service';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Eye, EyeOff, User, Lock, Loader } from 'lucide-react';
-import gsap from 'gsap';
+import { useAuth } from '../../contexts/AuthContext';
 
+/**
+ * LoginForm component
+ * Handles user login with API integration, multi-language, and theme support
+ * 
+ * @param {Object} props - Component props
+ * @param {string} props.returnTo - Path to redirect after successful login
+ * @returns {JSX.Element} - Login form component
+ */
 const LoginForm = ({ returnTo = '/dashboard' }) => {
-  const { login } = useAuth();
-  const { language } = useLanguage();
+  const navigate = useNavigate();
+  const { language, isRTL } = useLanguage();
   const { isDarkMode } = useTheme();
-  const isArabic = language === 'ar';
+  const { setUser, setIsAuthenticated } = useAuth();
   
-  // Form state
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  // Form state matching exact API requirements
+  const [formData, setFormData] = useState({
+    login: '',        // API expects 'login'
+    password: '',     // API expects 'password'
+    remember: false   // API expects 'remember'
+  });
   
-  // Refs for animation
-  const formRef = useRef(null);
-  const emailInputRef = useRef(null);
-  const passwordInputRef = useRef(null);
-  const submitBtnRef = useRef(null);
-  const errorRef = useRef(null);
+  // UI state
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState({ text: '', type: '' });
   
-  // Initialize animations
-  useEffect(() => {
-    const tl = gsap.timeline();
+  /**
+   * Handle input changes
+   * 
+   * @param {Event} e - Input change event
+   */
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
     
-    tl.fromTo(
-      [emailInputRef.current, passwordInputRef.current],
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, stagger: 0.1, duration: 0.4, ease: 'power2.out', delay: 0.2 }
-    ).fromTo(
-      submitBtnRef.current,
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' },
-      '-=0.2'
-    );
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
     
-    return () => {
-      tl.kill();
-    };
-  }, []);
-  
-  // Error animation
-  useEffect(() => {
-    if (error && errorRef.current) {
-      gsap.fromTo(
-        errorRef.current,
-        { opacity: 0, y: -20 },
-        { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }
-      );
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: null
+      }));
     }
-  }, [error]);
+  };
   
-  // Handle form submission
+  /**
+   * Handle form submission to API
+   * 
+   * @param {Event} e - Form submit event
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage({ text: '', type: '' });
     
-    if (!email || !password) {
-      setError(isArabic ? 'يرجى إدخال البريد الإلكتروني وكلمة المرور' : 'Please enter email and password');
+    // Client-side validation
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
     
+    setLoading(true);
+    
     try {
-      setIsLoading(true);
-      setError('');
+      // Call the login API with exact field names required by API
+      const response = await authService.login(
+        formData.login,     // API expects 'login'
+        formData.password,  // API expects 'password'
+        formData.remember   // API expects 'remember'
+      );
       
-      // Simulate button animation
-      gsap.to(submitBtnRef.current, {
-        scale: 0.95,
-        duration: 0.1,
-        yoyo: true,
-        repeat: 1
+      // Update auth context with user data
+      // AuthService returns data directly, not wrapped in response.data
+      if (response.data && response.data.user) {
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+      } else if (response.user) {
+        setUser(response.user);
+        setIsAuthenticated(true);
+      }
+      
+      // Handle success
+      setMessage({
+        text: response.message || (language === 'ar' ? 'تم تسجيل الدخول بنجاح!' : 'Login successful!'),
+        type: 'success'
       });
       
-      // Call login API
-      await login(email, password, returnTo);
+      // Redirect after short delay
+      setTimeout(() => {
+        navigate(returnTo);
+      }, 1000);
+    } catch (error) {
+      console.error('Login error:', error);
       
-      // Login successful
-      gsap.to(formRef.current, {
-        y: -20,
-        opacity: 0,
-        duration: 0.3,
-        ease: 'power2.in'
-      });
-    } catch (err) {
-      console.error('Login error:', err);
-      setError(isArabic 
-        ? 'فشل تسجيل الدخول: تأكد من صحة البريد الإلكتروني وكلمة المرور' 
-        : 'Login failed: Please check your email and password');
-        
-      // Shake animation for error
-      gsap.to(formRef.current, {
-        x: 10,
-        duration: 0.1,
-        repeat: 3,
-        yoyo: true,
-      });
+      // Handle API errors
+      if (error.errors) {
+        // Format validation errors from backend
+        setErrors(error.errors);
+      } else {
+        // General error message
+        setMessage({
+          text: error.message || (language === 'ar' ? 'فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد الخاصة بك.' : 'Login failed. Please check your credentials.'),
+          type: 'error'
+        });
+      }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
-
-  // Translations
-  const translations = {
-    email: isArabic ? 'البريد الإلكتروني' : 'Email',
-    password: isArabic ? 'كلمة المرور' : 'Password',
-    rememberMe: isArabic ? 'تذكرني' : 'Remember me',
-    forgotPassword: isArabic ? 'نسيت كلمة المرور؟' : 'Forgot password?',
-    signIn: isArabic ? 'تسجيل الدخول' : 'Sign In',
-    orContinueWith: isArabic ? 'أو متابعة باستخدام' : 'Or continue with',
-    google: isArabic ? 'جوجل' : 'Google',
-    emailPlaceholder: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email',
-    passwordPlaceholder: isArabic ? 'أدخل كلمة المرور' : 'Enter your password'
+  
+  /**
+   * Validate form data
+   * 
+   * @returns {Object} Validation errors if any
+   */
+  const validateForm = () => {
+    const errors = {};
+    
+    // Login validation
+    if (!formData.login.trim()) {
+      errors.login = language === 'ar' ? 'البريد الإلكتروني أو اسم المستخدم مطلوب' : 'Email or username is required';
+    }
+    
+    // Password validation
+    if (!formData.password) {
+      errors.password = language === 'ar' ? 'كلمة المرور مطلوبة' : 'Password is required';
+    }
+    
+    return errors;
+  };
+  
+  // Labels and text based on selected language
+  const labels = {
+    emailUsername: language === 'ar' ? 'البريد الإلكتروني أو اسم المستخدم' : 'Email or Username',
+    password: language === 'ar' ? 'كلمة المرور' : 'Password',
+    rememberMe: language === 'ar' ? 'تذكرني' : 'Remember me',
+    forgotPassword: language === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?',
+    login: language === 'ar' ? 'تسجيل الدخول' : 'Sign In',
+    loggingIn: language === 'ar' ? 'جاري تسجيل الدخول...' : 'Signing in...',
+    noAccount: language === 'ar' ? 'ليس لديك حساب؟' : 'Don\'t have an account?',
+    register: language === 'ar' ? 'إنشاء حساب جديد' : 'Register',
+    required: language === 'ar' ? 'مطلوب' : 'required',
   };
   
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-      {/* Error message */}
-      {error && (
+    <div className={`p-6 rounded-lg w-full ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      {message.text && (
         <div 
-          ref={errorRef}
-          className={`p-3 ${isDarkMode ? 'bg-red-900/20 text-red-400' : 'bg-red-50 text-red-600'} rounded-md text-sm`}
+          className={`mb-6 p-3 rounded-md ${
+            message.type === 'success' 
+              ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' 
+              : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
+          }`}
         >
-          {error}
+          {message.text}
         </div>
       )}
       
-      {/* Email input */}
-      <div ref={emailInputRef} className="space-y-2">
-        <label 
-          htmlFor="email" 
-          className={`block text-sm font-medium ${isDarkMode ? 'text-neutral-300' : 'text-neutral-700'}`}
-        >
-          {translations.email}
-        </label>
-        <div className={`relative rounded-md shadow-sm`}>
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <User size={16} className={`${isDarkMode ? 'text-neutral-500' : 'text-neutral-400'}`} />
-          </div>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            placeholder={translations.emailPlaceholder}
-            className={`block w-full pl-10 py-3 ${
-              isDarkMode 
-                ? 'bg-neutral-800 border-neutral-700 text-white placeholder-neutral-500' 
-                : 'bg-white border-neutral-300 text-neutral-900 placeholder-neutral-400'
-            } border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-base`}
-          />
-        </div>
-      </div>
-      
-      {/* Password input */}
-      <div ref={passwordInputRef} className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label 
-            htmlFor="password" 
-            className={`block text-sm font-medium ${isDarkMode ? 'text-neutral-300' : 'text-neutral-700'}`}
-          >
-            {translations.password}
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+        {/* Email/Username Field */}
+        <div>
+          <label htmlFor="login" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-1`}>
+            {labels.emailUsername} <span className="text-red-500">*</span>
           </label>
-          <a 
-            href="#" 
-            className={`text-xs font-medium ${isDarkMode ? 'text-primary-light hover:text-primary-base' : 'text-primary-base hover:text-primary-dark'}`}
-          >
-            {translations.forgotPassword}
-          </a>
+          <input
+            id="login"
+            name="login"
+            type="text"
+            required
+            value={formData.login}
+            onChange={handleChange}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+              errors.login 
+                ? 'border-red-300 dark:border-red-500' 
+                : isDarkMode 
+                  ? 'border-gray-600 bg-gray-700 text-white' 
+                  : 'border-gray-300 bg-white text-gray-900'
+            }`}
+            placeholder={language === 'ar' ? 'أدخل البريد الإلكتروني أو اسم المستخدم' : 'Enter email or username'}
+          />
+          {errors.login && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.login}</p>
+          )}
         </div>
-        <div className={`relative rounded-md shadow-sm`}>
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Lock size={16} className={`${isDarkMode ? 'text-neutral-500' : 'text-neutral-400'}`} />
+        
+        {/* Password Field */}
+        <div>
+          <div className="flex justify-between items-center mb-1">
+            <label htmlFor="password" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+              {labels.password} <span className="text-red-500">*</span>
+            </label>
+            <a 
+              href="/auth?mode=forgot-password" 
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+            >
+              {labels.forgotPassword}
+            </a>
           </div>
           <input
             id="password"
             name="password"
-            type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
+            type="password"
             required
-            placeholder={translations.passwordPlaceholder}
-            className={`block w-full pl-10 pr-10 py-3 ${
-              isDarkMode 
-                ? 'bg-neutral-800 border-neutral-700 text-white placeholder-neutral-500' 
-                : 'bg-white border-neutral-300 text-neutral-900 placeholder-neutral-400'
-            } border rounded-md focus:outline-none focus:ring-1 focus:ring-primary-base`}
+            value={formData.password}
+            onChange={handleChange}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+              errors.password 
+                ? 'border-red-300 dark:border-red-500' 
+                : isDarkMode 
+                  ? 'border-gray-600 bg-gray-700 text-white' 
+                  : 'border-gray-300 bg-white text-gray-900'
+            }`}
+            placeholder="********"
+            dir="ltr"
           />
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-            <button
-              type="button"
-              className="text-gray-400 hover:text-gray-500 focus:outline-none"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? (
-                <EyeOff size={16} className="text-gray-500" />
-              ) : (
-                <Eye size={16} className="text-gray-500" />
-              )}
-            </button>
-          </div>
+          {errors.password && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.password}</p>
+          )}
         </div>
-      </div>
-
-      {/* Remember me checkbox */}
-      <div className="flex items-center justify-between">
+        
+        {/* Remember Me Checkbox */}
         <div className="flex items-center">
           <input
-            id="remember-me"
-            name="remember-me"
+            id="remember"
+            name="remember"
             type="checkbox"
-            checked={remember}
-            onChange={(e) => setRemember(e.target.checked)}
-            className={`h-4 w-4 rounded ${isDarkMode ? 'bg-neutral-800 border-neutral-600' : 'bg-white border-neutral-300'} focus:ring-primary-base text-primary-base`}
+            checked={formData.remember}
+            onChange={handleChange}
+            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
           />
-          <label 
-            htmlFor="remember-me" 
-            className={`ml-2 block text-sm ${isDarkMode ? 'text-neutral-400' : 'text-neutral-600'}`}
-          >
-            {translations.rememberMe}
+          <label htmlFor="remember" className={`ml-2 block text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            {labels.rememberMe}
           </label>
         </div>
-      </div>
-
-      {/* Submit button */}
-      <div ref={submitBtnRef}>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className={`w-full py-3 px-4 flex justify-center items-center rounded-md shadow-sm text-sm font-medium text-white bg-primary-base hover:bg-primary-dark focus:outline-none transition-all duration-300 transform active:scale-95`}
-        >
-          {isLoading ? (
-            <Loader size={18} className="animate-spin" />
-          ) : (
-            translations.signIn
-          )}
-        </button>
-      </div>
-
-      {/* Social login options */}
-      <div className="mt-6">
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className={`w-full border-t ${isDarkMode ? 'border-neutral-700' : 'border-neutral-300'}`}></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className={`px-2 ${isDarkMode ? 'bg-background-dark text-neutral-400' : 'bg-white text-neutral-500'}`}>
-              {translations.orContinueWith}
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-6">
+        
+        {/* Submit Button */}
+        <div>
           <button
-            type="button"
-            className={`w-full flex justify-center items-center py-3 px-4 border ${
-              isDarkMode 
-                ? 'border-neutral-700 bg-neutral-800 hover:bg-neutral-700' 
-                : 'border-neutral-300 bg-white hover:bg-neutral-50'
-            } rounded-md shadow-sm text-sm font-medium transition-colors`}
+            type="submit"
+            disabled={loading}
+            className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+              loading ? 'opacity-75 cursor-not-allowed' : ''
+            }`}
           >
-            <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
-              <path
-                d="M12.545 10.239v3.821h5.445c-0.712 2.315-2.647 3.972-5.445 3.972-3.332 0-6.033-2.701-6.033-6.032s2.701-6.032 6.033-6.032c1.498 0 2.866 0.549 3.921 1.453l2.814-2.814c-1.871-1.752-4.370-2.825-7.035-2.825-5.696 0-10.318 4.622-10.318 10.318s4.622 10.318 10.318 10.318c8.834 0 10.761-8.104 9.788-13.134z"
-                fill="#4285F4"
-              />
-              <path
-                d="M12.545 10.239v3.821h5.445c-0.712 2.315-2.647 3.972-5.445 3.972-3.332 0-6.033-2.701-6.033-6.032s2.701-6.032 6.033-6.032c1.498 0 2.866 0.549 3.921 1.453l2.814-2.814c-1.871-1.752-4.370-2.825-7.035-2.825-5.696 0-10.318 4.622-10.318 10.318s4.622 10.318 10.318 10.318c8.834 0 10.761-8.104 9.788-13.134z"
-                fill="#34A853"
-                clipPath="polygon(0 0, 24 0, 24 24, 0 24)"
-              />
-              <path
-                d="M12.545 10.239v3.821h5.445c-0.712 2.315-2.647 3.972-5.445 3.972-3.332 0-6.033-2.701-6.033-6.032s2.701-6.032 6.033-6.032c1.498 0 2.866 0.549 3.921 1.453l2.814-2.814c-1.871-1.752-4.370-2.825-7.035-2.825-5.696 0-10.318 4.622-10.318 10.318s4.622 10.318 10.318 10.318c8.834 0 10.761-8.104 9.788-13.134z"
-                fill="#FBBC05"
-                clipPath="polygon(0 0, 24 0, 24 24, 0 24)"
-              />
-              <path
-                d="M12.545 10.239v3.821h5.445c-0.712 2.315-2.647 3.972-5.445 3.972-3.332 0-6.033-2.701-6.033-6.032s2.701-6.032 6.033-6.032c1.498 0 2.866 0.549 3.921 1.453l2.814-2.814c-1.871-1.752-4.370-2.825-7.035-2.825-5.696 0-10.318 4.622-10.318 10.318s4.622 10.318 10.318 10.318c8.834 0 10.761-8.104 9.788-13.134z"
-                fill="#EA4335"
-                clipPath="polygon(0 0, 24 0, 24 24, 0 24)"
-              />
-            </svg>
-            {translations.google}
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {labels.loggingIn}
+              </div>
+            ) : (
+              labels.login
+            )}
           </button>
         </div>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 };
 

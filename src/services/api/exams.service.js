@@ -1,167 +1,134 @@
 // src/services/api/exams.service.js
-import apiClient from './client';
+import api from '../api';
+import { handleApiError } from '../utils/errorHandler';
 
 /**
- * خدمات الامتحانات والاختبارات
+ * Exams Service - Handle all exam operations
  */
-const ExamsService = {
+class ExamsService {
   /**
-   * الحصول على قائمة الامتحانات المتاحة
-   * @param {Object} params - معلمات الاستعلام (الحالة، المادة، المستوى)
-   * @returns {Promise} - Promise مع قائمة الامتحانات
+   * Get all exams for the user
+   * @param {Object} params - Query parameters
+   * @returns {Promise<Array>} User exams
    */
-  getExams: async (params = {}) => {
+  async getUserExams(params = {}) {
     try {
-      const response = await apiClient.get('/exams', { params });
+      const response = await api.get('/exams/user', { params });
       return response.data;
     } catch (error) {
-      throw handleExamsError(error, 'جلب الامتحانات');
-    }
-  },
-
-  /**
-   * الحصول على تفاصيل امتحان معين
-   * @param {string} examId - معرف الامتحان
-   * @returns {Promise} - Promise مع تفاصيل الامتحان
-   */
-  getExamDetails: async (examId) => {
-    try {
-      const response = await apiClient.get(`/exams/${examId}`);
-      return response.data;
-    } catch (error) {
-      throw handleExamsError(error, 'جلب تفاصيل الامتحان');
-    }
-  },
-
-  /**
-   * التسجيل في امتحان
-   * @param {string} examId - معرف الامتحان
-   * @returns {Promise} - Promise مع تأكيد التسجيل
-   */
-  registerForExam: async (examId) => {
-    try {
-      const response = await apiClient.post(`/exams/${examId}/register`);
-      return response.data;
-    } catch (error) {
-      throw handleExamsError(error, 'التسجيل في الامتحان');
-    }
-  },
-
-  /**
-   * بدء الامتحان
-   * @param {string} examId - معرف الامتحان
-   * @returns {Promise} - Promise مع بيانات بدء الامتحان وأسئلته
-   */
-  startExam: async (examId) => {
-    try {
-      const response = await apiClient.post(`/exams/${examId}/start`);
-      return response.data;
-    } catch (error) {
-      throw handleExamsError(error, 'بدء الامتحان');
-    }
-  },
-
-  /**
-   * الحصول على أسئلة الامتحان
-   * @param {string} examId - معرف الامتحان
-   * @returns {Promise} - Promise مع أسئلة الامتحان
-   */
-  getExamQuestions: async (examId) => {
-    try {
-      const response = await apiClient.get(`/exams/${examId}/questions`);
-      return response.data;
-    } catch (error) {
-      throw handleExamsError(error, 'جلب أسئلة الامتحان');
-    }
-  },
-
-  /**
-   * تقديم إجابة على سؤال
-   * @param {string} examId - معرف الامتحان
-   * @param {string} questionId - معرف السؤال
-   * @param {Object} answerData - بيانات الإجابة
-   * @returns {Promise} - Promise مع تأكيد تقديم الإجابة
-   */
-  submitAnswer: async (examId, questionId, answerData) => {
-    try {
-      const response = await apiClient.post(`/exams/${examId}/questions/${questionId}/answer`, answerData);
-      return response.data;
-    } catch (error) {
-      throw handleExamsError(error, 'تقديم الإجابة');
-    }
-  },
-
-  /**
-   * تقديم الامتحان بأكمله
-   * @param {string} examId - معرف الامتحان
-   * @returns {Promise} - Promise مع نتيجة الامتحان
-   */
-  submitExam: async (examId) => {
-    try {
-      const response = await apiClient.post(`/exams/${examId}/submit`);
-      return response.data;
-    } catch (error) {
-      throw handleExamsError(error, 'تقديم الامتحان');
-    }
-  },
-
-  /**
-   * الحصول على نتائج امتحان
-   * @param {string} examId - معرف الامتحان
-   * @returns {Promise} - Promise مع نتائج الامتحان
-   */
-  getExamResults: async (examId) => {
-    try {
-      const response = await apiClient.get(`/exams/${examId}/results`);
-      return response.data;
-    } catch (error) {
-      throw handleExamsError(error, 'جلب نتائج الامتحان');
-    }
-  },
-
-  /**
-   * الحصول على امتحانات المستخدم
-   * @param {string} status - حالة الامتحان (upcoming, active, completed، أو جميعها)
-   * @returns {Promise} - Promise مع امتحانات المستخدم
-   */
-  getUserExams: async (status = '') => {
-    try {
-      const params = status ? { status } : {};
-      const response = await apiClient.get('/exams/user', { params });
-      return response.data;
-    } catch (error) {
-      throw handleExamsError(error, 'جلب امتحانات المستخدم');
-    }
-  },
-
-  /**
-   * الحصول على الامتحانات الموصى بها
-   * @returns {Promise} - Promise مع الامتحانات الموصى بها
-   */
-  getRecommendedExams: async () => {
-    try {
-      const response = await apiClient.get('/exams/recommended');
-      return response.data;
-    } catch (error) {
-      throw handleExamsError(error, 'جلب الامتحانات الموصى بها');
+      throw handleApiError(error, 'Failed to fetch user exams');
     }
   }
-};
 
-/**
- * معالجة أخطاء الامتحانات وتنسيقها
- * @param {Error} error - خطأ الاستجابة
- * @param {string} operation - نوع العملية التي فشلت
- * @returns {Error} - خطأ منسق
- */
-const handleExamsError = (error, operation) => {
-  const errorMessage = error.response?.data?.message || `حدث خطأ أثناء ${operation}`;
-  const errorCode = error.response?.status || 'UNKNOWN';
-  
-  const formattedError = new Error(errorMessage);
-  formattedError.code = errorCode;
-  
-  return formattedError;
-};
+  /**
+   * Get featured exams
+   * @param {number} limit - Number of exams to fetch
+   * @returns {Promise<Array>} Featured exams
+   */
+  async getFeaturedExams(limit = 6) {
+    try {
+      const response = await api.get('/exams/featured', { 
+        params: { limit } 
+      });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error, 'Failed to fetch featured exams');
+    }
+  }
 
-export default ExamsService;
+  /**
+   * Get specific exam details by ID
+   * @param {number|string} examId - Exam ID
+   * @returns {Promise<Object>} Exam details
+   */
+  async getExamById(examId) {
+    try {
+      const response = await api.get(`/exams/${examId}`);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error, 'Failed to fetch exam details');
+    }
+  }
+
+  /**
+   * Start an exam and get questions
+   * @param {number|string} examId - Exam ID
+   * @returns {Promise<Object>} Exam start response with questions
+   */
+  async startExam(examId) {
+    try {
+      const response = await api.post(`/exams/${examId}/start`);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error, 'Failed to start exam');
+    }
+  }
+
+  /**
+   * Submit an answer during the exam
+   * @param {number|string} examId - Exam ID
+   * @param {number|string} questionId - Question ID
+   * @param {any} answer - Answer data
+   * @returns {Promise<Object>} Submit response
+   */
+  async submitAnswer(examId, questionId, answer) {
+    try {
+      const response = await api.post(`/exams/${examId}/questions/${questionId}/answer`, { 
+        answer 
+      });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error, 'Failed to submit answer');
+    }
+  }
+
+  /**
+   * Submit the entire exam
+   * @param {number|string} examId - Exam ID
+   * @param {Object} answers - All answers
+   * @returns {Promise<Object>} Exam submission result
+   */
+  async submitExam(examId, answers) {
+    try {
+      const response = await api.post(`/exams/${examId}/submit`, { answers });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error, 'Failed to submit exam');
+    }
+  }
+
+  /**
+   * Get exam results
+   * @param {number|string} examId - Exam ID
+   * @param {number|string} attemptId - Specific attempt ID (optional)
+   * @returns {Promise<Object>} Exam results
+   */
+  async getExamResults(examId, attemptId = null) {
+    try {
+      const endpoint = attemptId 
+        ? `/exams/${examId}/attempts/${attemptId}/results`
+        : `/exams/${examId}/results`;
+      const response = await api.get(endpoint);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error, 'Failed to fetch exam results');
+    }
+  }
+
+  /**
+   * Get all previous attempts for an exam
+   * @param {number|string} examId - Exam ID
+   * @returns {Promise<Array>} List of attempts
+   */
+  async getExamAttempts(examId) {
+    try {
+      const response = await api.get(`/exams/${examId}/attempts`);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error, 'Failed to fetch exam attempts');
+    }
+  }
+}
+
+// Export single instance of the service
+export default new ExamsService();
