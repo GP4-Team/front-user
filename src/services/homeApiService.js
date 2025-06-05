@@ -34,11 +34,12 @@ const HomeApiService = {
 
   /**
    * الحصول على مستويات التعليم
+   * @param {Object} params - معلمات إضافية
    * @returns {Promise} - Promise مع قائمة المستويات
    */
-  getLevels: async () => {
+  getEducationLevels: async (params = {}) => {
     try {
-      return await coursesService.getEducationLevels();
+      return await coursesService.getEducationLevels(params);
     } catch (error) {
       console.error('Error fetching education levels:', error);
       throw error;
@@ -46,15 +47,15 @@ const HomeApiService = {
   },
 
   /**
-   * الحصول على جميع الدورات (مع إمكانية التصفية)
+   * الحصول على جميع الدورات مع pagination (مع إمكانية التصفية)
    * @param {Object} params - معلمات التصفية
    * @returns {Promise} - Promise مع قائمة الدورات
    */
-  getAllCourses: async (params = {}) => {
+  getAllCoursesPaginated: async (params = {}) => {
     try {
-      return await coursesService.getAllCourses(params);
+      return await coursesService.getAllCoursesPaginated(params);
     } catch (error) {
-      console.error('Error fetching all courses:', error);
+      console.error('Error fetching courses with pagination:', error);
       throw error;
     }
   },
@@ -124,6 +125,35 @@ const HomeApiService = {
       return await examsService.getFeaturedExams();
     } catch (error) {
       console.error('Error fetching featured exams:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * فلترة الكورسات حسب المستوى التعليمي (جديد)
+   * @param {Object} params - معلمات الفلترة بما فهلا education_level_ids
+   * @returns {Promise} - Promise مع قائمة الكورسات المفلترة
+   */
+  getFilteredCourses: async (params = {}) => {
+    try {
+      return await coursesService.getFilteredCourses(params);
+    } catch (error) {
+      console.error('Error fetching filtered courses:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * البحث في الكورسات (جديد)
+   * @param {string} query - نص البحث
+   * @param {Object} params - معلمات إضافية (page, per_page, إلخ)
+   * @returns {Promise} - Promise مع نتائج البحث
+   */
+  searchCourses: async (query, params = {}) => {
+    try {
+      return await coursesService.searchCourses(query, params);
+    } catch (error) {
+      console.error('Error searching courses:', error);
       throw error;
     }
   },

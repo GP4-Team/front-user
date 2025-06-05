@@ -7,16 +7,64 @@ import { handleApiError } from '../utils/errorHandler';
  */
 class CoursesService {
   /**
-   * Get all courses with filtering options
-   * @param {Object} params - Filter parameters (category, level, search, page, limit)
-   * @returns {Promise<Object>} List of courses with metadata
+   * Get all courses with pagination (new endpoint)
+   * @param {Object} params - Filter parameters (page, per_page, etc.)
+   * @returns {Promise<Array>} Paginated courses
    */
-  async getAllCourses(params = {}) {
+  async getAllCoursesPaginated(params = {}) {
     try {
+      // استدعاء الـ API الجديد لجميع الكورسات مع pagination
       const response = await api.get('/courses', { params });
-      return response.data;
+      
+      // تحويل البيانات من API format إلى UI format
+      const transformedData = {
+        success: response.data.success,
+        data: response.data.data.data.map(course => ({
+          id: course.id,
+          title: {
+            ar: course.name,
+            en: course.name
+          },
+          description: {
+            ar: `دورة شاملة في ${course.name} للمستوى ${this.getLevelNameAr(course.educational_level_id)}`,
+            en: `Comprehensive course in ${course.name} for ${this.getLevelNameEn(course.educational_level_id)}`
+          },
+          category: {
+            ar: this.getCategoryNameAr(course.educational_department_id),
+            en: this.getCategoryNameEn(course.educational_department_id)
+          },
+          level: {
+            ar: this.getLevelNameAr(course.educational_level_id),
+            en: this.getLevelNameEn(course.educational_level_id)
+          },
+          image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+          color: course.color || '#4285F4',
+          code: course.code,
+          rating: 4.5, // Default rating since not provided by API
+          students: '120+', // Default students count
+          duration: {
+            ar: '8 أسابيع',
+            en: '8 weeks'
+          },
+          educational_level_id: course.educational_level_id,
+          educational_department_id: course.educational_department_id,
+          levelId: this.mapLevelIdForFilter(course.educational_level_id)
+        })),
+        pagination: {
+          current_page: response.data.data.current_page,
+          last_page: response.data.data.last_page,
+          per_page: response.data.data.per_page,
+          total: response.data.data.total,
+          from: response.data.data.from,
+          to: response.data.data.to,
+          next_page_url: response.data.data.next_page_url,
+          prev_page_url: response.data.data.prev_page_url
+        }
+      };
+      
+      return transformedData;
     } catch (error) {
-      throw handleApiError(error, 'Failed to fetch courses');
+      throw handleApiError(error, 'Failed to fetch courses with pagination');
     }
   }
 
@@ -25,28 +73,207 @@ class CoursesService {
    * @param {number} limit - Number of courses requested
    * @returns {Promise<Array>} List of featured courses
    */
-  async getFeaturedCourses(limit = 6) {
+  async getFeaturedCourses(limit = 8) {
     try {
+      // استدعاء الـ API الجديد للكورسات المميزة
       const response = await api.get('/courses/featured', { 
-        params: { limit } 
+        params: { 
+          page: 1,
+          per_page: limit 
+        } 
       });
-      return response.data;
+      
+      // تحويل البيانات من API format إلى UI format
+      const transformedData = {
+        success: response.data.success,
+        data: response.data.data.data.map(course => ({
+          id: course.id,
+          title: {
+            ar: course.name,
+            en: course.name
+          },
+          category: {
+            ar: this.getCategoryNameAr(course.educational_department_id),
+            en: this.getCategoryNameEn(course.educational_department_id)
+          },
+          level: {
+            ar: this.getLevelNameAr(course.educational_level_id),
+            en: this.getLevelNameEn(course.educational_level_id)
+          },
+          image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+          color: course.color || '#4285F4',
+          code: course.code,
+          rating: 4.5, // Default rating since not provided by API
+          students: '120+', // Default students count
+          duration: {
+            ar: '8 أسابيع',
+            en: '8 weeks'
+          },
+          educational_level_id: course.educational_level_id,
+          educational_department_id: course.educational_department_id
+        })),
+        pagination: {
+          current_page: response.data.data.current_page,
+          last_page: response.data.data.last_page,
+          per_page: response.data.data.per_page,
+          total: response.data.data.total,
+          from: response.data.data.from,
+          to: response.data.data.to,
+          next_page_url: response.data.data.next_page_url,
+          prev_page_url: response.data.data.prev_page_url
+        }
+      };
+      
+      return transformedData;
     } catch (error) {
       throw handleApiError(error, 'Failed to fetch featured courses');
     }
   }
+  
+  /**
+   * Helper method to get category name in Arabic
+   */
+  getCategoryNameAr(departmentId) {
+    const categories = {
+      1: 'الرياضيات',
+      2: 'العلوم',
+      3: 'اللغة العربية',
+      4: 'اللغة الإنجليزية',
+      5: 'التاريخ',
+      6: 'الجغرافيا'
+    };
+    return categories[departmentId] || 'مادة عامة';
+  }
+  
+  /**
+   * Helper method to get category name in English
+   */
+  getCategoryNameEn(departmentId) {
+    const categories = {
+      1: 'Mathematics',
+      2: 'Science',
+      3: 'Arabic Language',
+      4: 'English Language',
+      5: 'History',
+      6: 'Geography'
+    };
+    return categories[departmentId] || 'General Subject';
+  }
+  
+  /**
+   * Helper method to get level name in Arabic
+   */
+  getLevelNameAr(levelId) {
+    const levels = {
+      1: 'الصف الأول الابتدائي',
+      2: 'الصف الثاني الابتدائي',
+      3: 'الصف الثالث الابتدائي',
+      4: 'الصف الرابع الابتدائي',
+      5: 'الصف الخامس الابتدائي',
+      6: 'الصف السادس الابتدائي',
+      7: 'الصف الأول المتوسط',
+      8: 'الصف الثاني المتوسط',
+      9: 'الصف الثالث المتوسط',
+      10: 'الصف الأول الثانوي',
+      11: 'الصف الثاني الثانوي',
+      12: 'الصف الثالث الثانوي'
+    };
+    return levels[levelId] || 'مستوى عام';
+  }
+  
+  /**
+   * Helper method to get level name in English
+   */
+  getLevelNameEn(levelId) {
+    const levels = {
+      1: 'Grade 1',
+      2: 'Grade 2', 
+      3: 'Grade 3',
+      4: 'Grade 4',
+      5: 'Grade 5',
+      6: 'Grade 6',
+      7: 'Grade 7',
+      8: 'Grade 8',
+      9: 'Grade 9',
+      10: 'Grade 10',
+      11: 'Grade 11',
+      12: 'Grade 12'
+    };
+    return levels[levelId] || 'General Level';
+  }
 
   /**
    * Get all courses (alternative endpoint)
+   * @param {Object} params - Filter parameters (page, per_page, etc.)
    * @returns {Promise<Array>} All available courses
    */
-  async getAllCoursesComplete() {
+  async getAllCoursesComplete(params = {}) {
     try {
-      const response = await api.get('/courses/all');
-      return response.data;
+      // استدعاء الـ API الحقيقي لجميع الكورسات
+      const response = await api.get('/courses/all', { params });
+      
+      // تحويل البيانات من API format إلى UI format
+      const transformedData = {
+        success: response.data.success,
+        data: response.data.data.data.map(course => ({
+          id: course.id,
+          title: {
+            ar: course.name,
+            en: course.name
+          },
+          description: {
+            ar: `دورة شاملة في ${course.name} للمستوى ${this.getLevelNameAr(course.educational_level_id)}`,
+            en: `Comprehensive course in ${course.name} for ${this.getLevelNameEn(course.educational_level_id)}`
+          },
+          category: {
+            ar: this.getCategoryNameAr(course.educational_department_id),
+            en: this.getCategoryNameEn(course.educational_department_id)
+          },
+          level: {
+            ar: this.getLevelNameAr(course.educational_level_id),
+            en: this.getLevelNameEn(course.educational_level_id)
+          },
+          image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+          color: course.color || '#4285F4',
+          code: course.code,
+          rating: 4.5, // Default rating since not provided by API
+          students: '120+', // Default students count
+          duration: {
+            ar: '8 أسابيع',
+            en: '8 weeks'
+          },
+          educational_level_id: course.educational_level_id,
+          educational_department_id: course.educational_department_id,
+          levelId: this.mapLevelIdForFilter(course.educational_level_id)
+        })),
+        pagination: {
+          current_page: response.data.data.current_page,
+          last_page: response.data.data.last_page,
+          per_page: response.data.data.per_page,
+          total: response.data.data.total,
+          from: response.data.data.from,
+          to: response.data.data.to,
+          next_page_url: response.data.data.next_page_url,
+          prev_page_url: response.data.data.prev_page_url
+        }
+      };
+      
+      return transformedData;
     } catch (error) {
       throw handleApiError(error, 'Failed to fetch all courses');
     }
+  }
+  
+  /**
+   * Helper method to map API level IDs to filter level IDs
+   */
+  mapLevelIdForFilter(levelId) {
+    // Map educational levels to filter categories
+    if (levelId >= 10 && levelId <= 12) {
+      const gradeMap = { 10: 'grade10', 11: 'grade11', 12: 'grade12' };
+      return gradeMap[levelId] || 'other';
+    }
+    return 'other';
   }
 
   /**
@@ -92,30 +319,141 @@ class CoursesService {
   }
 
   /**
-   * Search courses
+   * Search courses using the new API endpoint
    * @param {string} query - Search query
-   * @param {Object} filters - Additional filters
-   * @returns {Promise<Array>} Search results
+   * @param {Object} params - Additional parameters (page, per_page, etc.)
+   * @returns {Promise<Object>} Search results with pagination
    */
-  async searchCourses(query = '', filters = {}) {
+  async searchCourses(query = '', params = {}) {
     try {
-      const endpoint = query ? `/courses/search/${encodeURIComponent(query)}` : '/courses/search';
-      const response = await api.get(endpoint, { params: filters });
-      return response.data;
+      let endpoint;
+      
+      if (query.trim()) {
+        // إذا كان هناك نص بحث، استخدم الـ endpoint مع القيمة
+        endpoint = `/courses/search/${encodeURIComponent(query.trim())}`;
+      } else {
+        // إذا لم يكن هناك نص بحث، استخدم الـ endpoint العادي
+        endpoint = '/courses/search';
+      }
+      
+      console.log('🔍 Searching courses with endpoint:', endpoint, 'params:', params);
+      
+      const response = await api.get(endpoint, { params });
+      
+      console.log('✅ Search API response:', response.data);
+      
+      // تحويل البيانات من API format إلى UI format
+      const transformedData = {
+        success: response.data.success,
+        data: response.data.data.data.map(course => ({
+          id: course.id,
+          title: {
+            ar: course.name,
+            en: course.name
+          },
+          description: {
+            ar: `دورة شاملة في ${course.name} للمستوى ${this.getLevelNameAr(course.educational_level_id)}`,
+            en: `Comprehensive course in ${course.name} for ${this.getLevelNameEn(course.educational_level_id)}`
+          },
+          category: {
+            ar: this.getCategoryNameAr(course.educational_department_id),
+            en: this.getCategoryNameEn(course.educational_department_id)
+          },
+          level: {
+            ar: this.getLevelNameAr(course.educational_level_id),
+            en: this.getLevelNameEn(course.educational_level_id)
+          },
+          image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+          color: course.color || '#4285F4',
+          code: course.code,
+          rating: 4.5,
+          students: '120+',
+          duration: {
+            ar: '8 أسابيع',
+            en: '8 weeks'
+          },
+          educational_level_id: course.educational_level_id,
+          educational_department_id: course.educational_department_id,
+          levelId: this.mapLevelIdForFilter(course.educational_level_id)
+        })),
+        pagination: {
+          current_page: response.data.data.current_page,
+          last_page: response.data.data.last_page,
+          per_page: response.data.data.per_page,
+          total: response.data.data.total,
+          from: response.data.data.from,
+          to: response.data.data.to,
+          next_page_url: response.data.data.next_page_url,
+          prev_page_url: response.data.data.prev_page_url
+        }
+      };
+      
+      return transformedData;
     } catch (error) {
       throw handleApiError(error, 'Failed to search courses');
     }
   }
 
   /**
-   * Filter courses
-   * @param {Object} filters - Filter parameters
-   * @returns {Promise<Array>} Filtered courses
+   * Filter courses by education levels (NEW)
+   * @param {Object} params - Filter parameters including education_level_ids
+   * @returns {Promise<Object>} Filtered courses with pagination
    */
-  async filterCourses(filters = {}) {
+  async getFilteredCourses(params = {}) {
     try {
-      const response = await api.get('/courses/filter', { params: filters });
-      return response.data;
+      console.log('🔍 Calling courses filter API with params:', params);
+      
+      const response = await api.get('/courses/filter', { params });
+      
+      console.log('✅ Filter API response:', response.data);
+      
+      // تحويل البيانات من API format إلى UI format
+      const transformedData = {
+        success: response.data.success,
+        data: response.data.data.data.map(course => ({
+          id: course.id,
+          title: {
+            ar: course.name,
+            en: course.name
+          },
+          description: {
+            ar: `دورة شاملة في ${course.name} للمستوى ${this.getLevelNameAr(course.educational_level_id)}`,
+            en: `Comprehensive course in ${course.name} for ${this.getLevelNameEn(course.educational_level_id)}`
+          },
+          category: {
+            ar: this.getCategoryNameAr(course.educational_department_id),
+            en: this.getCategoryNameEn(course.educational_department_id)
+          },
+          level: {
+            ar: this.getLevelNameAr(course.educational_level_id),
+            en: this.getLevelNameEn(course.educational_level_id)
+          },
+          image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+          color: course.color || '#4285F4',
+          code: course.code,
+          rating: 4.5, // Default rating since not provided by API
+          students: '120+', // Default students count
+          duration: {
+            ar: '8 أسابيع',
+            en: '8 weeks'
+          },
+          educational_level_id: course.educational_level_id,
+          educational_department_id: course.educational_department_id,
+          levelId: this.mapLevelIdForFilter(course.educational_level_id)
+        })),
+        pagination: {
+          current_page: response.data.data.current_page,
+          last_page: response.data.data.last_page,
+          per_page: response.data.data.per_page,
+          total: response.data.data.total,
+          from: response.data.data.from,
+          to: response.data.data.to,
+          next_page_url: response.data.data.next_page_url,
+          prev_page_url: response.data.data.prev_page_url
+        }
+      };
+      
+      return transformedData;
     } catch (error) {
       throw handleApiError(error, 'Failed to filter courses');
     }
@@ -151,15 +489,55 @@ class CoursesService {
 
   /**
    * Get education levels
+   * @param {Object} params - Optional parameters
    * @returns {Promise<Array>} List of education levels
    */
-  async getEducationLevels() {
+  async getEducationLevels(params = {}) {
     try {
-      const response = await api.get('/courses/education-levels');
-      return response.data;
+      // استدعاء الـ API الحقيقي للمستويات التعليمية
+      const response = await api.get('/courses/education-levels', { params });
+      
+      // تحويل البيانات من API format إلى UI format
+      const transformedData = {
+        success: response.data.success,
+        data: response.data.data.data.map(level => ({
+          id: level.id,
+          name: level.name,
+          code: level.code,
+          color: level.color,
+          educational_category_id: level.educational_category_id,
+          category: level.category,
+          // إضافة levelId للفلترة
+          levelId: this.mapEducationLevelToFilterId(level.id, level.name)
+        })),
+        pagination: {
+          current_page: response.data.data.current_page,
+          last_page: response.data.data.last_page,
+          per_page: response.data.data.per_page,
+          total: response.data.data.total
+        }
+      };
+      
+      return transformedData;
     } catch (error) {
       throw handleApiError(error, 'Failed to fetch education levels');
     }
+  }
+  
+  /**
+   * Helper method to map education level to filter ID
+   */
+  mapEducationLevelToFilterId(levelId, levelName) {
+    console.log(`📝 Mapping level: ID=${levelId}, Name="${levelName}"`);
+    
+    // استخدام ID مباشر عشان يبقى بسيط وفعال
+    const levelIdStr = String(levelId);
+    
+    // Mapping بناءً على الـ ID أو الاسم
+    const result = `level_${levelIdStr}`;
+    console.log(`🎯 Mapped to: ${result}`);
+    
+    return result;
   }
 
   /**

@@ -50,8 +50,9 @@ import ExamDetailsPage from "./pages/exams/ExamDetailsPage.jsx";
 import ExamQuestionsPage from "./pages/exams/ExamQuestionsPage.jsx";
 import ExamResultsPage from "./pages/exams/ExamResultsPage.jsx";
 
-// Testing page
+// Testing pages
 import ApiTestPage from "./pages/testing/ApiTestPage.jsx";
+import ExamsApiTestPage from "./pages/testing/ExamsApiTestPage.jsx";
 
 // Protected route component
 import PrivateRoute from "./middleware/PrivateRoute.jsx";
@@ -121,6 +122,10 @@ const router = createBrowserRouter([
       {
         path: "/api-test",
         element: <GuestLayout><ApiTestPage /></GuestLayout>
+      },
+      {
+        path: "/exams-api-test",
+        element: <GuestLayout><ExamsApiTestPage /></GuestLayout>
       },
       
       // Protected Routes

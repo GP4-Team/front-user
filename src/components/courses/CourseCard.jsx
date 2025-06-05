@@ -40,6 +40,9 @@ const CourseCard = ({ course, isUserCourse = false, translations }) => {
   const { language, isRTL } = useLanguage();
   const { isDarkMode } = useTheme();
   const isArabic = language === 'ar';
+  
+  // For debugging - check course data structure
+  console.log('CourseCard received course:', course);
 
   return (
     <Link 
@@ -48,12 +51,12 @@ const CourseCard = ({ course, isUserCourse = false, translations }) => {
     >
       <div className="relative">
         <img 
-          src={course.image} 
-          alt={getText(course.title, language)} 
+          src={course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp'} 
+          alt={getText(course.title, language) || course.name || 'Course'} 
           className="w-full h-40 object-cover"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = `https://placehold.co/400x225/${isDarkMode ? '1E1E1E/7986CB' : 'FFFFFF/3949AB'}?text=${encodeURIComponent(getText(course.title, language))}`;
+            e.target.src = `https://placehold.co/400x225/${isDarkMode ? '1E1E1E/7986CB' : 'FFFFFF/3949AB'}?text=${encodeURIComponent(getText(course.title, language) || course.name || 'Course')}`;
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
@@ -81,12 +84,12 @@ const CourseCard = ({ course, isUserCourse = false, translations }) => {
                   <Star 
                     key={i} 
                     size={14} 
-                    className={i < Math.floor(course.rating) ? 'text-accent' : 'text-gray-300'} 
-                    fill={i < Math.floor(course.rating) ? '#FFC107' : 'none'} 
+                    className={i < Math.floor(course.rating || 4.5) ? 'text-accent' : 'text-gray-300'} 
+                    fill={i < Math.floor(course.rating || 4.5) ? '#FFC107' : 'none'} 
                   />
                 ))}
               </div>
-              <span className="text-white text-xs ml-1">{course.rating}</span>
+              <span className="text-white text-xs ml-1">{course.rating || 4.5}</span>
             </div>
           </div>
         )}
@@ -102,10 +105,10 @@ const CourseCard = ({ course, isUserCourse = false, translations }) => {
           </span>
         </div>
         <h3 className={`font-bold text-lg mb-1 ${isDarkMode ? 'text-text-light' : 'text-text-dark'}`}>
-          {getText(course.title, language)}
+          {getText(course.title, language) || course.name || 'Course Title'}
         </h3>
         <p className={`text-sm ${isDarkMode ? 'text-neutral-400' : 'text-neutral-600'}`}>
-          {getText(course.level, language)}
+          {getText(course.level, language) || course.code || 'Course Level'}
         </p>
         
         {isUserCourse ? (
@@ -128,7 +131,7 @@ const CourseCard = ({ course, isUserCourse = false, translations }) => {
             <div className="flex items-center">
               <Users size={14} className={isDarkMode ? 'text-neutral-400' : 'text-neutral-500'} />
               <span className={`text-xs ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'} ml-1 rtl:mr-1 rtl:ml-0`}>
-                {course.students}
+                {course.students || '120+'}
               </span>
             </div>
             <div className="flex items-center">
