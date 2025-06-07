@@ -103,8 +103,10 @@ export const AuthProvider = ({ children }) => {
    */
   const login = async (email, password, remember = false) => {
     try {
-      // Make sure we have a fresh CSRF token
-      await initCsrfToken();
+      // Make sure we have a fresh CSRF token (only in production)
+      if (window.location.hostname !== 'localhost') {
+        await initCsrfToken();
+      }
       
       const response = await authService.login(email, password, remember);
       if (response.data && response.data.user) {
@@ -155,8 +157,10 @@ export const AuthProvider = ({ children }) => {
    */
   const register = async (userData, loginAfterRegister = true) => {
     try {
-      // Make sure we have a fresh CSRF token
-      await initCsrfToken();
+      // Make sure we have a fresh CSRF token (only in production)
+      if (window.location.hostname !== 'localhost') {
+        await initCsrfToken();
+      }
       
       const response = await authService.register(userData);
       

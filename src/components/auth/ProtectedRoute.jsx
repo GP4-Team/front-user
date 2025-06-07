@@ -60,19 +60,11 @@ const ProtectedRoute = ({
     );
   }
   
-  // للتطوير فقط: تجاوز التحقق من المصادقة
-  // أزل هذه التعليقات وفعّل الكود الأصلي عند الانتهاء من التطوير
-  /*
+  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     // حفظ المسار الحالي للعودة إليه بعد تسجيل الدخول
     const returnTo = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/auth?returnTo=${returnTo}`} replace />;
-  }
-  */
-  
-  // للتطوير فقط: السماح بالوصول حتى بدون مصادقة
-  if (!isAuthenticated) {
-    console.log('وضع التطوير: السماح بالوصول بدون مصادقة');
   }
   
   // إذا كان المستخدم لا يملك الصلاحيات المطلوبة

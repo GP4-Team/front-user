@@ -10,7 +10,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 // Register ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
 
-const UserCoursesSection = ({ userCourses, translations }) => {
+const UserCoursesSection = ({ userCourses, translations = {} }) => {
   const { language, isRTL } = useLanguage();
   const { isDarkMode } = useTheme();
   const isArabic = language === 'ar';
@@ -20,6 +20,30 @@ const UserCoursesSection = ({ userCourses, translations }) => {
   const titleRef = useRef(null);
   const linkRef = useRef(null);
   const cardsRef = useRef([]);
+
+  // Default translations if not provided
+  const defaultTranslations = {
+    myCourses: {
+      en: "My Courses",
+      ar: "مقرراتي"
+    },
+    continueLearning: {
+      en: "Continue Learning",
+      ar: "متابعة التعلم"
+    }
+  };
+
+  // Merge provided translations with defaults
+  const finalTranslations = {
+    ...defaultTranslations,
+    ...translations
+  };
+
+  // Helper function to get text
+  const getText = (textObj) => {
+    if (!textObj) return '';
+    return textObj[language] || textObj.en || '';
+  };
 
   // GSAP animations
   useEffect(() => {
@@ -166,8 +190,23 @@ const UserCoursesSection = ({ userCourses, translations }) => {
     };
   }, [userCourses, language, isRTL, isDarkMode]);
 
-  if (userCourses.length === 0) {
-    return null;
+  if (!userCourses || userCourses.length === 0) {
+    return (
+      <section 
+        className={`py-10 px-4 ${isDarkMode ? 'bg-background-card-dark' : 'bg-background-card-light'}`}
+      >
+        <div className="container mx-auto">
+          <div className="text-center py-8">
+            <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-text-light' : 'text-text-dark'}`}>
+              {getText(finalTranslations.myCourses)}
+            </h2>
+            <p className={`${isDarkMode ? 'text-neutral-400' : 'text-neutral-600'}`}>
+              {isArabic ? 'لم تقم بالتسجيل في أي مقررات بعد' : 'You haven\'t enrolled in any courses yet'}
+            </p>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -181,7 +220,7 @@ const UserCoursesSection = ({ userCourses, translations }) => {
             ref={titleRef}
             className={`text-2xl font-bold ${isDarkMode ? 'text-text-light' : 'text-text-dark'}`}
           >
-            {translations.myCourses}
+            {getText(finalTranslations.myCourses)}
           </h2>
           <Link 
             ref={linkRef}
@@ -210,14 +249,17 @@ const UserCoursesSection = ({ userCourses, translations }) => {
               >
                 <div className="relative">
                   <img 
-                    src={course.image} 
-                    alt={course.title[language] || course.title.en} 
+                    src={course.image || course.thumbnail || '/api/placeholder/400/160'} 
+                    alt={getText(course.title) || course.name || 'Course'} 
                     className="w-full h-40 object-cover"
+                    onError={(e) => {
+                      e.target.src = '/api/placeholder/400/160';
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
                   <div className="absolute bottom-3 left-3 flex items-center">
                     <div className={`px-2 py-1 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm`}>
-                      {course.progress}% {isArabic ? 'مكتمل' : 'Complete'}
+                      {course.progress || 0}% {isArabic ? 'مكتمل' : 'Complete'}
                     </div>
                   </div>
                 </div>
@@ -227,19 +269,20 @@ const UserCoursesSection = ({ userCourses, translations }) => {
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-primary-dark/50' : 'bg-primary-light/30'}`}>
                       {(() => {
                         const { Atom, Beaker, Calculator, Dna, Book } = require('lucide-react');
-                        const category = course.category[language] || course.category.en;
+                        const category = getText(course.category) || course.category_name || course.subject || 'general';
+                        const categoryLower = category.toLowerCase();
                         
-                        if (category.toLowerCase().includes("physics") || 
-                            category.includes("فيزياء")) {
+                        if (categoryLower.includes("physics") || 
+                            categoryLower.includes("فيزياء")) {
                           return <Atom size={14} />;
-                        } else if (category.toLowerCase().includes("chemistry") || 
-                                  category.includes("كيمياء")) {
+                        } else if (categoryLower.includes("chemistry") || 
+                                  categoryLower.includes("كيمياء")) {
                           return <Beaker size={14} />;
-                        } else if (category.toLowerCase().includes("math") || 
-                                  category.includes("رياضيات")) {
+                        } else if (categoryLower.includes("math") || 
+                                  categoryLower.includes("رياضيات")) {
                           return <Calculator size={14} />;
-                        } else if (category.toLowerCase().includes("biology") || 
-                                  category.includes("أحياء")) {
+                        } else if (categoryLower.includes("biology") || 
+                                  categoryLower.includes("أحياء")) {
                           return <Dna size={14} />;
                         } else {
                           return <Book size={14} />;
@@ -247,14 +290,14 @@ const UserCoursesSection = ({ userCourses, translations }) => {
                       })()}
                     </div>
                     <span className={`text-xs ${isDarkMode ? 'text-primary-light' : 'text-primary-base'} ml-2 rtl:mr-2 rtl:ml-0`}>
-                      {course.category[language] || course.category.en}
+                      {getText(course.category) || course.category_name || course.subject || 'General'}
                     </span>
                   </div>
                   <h3 className={`font-bold text-lg mb-1 ${isDarkMode ? 'text-text-light' : 'text-text-dark'}`}>
-                    {course.title[language] || course.title.en}
+                    {getText(course.title) || course.name || course.course_name || 'Course Title'}
                   </h3>
                   <p className={`text-sm ${isDarkMode ? 'text-neutral-400' : 'text-neutral-600'}`}>
-                    {course.level[language] || course.level.en}
+                    {getText(course.level) || course.difficulty || course.level_name || 'Beginner'}
                   </p>
                   
                   <div className="mt-4">
@@ -262,13 +305,13 @@ const UserCoursesSection = ({ userCourses, translations }) => {
                       <div 
                         className="progress-bar-fill bg-accent h-2 rounded-full" 
                         style={{ width: '0%' }}
-                        data-progress={course.progress}
+                        data-progress={course.progress || 0}
                       />
                     </div>
                   </div>
                   
                   <button className="w-full mt-4 py-2 bg-primary-base hover:bg-primary-dark text-text-light rounded-lg font-medium text-sm transition-colors">
-                    {translations.continueLearning}
+                    {getText(finalTranslations.continueLearning)}
                   </button>
                 </div>
               </Link>

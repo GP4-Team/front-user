@@ -468,6 +468,21 @@ const Navbar = () => {
                     alt="Profile" 
                     className="h-8 w-8 rounded-full object-cover"
                   />
+                  
+                  {/* اسم المستخدم - مخفي على الموبايل */}
+                  <div className="hidden sm:flex flex-col items-start rtl:items-end">
+                    <span className={`text-sm font-medium leading-tight ${
+                      isDarkMode ? 'text-text-light' : (isScrolled ? 'text-text-dark' : 'text-text-light')
+                    }`}>
+                      {user?.name || (isArabic ? 'مرحباً' : 'Welcome')}
+                    </span>
+                    <span className={`text-xs opacity-75 leading-tight ${
+                      isDarkMode ? 'text-neutral-300' : (isScrolled ? 'text-neutral-600' : 'text-neutral-200')
+                    }`}>
+                      {user?.type || (isArabic ? 'طالب' : 'Student')}
+                    </span>
+                  </div>
+                  
                   <ChevronDown size={16} className="text-current" />
                 </button>
                 

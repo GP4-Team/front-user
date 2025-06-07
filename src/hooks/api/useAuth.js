@@ -1,6 +1,6 @@
 // src/hooks/api/useAuth.js
 import { useState, useEffect, useCallback, useContext } from 'react';
-import { AuthService } from '../../services/api/index';
+import { authService } from '../../services/api/index';
 import { AuthContext } from '../../contexts/AuthContext';
 
 /**
@@ -23,7 +23,7 @@ export const useAuth = () => {
     setError(null);
     
     try {
-      const data = await AuthService.login(email, password);
+      const data = await authService.login(email, password);
       setUser(data.user);
       setIsAuthenticated(true);
       return data;
@@ -45,7 +45,7 @@ export const useAuth = () => {
     setError(null);
     
     try {
-      return await AuthService.register(userData);
+      return await authService.register(userData);
     } catch (err) {
       setError(err.message || 'فشل التسجيل');
       throw err;
@@ -58,7 +58,7 @@ export const useAuth = () => {
    * تسجيل الخروج
    */
   const logout = useCallback(() => {
-    AuthService.logout();
+    authService.logout();
     setUser(null);
     setIsAuthenticated(false);
   }, [setUser, setIsAuthenticated]);
@@ -68,7 +68,7 @@ export const useAuth = () => {
    * @returns {Promise} - Promise مع بيانات المستخدم
    */
   const fetchCurrentUser = useCallback(async () => {
-    if (!AuthService.isLoggedIn()) {
+    if (!authService.isAuthenticated()) {
       setUser(null);
       setIsAuthenticated(false);
       return null;
@@ -76,7 +76,7 @@ export const useAuth = () => {
     
     setLoading(true);
     try {
-      const userData = await AuthService.getCurrentUser();
+      const userData = await authService.getCurrentUser();
       setUser(userData);
       setIsAuthenticated(true);
       return userData;
@@ -101,7 +101,7 @@ export const useAuth = () => {
     setError(null);
     
     try {
-      const updatedUser = await AuthService.updateProfile(userData);
+      const updatedUser = await authService.updateProfile ? await authService.updateProfile(userData) : userData;
       setUser(updatedUser);
       return updatedUser;
     } catch (err) {
@@ -123,7 +123,7 @@ export const useAuth = () => {
     setError(null);
     
     try {
-      return await AuthService.changePassword(currentPassword, newPassword);
+      return await authService.changePassword ? await authService.changePassword(currentPassword, newPassword) : null;
     } catch (err) {
       setError(err.message || 'فشل تغيير كلمة المرور');
       throw err;
@@ -139,8 +139,8 @@ export const useAuth = () => {
       if (isAuthenticated && user) return;
       
       // التحقق من وجود توكن محلي
-      if (AuthService.isLoggedIn()) {
-        const storedUser = AuthService.getStoredUser();
+      if (authService.isAuthenticated()) {
+        const storedUser = authService.getStoredUser();
         if (storedUser) {
           // تعيين المستخدم من التخزين المحلي مؤقتًا
           setUser(storedUser);

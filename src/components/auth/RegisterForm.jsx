@@ -105,9 +105,13 @@ const RegisterForm = ({ returnTo = '/dashboard' }) => {
     setLoading(true);
     
     try {
-      // Get fresh CSRF token before registration
-      console.log('Getting fresh CSRF token before registration...');
-      await initCsrfToken();
+      // Get fresh CSRF token before registration (only in production to avoid CORS)
+      if (window.location.hostname !== 'localhost') {
+        console.log('Getting fresh CSRF token before registration...');
+        await initCsrfToken();
+      } else {
+        console.log('🛠️ Development mode: Skipping CSRF token initialization');
+      }
       
       // Log the data being sent for debugging
       console.log('Sending registration data:', apiData);

@@ -1,21 +1,57 @@
 // src/hooks/api/useExams.js
 import { useState, useCallback } from 'react';
-import { ExamsService } from '../../services/api/index';
+import ExamsService from '../../services/api/exams.service';
+import { parseExamData } from '../../services/examProgressService';
 
 /**
- * هوك مخصص لإدارة عمليات الامتحانات
- * يوفر وظائف للتعامل مع الامتحانات، وجلبها وإدارتها
+ * هوك مخصص لإدارة عمليات الامتحانات الجديدة
+ * يوفر وظائف للتعامل مع الامتحانات، وجلبها وإدارتها مع الحالات الجديدة
  */
 export const useExams = () => {
   const [exams, setExams] = useState([]);
+  const [onlineExams, setOnlineExams] = useState([]);
   const [examDetails, setExamDetails] = useState(null);
+  const [onlineExamDetails, setOnlineExamDetails] = useState(null);
   const [examQuestions, setExamQuestions] = useState([]);
   const [examResults, setExamResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
   /**
-   * جلب قائمة الامتحانات
+   * جلب قائمة الامتحانات الاونلاين مع الحالات
+   * @param {Object} params - معلمات الاستعلام
+   * @returns {Promise} - Promise مع قائمة الامتحانات وحالاتها
+   */
+  const fetchOnlineExams = useCallback(async (params = {}) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log('🚀 [useExams] Fetching online exams with params:', params);
+      const data = await ExamsService.getOnlineExams(params);
+      console.log('📥 [useExams] Raw API response:', data);
+      
+      const parsedExams = (data.exams || data || []).map(exam => {
+        const parsed = parseExamData(exam);
+        console.log('⚙️ [useExams] Parsed exam:', { original: exam, parsed });
+        return parsed;
+      });
+      
+      console.log('✅ [useExams] All parsed exams:', parsedExams);
+      setOnlineExams(parsedExams);
+      return { ...data, exams: parsedExams };
+    } catch (err) {
+      console.error('❌ [useExams] Error fetching online exams:', err);
+      const errorMessage = err.message || 'فشل جلب الامتحانات الاونلاين';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * جلب قائمة الامتحانات (القديمة)
    * @param {Object} params - معلمات الاستعلام
    * @returns {Promise} - Promise مع قائمة الامتحانات
    */
@@ -24,7 +60,7 @@ export const useExams = () => {
     setError(null);
     
     try {
-      const data = await ExamsService.getExams(params);
+      const data = await ExamsService.getUserExams(params);
       setExams(data.exams || data);
       return data;
     } catch (err) {
@@ -36,7 +72,29 @@ export const useExams = () => {
   }, []);
   
   /**
-   * جلب تفاصيل امتحان
+   * جلب تفاصيل امتحان اونلاين مع الحالة
+   * @param {string} examId - معرف الامتحان
+   * @returns {Promise} - Promise مع تفاصيل الامتحان وحالته
+   */
+  const fetchOnlineExamDetails = useCallback(async (examId) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const data = await ExamsService.getOnlineExamById(examId);
+      const parsedExam = parseExamData(data);
+      setOnlineExamDetails(parsedExam);
+      return parsedExam;
+    } catch (err) {
+      setError(err.message || 'فشل جلب تفاصيل امتحان اونلاين');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * جلب تفاصيل امتحان (قديم)
    * @param {string} examId - معرف الامتحان
    * @returns {Promise} - Promise مع تفاصيل الامتحان
    */
@@ -45,7 +103,7 @@ export const useExams = () => {
     setError(null);
     
     try {
-      const data = await ExamsService.getExamDetails(examId);
+      const data = await ExamsService.getExamById(examId);
       setExamDetails(data);
       return data;
     } catch (err) {
@@ -228,12 +286,23 @@ export const useExams = () => {
   
   // إعادة الدوال والحالات
   return {
+    // Online Exams (New)
+    onlineExams,
+    onlineExamDetails,
+    fetchOnlineExams,
+    fetchOnlineExamDetails,
+    
+    // Legacy Exams
     exams,
     examDetails,
     examQuestions,
     examResults,
+    
+    // States
     loading,
     error,
+    
+    // Legacy Functions
     fetchExams,
     fetchExamDetails,
     registerForExam,
@@ -244,6 +313,8 @@ export const useExams = () => {
     fetchExamResults,
     fetchUserExams,
     fetchRecommendedExams,
+    
+    // Utilities
     clearError: () => setError(null)
   };
 };

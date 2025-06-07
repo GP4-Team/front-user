@@ -1,11 +1,25 @@
 // components/students/StudentProfile.jsx
 import React from "react";
 import { Link } from "react-router-dom";
+import useStudentProfile from "../../hooks/useStudentProfile";
+import { useLanguage } from "../../contexts/LanguageContext";
+import { useTheme } from "../../contexts/ThemeContext";
 
-// Note: We're using the LanguageContext from your app
-// We'll handle the case where t might not be available
-
-const StudentProfile = ({ student, exams, currentCourses }) => {
+const StudentProfile = () => {
+  // استخدام الـ hook للحصول على بيانات البروفايل
+  const {
+    loading,
+    error,
+    basicInfo,
+    academicInfo,
+    currentCourses,
+    examHistory,
+    hasData,
+    refreshProfile
+  } = useStudentProfile();
+  
+  const { language, isRTL } = useLanguage();
+  const { isDarkMode } = useTheme();
   // Default text function if translation isn't available
   const defaultT = (key) => {
     const translations = {
@@ -35,17 +49,50 @@ const StudentProfile = ({ student, exams, currentCourses }) => {
   // Get translations - first try from context, fall back to default
   const t = (key) => defaultT(key);
 
-  // Default to LTR if not specified
-  const isRtl = false;
-
-  if (!student) {
+  // Loading state
+  if (loading) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div
-          className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4"
-          role="alert"
-        >
-          <p>{t("noStudentData")}</p>
+      <div className={`container mx-auto px-4 py-6 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50'}`}>
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+          <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            {language === 'ar' ? 'جاري تحميل بيانات البروفايل...' : 'Loading profile data...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className={`container mx-auto px-4 py-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <div className={`${isDarkMode ? 'bg-red-900 border-red-700 text-red-300' : 'bg-red-100 border-red-500 text-red-700'} border-l-4 p-4 rounded`} role="alert">
+          <div className="flex items-center">
+            <div className="ml-3">
+              <p className="text-sm font-medium">
+                {language === 'ar' ? 'خطأ في تحميل البيانات' : 'Error loading data'}
+              </p>
+              <p className="text-sm mt-1">{error}</p>
+              <button 
+                onClick={refreshProfile}
+                className={`mt-2 px-4 py-2 text-sm rounded ${isDarkMode ? 'bg-red-700 hover:bg-red-600 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}`}
+              >
+                {language === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No data state
+  if (!hasData || !basicInfo) {
+    return (
+      <div className={`container mx-auto px-4 py-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <div className={`${isDarkMode ? 'bg-yellow-900 border-yellow-700 text-yellow-300' : 'bg-yellow-100 border-yellow-500 text-yellow-700'} border-l-4 p-4 rounded`} role="alert">
+          <p>{language === 'ar' ? 'لا توجد بيانات للبروفايل' : 'No profile data available'}</p>
         </div>
       </div>
     );
@@ -67,70 +114,74 @@ const StudentProfile = ({ student, exams, currentCourses }) => {
       </div>
 
       {/* Profile Info */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+      <div className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-lg shadow-md overflow-hidden mb-6`}>
         <div className="md:flex">
-          <div className="md:w-1/3 bg-gray-100 p-6 text-center">
+          <div className={`md:w-1/3 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} p-6 text-center`}>
             <img
-              src={student.photo}
-              alt={student.name}
+              src={basicInfo.avatar || '/api/placeholder/128/128'}
+              alt={basicInfo.name}
               className="rounded-full w-32 h-32 mx-auto mb-4 border-4 border-white shadow"
+              onError={(e) => {
+                e.target.src = '/api/placeholder/128/128';
+              }}
             />
-            <h2 className="text-2xl font-bold text-gray-800">{student.name}</h2>
-            <p className="text-gray-600 mb-4">{student.id}</p>
+            <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{basicInfo.name}</h2>
+            <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>{basicInfo.id}</p>
 
-            <div className="flex items-center justify-center mb-2">
-              <span className="text-gray-700 mr-2">✉</span> {/* Email icon */}
-              <span>{student.email}</span>
+            <div className={`flex items-center justify-center mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} ${isRTL ? 'ml-2' : 'mr-2'}`}>✉</span>
+              <span className={isDarkMode ? 'text-gray-200' : 'text-gray-800'}>{basicInfo.email}</span>
             </div>
 
-            <div className="flex items-center justify-center mb-4">
-              <span className="text-gray-700 mr-2">📱</span> {/* Phone icon */}
-              <span>{student.phone}</span>
+            <div className={`flex items-center justify-center mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} ${isRTL ? 'ml-2' : 'mr-2'}`}>📱</span>
+              <span className={isDarkMode ? 'text-gray-200' : 'text-gray-800'}>{basicInfo.phone}</span>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mt-6">
-              <div className="bg-white p-3 rounded shadow-sm">
-                <p className="text-xs text-gray-500">{t("department")}</p>
-                <p className="font-semibold text-gray-800">
-                  {student.department}
+              <div className={`${isDarkMode ? 'bg-gray-600' : 'bg-white'} p-3 rounded shadow-sm`}>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>{t("department")}</p>
+                <p className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                  {basicInfo.department}
                 </p>
               </div>
-              <div className="bg-white p-3 rounded shadow-sm">
-                <p className="text-xs text-gray-500">{t("level")}</p>
-                <p className="font-semibold text-gray-800">{student.level}</p>
+              <div className={`${isDarkMode ? 'bg-gray-600' : 'bg-white'} p-3 rounded shadow-sm`}>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>{t("level")}</p>
+                <p className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{basicInfo.level}</p>
               </div>
-              <div className="bg-white p-3 rounded shadow-sm">
-                <p className="text-xs text-gray-500">{t("gpa")}</p>
-                <p className="font-semibold text-green-600">{student.gpa}</p>
+              <div className={`${isDarkMode ? 'bg-gray-600' : 'bg-white'} p-3 rounded shadow-sm`}>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>{t("gpa")}</p>
+                <p className="font-semibold text-green-600">{basicInfo.gpa || 'N/A'}</p>
               </div>
-              <div className="bg-white p-3 rounded shadow-sm">
-                <p className="text-xs text-gray-500">{t("status")}</p>
-                <p className="font-semibold text-green-600">{student.status}</p>
+              <div className={`${isDarkMode ? 'bg-gray-600' : 'bg-white'} p-3 rounded shadow-sm`}>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>{t("status")}</p>
+                <p className="font-semibold text-green-600">{basicInfo.status}</p>
               </div>
             </div>
           </div>
 
           <div className="md:w-2/3 p-6">
             <div className="mb-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <span className={`${isRtl ? "ml-2" : "mr-2"}`}>🎓</span>{" "}
-                {/* Graduation cap icon */}
+              <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-4 flex items-center ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+                <span className={`${isRTL ? "ml-2" : "mr-2"}`}>🎓</span>
                 {t("academicProgress")}
               </h3>
 
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-700">{t("creditsCompleted")}</span>
-                  <span className="font-bold">
-                    {student.totalCredits} / {student.requiredCredits}
+              <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} p-4 rounded-lg mb-4`}>
+                <div className={`flex justify-between mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{t("creditsCompleted")}</span>
+                  <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                    {academicInfo?.totalCredits || 0} / {academicInfo?.requiredCredits || 120}
                   </span>
                 </div>
-                <div className="w-full bg-gray-300 rounded-full h-4">
+                <div className={`w-full ${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'} rounded-full h-4`}>
                   <div
                     className="bg-green-500 rounded-full h-4"
                     style={{
                       width: `${
-                        (student.totalCredits / student.requiredCredits) * 100
+                        academicInfo?.totalCredits && academicInfo?.requiredCredits
+                          ? (academicInfo.totalCredits / academicInfo.requiredCredits) * 100
+                          : 0
                       }%`,
                     }}
                   ></div>
@@ -138,27 +189,27 @@ const StudentProfile = ({ student, exams, currentCourses }) => {
               </div>
 
               <div className="grid md:grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded shadow-sm border-t-4 border-green-400">
-                  <div className="text-3xl font-bold text-gray-800">
-                    {student.gpa}
+                <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'} p-4 rounded shadow-sm border-t-4 border-green-400`}>
+                  <div className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                    {basicInfo.gpa || 'N/A'}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
                     {t("cumulativeGPA")}
                   </div>
                 </div>
-                <div className="bg-white p-4 rounded shadow-sm border-t-4 border-blue-400">
-                  <div className="text-3xl font-bold text-gray-800">
-                    {currentCourses.length}
+                <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'} p-4 rounded shadow-sm border-t-4 border-blue-400`}>
+                  <div className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                    {currentCourses?.length || 0}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
                     {t("currentCourses")}
                   </div>
                 </div>
-                <div className="bg-white p-4 rounded shadow-sm border-t-4 border-purple-400">
-                  <div className="text-3xl font-bold text-gray-800">
-                    {exams.filter((exam) => exam.status === "قادم").length}
+                <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'} p-4 rounded shadow-sm border-t-4 border-purple-400`}>
+                  <div className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                    {examHistory?.filter((exam) => exam.status === "upcoming" || exam.status === "قادم").length || 0}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
                     {t("upcomingExams")}
                   </div>
                 </div>
@@ -166,76 +217,68 @@ const StudentProfile = ({ student, exams, currentCourses }) => {
             </div>
 
             <div>
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <span className={`${isRtl ? "ml-2" : "mr-2"}`}>📋</span>{" "}
-                {/* Clipboard icon */}
+              <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-4 flex items-center ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+                <span className={`${isRTL ? "ml-2" : "mr-2"}`}>📋</span>
                 {t("examHistory")}
               </h3>
 
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gray-100">
-                      <th
-                        className={`px-4 py-2 ${
-                          isRtl ? "text-right" : "text-left"
-                        }`}
-                      >
+                    <tr className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                      <th className={`px-4 py-2 ${isRTL ? "text-right" : "text-left"} ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                         {t("course")}
                       </th>
-                      <th
-                        className={`px-4 py-2 ${
-                          isRtl ? "text-right" : "text-left"
-                        }`}
-                      >
+                      <th className={`px-4 py-2 ${isRTL ? "text-right" : "text-left"} ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                         {t("date")}
                       </th>
-                      <th
-                        className={`px-4 py-2 ${
-                          isRtl ? "text-right" : "text-left"
-                        }`}
-                      >
+                      <th className={`px-4 py-2 ${isRTL ? "text-right" : "text-left"} ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                         {t("score")}
                       </th>
-                      <th
-                        className={`px-4 py-2 ${
-                          isRtl ? "text-right" : "text-left"
-                        }`}
-                      >
+                      <th className={`px-4 py-2 ${isRTL ? "text-right" : "text-left"} ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                         {t("status")}
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {exams.map((exam) => (
-                      <tr key={exam.id} className="border-b hover:bg-gray-50">
-                        <td className="px-4 py-3">{exam.course}</td>
-                        <td className="px-4 py-3">
-                          {new Date(exam.date).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-3">
-                          {exam.score !== null ? (
-                            <span className="font-medium">
-                              {exam.score} / {exam.maxScore}
+                    {examHistory && examHistory.length > 0 ? (
+                      examHistory.map((exam, index) => (
+                        <tr key={exam.id || index} className={`border-b ${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-200 hover:bg-gray-50'}`}>
+                          <td className={`px-4 py-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                            {exam.course_name || exam.course || exam.title || 'N/A'}
+                          </td>
+                          <td className={`px-4 py-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                            {exam.date ? new Date(exam.date).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : 'N/A'}
+                          </td>
+                          <td className={`px-4 py-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                            {exam.score !== null && exam.score !== undefined ? (
+                              <span className="font-medium">
+                                {exam.score} / {exam.max_score || exam.maxScore || 100}
+                              </span>
+                            ) : (
+                              <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs ${
+                                exam.status === "completed" || exam.status === "مكتمل"
+                                  ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200"
+                                  : "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-200"
+                              }`}
+                            >
+                              {exam.status}
                             </span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              exam.status === "مكتمل" ||
-                              exam.status === "completed"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-blue-100 text-blue-800"
-                            }`}
-                          >
-                            {exam.status}
-                          </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className={`px-4 py-8 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {language === 'ar' ? 'لا توجد امتحانات سابقة' : 'No exam history available'}
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -245,47 +288,54 @@ const StudentProfile = ({ student, exams, currentCourses }) => {
       </div>
 
       {/* Current Courses */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+      <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md overflow-hidden mb-6`}>
         <div className="p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-            <span className={`${isRtl ? "ml-2" : "mr-2"}`}>📚</span>{" "}
-            {/* Book icon */}
+          <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-4 flex items-center ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+            <span className={`${isRTL ? "ml-2" : "mr-2"}`}>📚</span>
             {t("currentCourses")}
           </h3>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {currentCourses.map((course) => (
-              <div
-                key={course.id}
-                className="border rounded-lg overflow-hidden"
-              >
-                <div className="bg-gray-100 px-4 py-3 flex justify-between items-center">
-                  <div>
-                    <h4 className="font-bold text-gray-800">{course.name}</h4>
-                    <p className="text-sm text-gray-600">
-                      {course.code} · {course.credits} {t("credits")}
+            {currentCourses && currentCourses.length > 0 ? (
+              currentCourses.map((course, index) => (
+                <div
+                  key={course.id || index}
+                  className={`border ${isDarkMode ? 'border-gray-600' : 'border-gray-200'} rounded-lg overflow-hidden`}
+                >
+                  <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} px-4 py-3 flex justify-between items-center`}>
+                    <div>
+                      <h4 className={`font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                        {course.name || course.course_name || course.title || 'N/A'}
+                      </h4>
+                      <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {course.code || course.course_code || 'N/A'} · {course.credits || course.credit_hours || 3} {t("credits")}
+                      </p>
+                    </div>
+                    <div className={`${isDarkMode ? 'bg-gray-600' : 'bg-white'} rounded-full h-12 w-12 flex items-center justify-center shadow-sm`}>
+                      <span className={`${isDarkMode ? 'text-white' : 'text-gray-800'} font-bold`}>
+                        {course.progress || course.completion_percentage || 0}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <p className={`text-sm mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{t("instructor")}:</span>{" "}
+                      {course.instructor || course.instructor_name || course.teacher || 'N/A'}
                     </p>
-                  </div>
-                  <div className="bg-white rounded-full h-12 w-12 flex items-center justify-center shadow-sm">
-                    <span className="text-gray-800 font-bold">
-                      {course.progress}%
-                    </span>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <p className="text-sm mb-2">
-                    <span className="text-gray-500">{t("instructor")}:</span>{" "}
-                    {course.instructor}
-                  </p>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                    <div
-                      className="bg-green-500 rounded-full h-2"
-                      style={{ width: `${course.progress}%` }}
-                    ></div>
+                    <div className={`w-full ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full h-2 mt-2`}>
+                      <div
+                        className="bg-green-500 rounded-full h-2"
+                        style={{ width: `${course.progress || course.completion_percentage || 0}%` }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className={`col-span-2 text-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {language === 'ar' ? 'لا توجد مقررات حالية' : 'No current courses available'}
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

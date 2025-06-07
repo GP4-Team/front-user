@@ -13,10 +13,32 @@ const ExamList = ({
   handleSelectExam, 
   favoriteExams, 
   translations,
-  cardRefs
+  cardRefs,
+  isOnlineExam = false
 }) => {
   const { isDarkMode } = useTheme();
-  const { isRTL } = useLanguage();
+  const { isRTL, language } = useLanguage();
+
+  // Show empty state if no exams
+  if (!exams || exams.length === 0) {
+    return (
+      <div className="mb-8 animate-fadeIn">
+        <SectionTitle title={title} count={0} />
+        <div className="text-center py-12">
+          <div className="text-gray-400 text-6xl mb-4">📝</div>
+          <h3 className={`text-lg font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            {language === 'ar' ? 'لا توجد امتحانات' : 'No exams available'}
+          </h3>
+          <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            {language === 'ar' 
+              ? 'سيتم عرض الامتحانات هنا عندما تكون متاحة' 
+              : 'Exams will appear here when available'
+            }
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-8 animate-fadeIn">
@@ -38,6 +60,7 @@ const ExamList = ({
               handleSelectExam={handleSelectExam}
               favoriteExams={favoriteExams}
               translations={translations}
+              isOnlineExam={isOnlineExam}
             />
           </div>
         ))}

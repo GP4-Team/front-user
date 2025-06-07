@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useExams } from "../../hooks/api/useExams";
 import Navbar from "../../components/navigation/Navbar";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -29,6 +30,14 @@ const MyExamsPage = () => {
   const { language, isRTL, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
 
+  // Use the new online exams hook
+  const { 
+    onlineExams, 
+    loading, 
+    error, 
+    fetchOnlineExams 
+  } = useExams();
+
   // Refs for animations
   const pageRef = useRef(null);
   const statsSectionRef = useRef(null);
@@ -46,63 +55,59 @@ const MyExamsPage = () => {
   const [favoriteExams, setFavoriteExams] = useState([]);
   const [statsVisible, setStatsVisible] = useState(true);
 
-  // Stats calculation
+  // Stats calculation from real data
   const [examStats, setExamStats] = useState({
     totalExams: 0,
     completedExams: 0,
-    averageScore: 82,
-    highestScore: 82,
+    averageScore: 0,
+    highestScore: 0,
     pendingExams: 0,
   });
 
-  // Sample exam data
-  const mockExamsData = [
-    {
-      id: 1,
-      title: isRTL ? "اختبار عملي" : "Practical Test",
-      subject: isRTL ? "قواعد البيانات" : "Database",
-      status: "available",
-      date: "2025/03/18",
-      time: "PM 14:00",
-      duration: 120,
-      numberOfQuestions: 25,
-    },
-    {
-      id: 2,
-      title: isRTL ? "تدريب الباب الاول" : "First Chapter Training",
-      subject: isRTL ? "أساسيات و مفاهيم في التيار الكهربي" : "Basics & Concepts in Electric Current",
-      status: "available",
-      date: "2025/03/20",
-      time: "AM 10:00",
-      duration: 45,
-      numberOfQuestions: 50,
-    },
-    {
-      id: 3,
-      title: isRTL ? "امتحان نصف الفصل" : "Midterm Exam",
-      subject: isRTL ? "ميكانيكا الموائع" : "Fluid Mechanics",
-      status: "available",
-      date: "2025/03/22",
-      time: "PM 12:30",
-      duration: 60,
-      numberOfQuestions: 30,
-    },
-    {
-      id: 4,
-      title: isRTL ? "الاختبار النهائي" : "Final Exam",
-      subject: isRTL ? "تحليل البيانات" : "Data Analysis",
-      status: "finished",
-      date: "2025/02/28",
-      time: "PM 15:00",
-      duration: 90,
-      numberOfQuestions: 40,
-      score: 82,
-    },
-  ];
-
-  // Calculate and prepare the exams data
+  // Load exams data from API
   useEffect(() => {
-    // Load favorites from localStorage
+    const loadExams = async () => {
+      try {
+        await fetchOnlineExams();
+      } catch (err) {
+        console.error('Error loading exams:', err);
+      }
+    };
+
+    loadExams();
+  }, [fetchOnlineExams]);
+
+  // Calculate stats from real exam data
+  useEffect(() => {
+    if (onlineExams && onlineExams.length > 0) {
+      const completed = onlineExams.filter(exam => 
+        exam.status === 'revision' || exam.lastAttempt
+      );
+      
+      const scores = completed
+        .map(exam => exam.bestScore || exam.lastAttempt?.score || 0)
+        .filter(score => score > 0);
+      
+      const avgScore = scores.length > 0
+        ? scores.reduce((sum, score) => sum + score, 0) / scores.length
+        : 0;
+      
+      const highest = scores.length > 0 ? Math.max(...scores) : 0;
+      
+      setExamStats({
+        totalExams: onlineExams.length,
+        completedExams: completed.length,
+        averageScore: Math.round(avgScore),
+        highestScore: highest,
+        pendingExams: onlineExams.filter(exam => 
+          exam.status === 'start' || exam.status === 'continue' || exam.status === 'retry'
+        ).length,
+      });
+    }
+  }, [onlineExams]);
+
+  // Load favorites from localStorage
+  useEffect(() => {
     try {
       const savedFavorites = localStorage.getItem("favoriteExams");
       if (savedFavorites) {
@@ -111,26 +116,6 @@ const MyExamsPage = () => {
     } catch (error) {
       console.error("Error loading favorites:", error);
     }
-
-    // Calculate stats using the mock data
-    const completed = mockExamsData.filter(
-      (exam) => exam.status === "finished"
-    );
-    const scores = completed.map((exam) => exam.score || 0);
-    const avgScore =
-      scores.length > 0
-        ? scores.reduce((sum, score) => sum + score, 0) / scores.length
-        : 0;
-    const highest = scores.length > 0 ? Math.max(...scores) : 0;
-
-    setExamStats({
-      totalExams: mockExamsData.length,
-      completedExams: completed.length,
-      averageScore: Math.round(avgScore),
-      highestScore: highest,
-      pendingExams: mockExamsData.filter((exam) => exam.status !== "finished")
-        .length,
-    });
   }, []);
 
   // GSAP animations
@@ -331,19 +316,70 @@ const MyExamsPage = () => {
   };
 
   const handleSelectExam = (exam) => {
-    if (exam.status === "finished") {
-      navigate(`/exams/${exam.id}`);
+    if (exam.status === "revision") {
+      navigate(`/exams/${exam.id}/review`);
+    } else if (exam.status === "unavailable" || exam.status === "none") {
+      // Do nothing for unavailable exams
+      return;
     } else {
-      navigate(`/exams/${exam.id}/questions`);
+      navigate(`/exams/${exam.id}`);
     }
   };
 
   // Access translations based on current language
   const t = translations[language];
 
-  // Filter exams for different sections
-  const availableExams = mockExamsData.filter(exam => exam.status !== "finished");
-  const completedExams = mockExamsData.filter(exam => exam.status === "finished");
+  // Filter exams for different sections from real data
+  const availableExams = onlineExams ? onlineExams.filter(exam => 
+    exam.status === 'start' || exam.status === 'continue' || exam.status === 'retry'
+  ) : [];
+  
+  const completedExams = onlineExams ? onlineExams.filter(exam => 
+    exam.status === 'revision' || exam.lastAttempt
+  ) : [];
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className={`flex flex-col min-h-screen ${isDarkMode ? 'bg-background-dark' : 'bg-[#F0F4F8]'}`}>
+        <Navbar />
+        <div className="mt-16 flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-base mx-auto mb-4"></div>
+            <p className={`text-lg ${isDarkMode ? 'text-white' : 'text-gray-600'}`}>
+              {language === 'ar' ? 'جاري تحميل الامتحانات...' : 'Loading exams...'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className={`flex flex-col min-h-screen ${isDarkMode ? 'bg-background-dark' : 'bg-[#F0F4F8]'}`}>
+        <Navbar />
+        <div className="mt-16 flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-red-500 text-6xl mb-4">⚠️</div>
+            <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+              {language === 'ar' ? 'خطأ في تحميل الامتحانات' : 'Error Loading Exams'}
+            </h2>
+            <p className={`text-lg mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              {error}
+            </p>
+            <button 
+              onClick={() => fetchOnlineExams()}
+              className="bg-primary-base hover:bg-primary-dark text-white px-6 py-2 rounded-lg"
+            >
+              {language === 'ar' ? 'إعادة المحاولة' : 'Try Again'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -411,6 +447,7 @@ const MyExamsPage = () => {
               favoriteExams={favoriteExams}
               translations={t}
               cardRefs={examCardRefs}
+              isOnlineExam={true}
             />
           </div>
 
@@ -425,6 +462,7 @@ const MyExamsPage = () => {
               favoriteExams={favoriteExams}
               translations={t}
               cardRefs={examCardRefs}
+              isOnlineExam={true}
             />
           </div>
         </div>

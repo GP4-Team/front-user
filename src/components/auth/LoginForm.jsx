@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/api/auth.service';
+import { initCsrfToken } from '../../services/api';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -72,12 +73,29 @@ const LoginForm = ({ returnTo = '/dashboard' }) => {
     setLoading(true);
     
     try {
+      // Get fresh CSRF token before login (only in production to avoid CORS)
+      if (window.location.hostname !== 'localhost') {
+        console.log('Getting fresh CSRF token before login...');
+        await initCsrfToken();
+      } else {
+        console.log('🛠️ Development mode: Skipping CSRF token initialization');
+      }
+      
+      // Log the data being sent for debugging
+      console.log('Sending login data:', {
+        login: formData.login,
+        password: '***hidden***',
+        remember: formData.remember
+      });
+      
       // Call the login API with exact field names required by API
       const response = await authService.login(
         formData.login,     // API expects 'login'
         formData.password,  // API expects 'password'
         formData.remember   // API expects 'remember'
       );
+      
+      console.log('Login response:', response);
       
       // Update auth context with user data
       // AuthService returns data directly, not wrapped in response.data
@@ -102,14 +120,41 @@ const LoginForm = ({ returnTo = '/dashboard' }) => {
     } catch (error) {
       console.error('Login error:', error);
       
-      // Handle API errors
+      // Handle API errors (same pattern as registration)
       if (error.errors) {
         // Format validation errors from backend
         setErrors(error.errors);
+      } else if (error.response?.status === 500) {
+        // Special handling for server errors
+        setMessage({
+          text: language === 'ar' ? 
+            'خطأ في إعدادات الخادم. يرجى التواصل مع الدعم الفني.' : 
+            'Server configuration error. Please contact support.',
+          type: 'error'
+        });
+      } else if (error.response?.status === 419) {
+        // CSRF token error - retry with new token
+        console.log('CSRF error detected, retrying with new token...');
+        setMessage({
+          text: language === 'ar' ? 'حدث خطأ في المصادقة. جاري إعادة المحاولة...' : 'Authentication error. Retrying...',
+          type: 'error'
+        });
+        
+        // Wait a moment then try again
+        setTimeout(() => {
+          handleSubmit(e);
+        }, 1000);
+        return;
+      } else if (error.response?.status === 401) {
+        // Unauthorized - wrong credentials
+        setMessage({
+          text: language === 'ar' ? 'بيانات الاعتماد غير صحيحة. يرجى التحقق من البريد الإلكتروني وكلمة المرور.' : 'Invalid credentials. Please check your email and password.',
+          type: 'error'
+        });
       } else {
         // General error message
         setMessage({
-          text: error.message || (language === 'ar' ? 'فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد الخاصة بك.' : 'Login failed. Please check your credentials.'),
+          text: error.message || (language === 'ar' ? 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.' : 'Login failed. Please try again.'),
           type: 'error'
         });
       }

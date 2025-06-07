@@ -20,140 +20,35 @@ import {
   FileText,
   Edit,
   Bell,
+  Loader,
 } from "lucide-react";
-import Navbar from "../../components/navigation/Navbar"; // Import the Navbar component
+import Navbar from "../../components/navigation/Navbar";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
+import useStudentProfile from "../../hooks/useStudentProfile";
 
 const StudentProfile = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const { language, isRTL } = useLanguage();
   const { isDarkMode } = useTheme();
   const isArabic = language === "ar";
+  
+  // استخدام الـ hook للحصول على بيانات البروفايل
+  const {
+    loading,
+    error,
+    basicInfo,
+    academicInfo,
+    currentCourses,
+    examHistory,
+    hasData,
+    refreshProfile,
+    upcomingAssignments,
+    completedCourses,
+    announcements
+  } = useStudentProfile();
 
-  const student = {
-    name: "Ahmed Mohamed",
-    id: "S-2023-4502",
-    email: "ahmed.mohamed@example.com",
-    phone: "+20 123 456 7890",
-    address: "15 Tahrir Street, Cairo, Egypt",
-    avatar: "/api/placeholder/200/200",
-    program: "Bachelor of Computer Science",
-    department: "Information Systems",
-    year: 3,
-    gpa: 3.7,
-    totalCredits: 87,
-    remainingCredits: 45,
-    advisorName: "Dr. Nabil Ibrahim",
-    enrollmentDate: "Sep 2021",
-  };
-
-  const currentCourses = [
-    {
-      code: "CS301",
-      name: "Database Systems",
-      credits: 3,
-      grade: "In Progress",
-      instructor: "Dr. Heba Ahmed",
-    },
-    {
-      code: "CS315",
-      name: "Software Engineering",
-      credits: 4,
-      grade: "In Progress",
-      instructor: "Dr. Mahmoud Ali",
-    },
-    {
-      code: "CS350",
-      name: "Computer Networks",
-      credits: 3,
-      grade: "In Progress",
-      instructor: "Dr. Samia Hassan",
-    },
-    {
-      code: "CS325",
-      name: "Operating Systems",
-      credits: 4,
-      grade: "In Progress",
-      instructor: "Dr. Khaled Omar",
-    },
-  ];
-
-  const completedCourses = [
-    {
-      code: "CS101",
-      name: "Introduction to Programming",
-      credits: 3,
-      grade: "A",
-      semester: "Fall 2021",
-    },
-    {
-      code: "CS201",
-      name: "Data Structures",
-      credits: 4,
-      grade: "A-",
-      semester: "Spring 2022",
-    },
-    {
-      code: "CS210",
-      name: "Algorithms",
-      credits: 3,
-      grade: "B+",
-      semester: "Fall 2022",
-    },
-    {
-      code: "CS220",
-      name: "Computer Architecture",
-      credits: 3,
-      grade: "A",
-      semester: "Spring 2023",
-    },
-    {
-      code: "CS250",
-      name: "Discrete Mathematics",
-      credits: 3,
-      grade: "B",
-      semester: "Fall 2022",
-    },
-    {
-      code: "CS260",
-      name: "Theory of Computation",
-      credits: 3,
-      grade: "B+",
-      semester: "Spring 2023",
-    },
-  ];
-
-  const upcomingAssignments = [
-    {
-      course: "CS301",
-      title: "ER Diagram Design",
-      dueDate: "Oct 25, 2023",
-      status: "Pending",
-    },
-    {
-      course: "CS315",
-      title: "Requirements Document",
-      dueDate: "Oct 28, 2023",
-      status: "Pending",
-    },
-    {
-      course: "CS350",
-      title: "Network Protocols Lab",
-      dueDate: "Nov 5, 2023",
-      status: "Pending",
-    },
-  ];
-
-  const announcements = [
-    { title: "Midterm Schedule Published", date: "Oct 10, 2023", read: false },
-    {
-      title: "New Database Lab Resources Available",
-      date: "Oct 8, 2023",
-      read: true,
-    },
-    { title: "Academic Advising Week", date: "Oct 5, 2023", read: true },
-  ];
+  // إزالة التعليق لأن البيانات أصبحت من الAPI
 
   // UI text translations
   const translations = {
@@ -215,12 +110,86 @@ const StudentProfile = () => {
       en: "Upcoming Assignments",
       ar: "الواجبات القادمة",
     },
+    loading: {
+      en: "Loading profile data...",
+      ar: "جاري تحميل بيانات البروفايل...",
+    },
+    errorLoading: {
+      en: "Error loading profile data",
+      ar: "خطأ في تحميل بيانات البروفايل",
+    },
+    retry: {
+      en: "Retry",
+      ar: "إعادة المحاولة",
+    },
+    noData: {
+      en: "No profile data available",
+      ar: "لا توجد بيانات للبروفايل",
+    },
   };
 
   // Get text based on current language
   const getText = (textObj) => {
     return textObj[language] || textObj.en; // Fallback to English
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className={`w-full bg-[#F0F4F8] dark:bg-[#121212] min-h-screen ${
+        isRTL ? "font-tajawal" : ""
+      }`}>
+        <Navbar />
+        <div className="max-w-6xl mx-auto p-6 pt-24">
+          <div className="flex flex-col items-center justify-center min-h-[400px]">
+            <Loader className="animate-spin h-12 w-12 text-[#3949AB] mb-4" />
+            <p className="text-lg text-[#37474F] dark:text-white">
+              {getText(translations.loading)}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className={`w-full bg-[#F0F4F8] dark:bg-[#121212] min-h-screen ${
+        isRTL ? "font-tajawal" : ""
+      }`}>
+        <Navbar />
+        <div className="max-w-6xl mx-auto p-6 pt-24">
+          <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded">
+            <h3 className="font-bold">{getText(translations.errorLoading)}</h3>
+            <p className="mt-1">{error}</p>
+            <button 
+              onClick={refreshProfile}
+              className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+            >
+              {getText(translations.retry)}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No data state
+  if (!hasData || !basicInfo) {
+    return (
+      <div className={`w-full bg-[#F0F4F8] dark:bg-[#121212] min-h-screen ${
+        isRTL ? "font-tajawal" : ""
+      }`}>
+        <Navbar />
+        <div className="max-w-6xl mx-auto p-6 pt-24">
+          <div className="bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-700 text-yellow-700 dark:text-yellow-400 px-4 py-3 rounded">
+            <p>{getText(translations.noData)}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -236,52 +205,55 @@ const StudentProfile = () => {
         <div className="bg-white dark:bg-[#1E1E1E] rounded-xl shadow-md overflow-hidden mb-6">
           <div className="flex flex-col md:flex-row">
             {/* Profile Image and Basic Info */}
-            <div className="md:w-1/3 p-6 bg-[#3949AB] dark:bg-[#1A237E] text-white">
+            <div className={`md:w-1/3 p-6 bg-[#3949AB] dark:bg-[#1A237E] text-white ${isRTL ? 'md:order-2' : ''}`}>
               <div className="flex flex-col items-center">
                 <div className="relative mb-4">
                   <img
-                    src={student.avatar}
-                    alt={student.name}
+                    src={basicInfo.avatar || "/api/placeholder/200/200"}
+                    alt={basicInfo.name}
                     className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-[#37474F]"
+                    onError={(e) => {
+                      e.target.src = "/api/placeholder/200/200";
+                    }}
                   />
                   <button className="absolute bottom-0 right-0 bg-[#FFC107] p-2 rounded-full">
                     <Edit size={16} className="text-[#37474F]" />
                   </button>
                 </div>
-                <h1 className="text-2xl font-bold">{student.name}</h1>
-                <p className="text-[#7986CB]">{student.id}</p>
+                <h1 className="text-2xl font-bold">{basicInfo.name}</h1>
+                <p className="text-[#7986CB]">{basicInfo.id}</p>
                 <p className="mt-2 text-center font-medium">
-                  {student.program}
+                  {basicInfo.program || basicInfo.department}
                 </p>
-                <div className="flex items-center mt-1">
-                  <GraduationCap size={16} className="mr-1" />
-                  <span className="text-sm">{student.department}</span>
+                <div className={`flex items-center mt-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <GraduationCap size={16} className={`${isRTL ? 'ml-1' : 'mr-1'}`} />
+                  <span className="text-sm">{basicInfo.department}</span>
                 </div>
               </div>
 
               <div className="mt-6 space-y-3">
-                <div className="flex items-center">
-                  <Mail size={16} className="mr-3 text-[#7986CB]" />
-                  <span className="text-sm">{student.email}</span>
+                <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <Mail size={16} className={`${isRTL ? 'ml-3' : 'mr-3'} text-[#7986CB]`} />
+                  <span className="text-sm">{basicInfo.email}</span>
                 </div>
-                <div className="flex items-center">
-                  <Phone size={16} className="mr-3 text-[#7986CB]" />
-                  <span className="text-sm">{student.phone}</span>
+                <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <Phone size={16} className={`${isRTL ? 'ml-3' : 'mr-3'} text-[#7986CB]`} />
+                  <span className="text-sm">{basicInfo.phone}</span>
                 </div>
-                <div className="flex items-center">
-                  <MapPin size={16} className="mr-3 text-[#7986CB]" />
-                  <span className="text-sm">{student.address}</span>
+                <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <MapPin size={16} className={`${isRTL ? 'ml-3' : 'mr-3'} text-[#7986CB]`} />
+                  <span className="text-sm">{basicInfo.address || 'N/A'}</span>
                 </div>
               </div>
             </div>
 
             {/* Academic Progress and Stats */}
-            <div className="md:w-2/3 p-6">
-              <div className="flex justify-between items-center mb-6">
+            <div className={`md:w-2/3 p-6 ${isRTL ? 'md:order-1' : ''}`}>
+              <div className={`flex justify-between items-center mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
                 <h2 className="text-xl font-semibold text-[#37474F] dark:text-white">
                   {getText(translations.academicProgress)}
                 </h2>
-                <div className="flex space-x-2">
+                <div className={`flex space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
                   <button className="p-2 bg-[#F0F4F8] dark:bg-[#2D2D2D] rounded-full">
                     <Bell
                       size={18}
@@ -303,7 +275,7 @@ const StudentProfile = () => {
                     {getText(translations.currentGPA)}
                   </p>
                   <p className="text-2xl font-bold text-[#37474F] dark:text-white">
-                    {student.gpa}
+                    {basicInfo.gpa || 'N/A'}
                   </p>
                 </div>
                 <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-4 rounded-lg">
@@ -311,8 +283,7 @@ const StudentProfile = () => {
                     {getText(translations.year)}
                   </p>
                   <p className="text-2xl font-bold text-[#37474F] dark:text-white">
-                    {student.year}
-                    <span className="text-base font-normal">rd</span>
+                    {academicInfo?.currentYear || academicInfo?.level || 'N/A'}
                   </p>
                 </div>
                 <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-4 rounded-lg">
@@ -320,7 +291,7 @@ const StudentProfile = () => {
                     {getText(translations.completedCredits)}
                   </p>
                   <p className="text-2xl font-bold text-[#37474F] dark:text-white">
-                    {student.totalCredits}
+                    {academicInfo?.totalCredits || 0}
                   </p>
                 </div>
                 <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-4 rounded-lg">
@@ -328,18 +299,18 @@ const StudentProfile = () => {
                     {getText(translations.remaining)}
                   </p>
                   <p className="text-2xl font-bold text-[#37474F] dark:text-white">
-                    {student.remainingCredits}
+                    {academicInfo?.requiredCredits ? (academicInfo.requiredCredits - (academicInfo.totalCredits || 0)) : 'N/A'}
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-col md:flex-row justify-between">
+              <div className={`flex flex-col md:flex-row justify-between ${isRTL ? 'md:flex-row-reverse' : ''}`}>
                 <div className="mb-4 md:mb-0">
                   <p className="text-sm text-[#3949AB] dark:text-[#7986CB]">
                     {getText(translations.academicAdvisor)}
                   </p>
                   <p className="font-medium text-[#37474F] dark:text-white">
-                    {student.advisorName}
+                    {academicInfo?.advisorName || 'N/A'}
                   </p>
                 </div>
                 <div>
@@ -347,7 +318,7 @@ const StudentProfile = () => {
                     {getText(translations.enrollmentDate)}
                   </p>
                   <p className="font-medium text-[#37474F] dark:text-white">
-                    {student.enrollmentDate}
+                    {academicInfo?.enrollmentDate ? new Date(academicInfo.enrollmentDate).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : 'N/A'}
                   </p>
                 </div>
                 <div>
@@ -355,7 +326,7 @@ const StudentProfile = () => {
                     {getText(translations.expectedGraduation)}
                   </p>
                   <p className="font-medium text-[#37474F] dark:text-white">
-                    Jun 2024
+                    {academicInfo?.expectedGraduation ? new Date(academicInfo.expectedGraduation).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US') : 'N/A'}
                   </p>
                 </div>
               </div>
@@ -365,33 +336,33 @@ const StudentProfile = () => {
 
         {/* Tabs Section */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-white dark:bg-[#1E1E1E] p-1 rounded-lg mb-6 flex space-x-1">
+          <TabsList className={`bg-white dark:bg-[#1E1E1E] p-1 rounded-lg mb-6 flex ${isRTL ? 'space-x-reverse' : 'space-x-1'}`}>
             <TabsTrigger
               value="overview"
-              className="flex-1 py-2 data-[state=active]:bg-[#3949AB] data-[state=active]:text-white"
+              className={`flex-1 py-2 data-[state=active]:bg-[#3949AB] data-[state=active]:text-white ${isRTL ? 'flex-row-reverse' : ''}`}
             >
-              <BarChart size={16} className="mr-2" />
+              <BarChart size={16} className={`${isRTL ? 'ml-2' : 'mr-2'}`} />
               {getText(translations.overview)}
             </TabsTrigger>
             <TabsTrigger
               value="courses"
-              className="flex-1 py-2 data-[state=active]:bg-[#3949AB] data-[state=active]:text-white"
+              className={`flex-1 py-2 data-[state=active]:bg-[#3949AB] data-[state=active]:text-white ${isRTL ? 'flex-row-reverse' : ''}`}
             >
-              <BookOpen size={16} className="mr-2" />
+              <BookOpen size={16} className={`${isRTL ? 'ml-2' : 'mr-2'}`} />
               {getText(translations.courses)}
             </TabsTrigger>
             <TabsTrigger
               value="assignments"
-              className="flex-1 py-2 data-[state=active]:bg-[#3949AB] data-[state=active]:text-white"
+              className={`flex-1 py-2 data-[state=active]:bg-[#3949AB] data-[state=active]:text-white ${isRTL ? 'flex-row-reverse' : ''}`}
             >
-              <FileText size={16} className="mr-2" />
+              <FileText size={16} className={`${isRTL ? 'ml-2' : 'mr-2'}`} />
               {getText(translations.assignments)}
             </TabsTrigger>
             <TabsTrigger
               value="announcements"
-              className="flex-1 py-2 data-[state=active]:bg-[#3949AB] data-[state=active]:text-white"
+              className={`flex-1 py-2 data-[state=active]:bg-[#3949AB] data-[state=active]:text-white ${isRTL ? 'flex-row-reverse' : ''}`}
             >
-              <Bell size={16} className="mr-2" />
+              <Bell size={16} className={`${isRTL ? 'ml-2' : 'mr-2'}`} />
               {getText(translations.announcements)}
             </TabsTrigger>
           </TabsList>
@@ -401,39 +372,45 @@ const StudentProfile = () => {
               {/* Current Courses Card */}
               <div className="bg-white dark:bg-[#1E1E1E] rounded-xl shadow-md overflow-hidden col-span-1 md:col-span-2">
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold text-[#37474F] dark:text-white mb-4">
+                  <h3 className={`text-lg font-semibold text-[#37474F] dark:text-white mb-4 ${isRTL ? 'text-right' : 'text-left'}`}>
                     {getText(translations.currentCourses)}
                   </h3>
                   <div className="space-y-4">
-                    {currentCourses.map((course, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between border-b border-[#F0F4F8] dark:border-[#2D2D2D] pb-3 last:border-0 last:pb-0"
-                      >
-                        <div>
-                          <p className="font-medium text-[#37474F] dark:text-white">
-                            {course.name}
-                          </p>
-                          <div className="flex items-center">
-                            <span className="text-sm text-[#3949AB] dark:text-[#7986CB] mr-2">
-                              {course.code}
+                    {currentCourses && currentCourses.length > 0 ? (
+                      currentCourses.slice(0, 4).map((course, index) => (
+                        <div
+                          key={course.id || index}
+                          className={`flex items-center justify-between border-b border-[#F0F4F8] dark:border-[#2D2D2D] pb-3 last:border-0 last:pb-0 ${isRTL ? 'flex-row-reverse' : ''}`}
+                        >
+                          <div className={isRTL ? 'text-right' : 'text-left'}>
+                            <p className="font-medium text-[#37474F] dark:text-white">
+                              {course.name || course.course_name || course.title || 'N/A'}
+                            </p>
+                            <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
+                              <span className={`text-sm text-[#3949AB] dark:text-[#7986CB] ${isRTL ? 'ml-2' : 'mr-2'}`}>
+                                {course.code || course.course_code || 'N/A'}
+                              </span>
+                              <span className="text-xs bg-[#F0F4F8] dark:bg-[#2D2D2D] text-[#3949AB] dark:text-[#7986CB] py-0.5 px-2 rounded-full">
+                                {course.credits || course.credit_hours || 3} credits
+                              </span>
+                            </div>
+                          </div>
+                          <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            <span className={`text-sm text-[#3949AB] dark:text-[#7986CB] ${isRTL ? 'ml-3' : 'mr-3'}`}>
+                              {course.instructor || course.instructor_name || course.teacher || 'N/A'}
                             </span>
-                            <span className="text-xs bg-[#F0F4F8] dark:bg-[#2D2D2D] text-[#3949AB] dark:text-[#7986CB] py-0.5 px-2 rounded-full">
-                              {course.credits} credits
-                            </span>
+                            <ChevronRight
+                              size={18}
+                              className={`text-[#3949AB] dark:text-[#7986CB] ${isRTL ? 'rotate-180' : ''}`}
+                            />
                           </div>
                         </div>
-                        <div className="flex items-center">
-                          <span className="text-sm text-[#3949AB] dark:text-[#7986CB] mr-3">
-                            {course.instructor}
-                          </span>
-                          <ChevronRight
-                            size={18}
-                            className="text-[#3949AB] dark:text-[#7986CB]"
-                          />
-                        </div>
+                      ))
+                    ) : (
+                      <div className={`text-center py-8 text-[#37474F] dark:text-white ${isRTL ? 'text-right' : 'text-left'}`}>
+                        {language === 'ar' ? 'لا توجد مقررات حالية' : 'No current courses available'}
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               </div>
@@ -445,35 +422,41 @@ const StudentProfile = () => {
                     {getText(translations.upcomingAssignments)}
                   </h3>
                   <div className="space-y-4">
-                    {upcomingAssignments.map((assignment, index) => (
-                      <div
-                        key={index}
-                        className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-3 rounded-lg"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <p className="font-medium text-[#37474F] dark:text-white">
-                            {assignment.title}
-                          </p>
-                          <span className="text-xs bg-[#FFC107] text-[#37474F] py-0.5 px-2 rounded-full">
-                            {assignment.course}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <Clock
-                              size={14}
-                              className="text-[#3949AB] dark:text-[#7986CB] mr-1"
-                            />
-                            <span className="text-xs text-[#3949AB] dark:text-[#7986CB]">
-                              Due: {assignment.dueDate}
+                    {upcomingAssignments && upcomingAssignments.length > 0 ? (
+                      upcomingAssignments.slice(0, 3).map((assignment, index) => (
+                        <div
+                          key={assignment.id || index}
+                          className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-3 rounded-lg"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <p className="font-medium text-[#37474F] dark:text-white">
+                              {assignment.title || assignment.name || 'Assignment'}
+                            </p>
+                            <span className="text-xs bg-[#FFC107] text-[#37474F] py-0.5 px-2 rounded-full">
+                              {assignment.course || assignment.course_code || 'Course'}
                             </span>
                           </div>
-                          <span className="text-xs text-[#3949AB] dark:text-[#7986CB]">
-                            {assignment.status}
-                          </span>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <Clock
+                                size={14}
+                                className="text-[#3949AB] dark:text-[#7986CB] mr-1"
+                              />
+                              <span className="text-xs text-[#3949AB] dark:text-[#7986CB]">
+                                Due: {assignment.due_date || assignment.dueDate || 'TBD'}
+                              </span>
+                            </div>
+                            <span className="text-xs text-[#3949AB] dark:text-[#7986CB]">
+                              {assignment.status || 'Pending'}
+                            </span>
+                          </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-[#37474F] dark:text-white">
+                        {language === 'ar' ? 'لا توجد واجبات قادمة' : 'No upcoming assignments'}
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               </div>
@@ -520,35 +503,43 @@ const StudentProfile = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#F0F4F8] dark:divide-[#2D2D2D]">
-                      {completedCourses.map((course, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-4 text-sm font-medium text-[#37474F] dark:text-white">
-                            {course.code}
-                          </td>
-                          <td className="px-4 py-4 text-sm text-[#37474F] dark:text-white">
-                            {course.name}
-                          </td>
-                          <td className="px-4 py-4 text-sm text-[#3949AB] dark:text-[#7986CB]">
-                            {course.credits}
-                          </td>
-                          <td className="px-4 py-4">
-                            <span
-                              className={`text-sm py-1 px-2 rounded-full ${
-                                course.grade === "A" || course.grade === "A-"
-                                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                  : course.grade.startsWith("B")
-                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                                  : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                              }`}
-                            >
-                              {course.grade}
-                            </span>
-                          </td>
-                          <td className="px-4 py-4 text-sm text-[#3949AB] dark:text-[#7986CB]">
-                            {course.semester}
+                      {completedCourses && completedCourses.length > 0 ? (
+                        completedCourses.map((course, index) => (
+                          <tr key={course.id || index}>
+                            <td className="px-4 py-4 text-sm font-medium text-[#37474F] dark:text-white">
+                              {course.code || course.course_code || 'N/A'}
+                            </td>
+                            <td className="px-4 py-4 text-sm text-[#37474F] dark:text-white">
+                              {course.name || course.course_name || course.title || 'N/A'}
+                            </td>
+                            <td className="px-4 py-4 text-sm text-[#3949AB] dark:text-[#7986CB]">
+                              {course.credits || course.credit_hours || 3}
+                            </td>
+                            <td className="px-4 py-4">
+                              <span
+                                className={`text-sm py-1 px-2 rounded-full ${
+                                  course.grade === "A" || course.grade === "A-"
+                                    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                    : course.grade?.startsWith("B")
+                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                                    : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                }`}
+                              >
+                                {course.grade || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 text-sm text-[#3949AB] dark:text-[#7986CB]">
+                              {course.semester || course.term || 'N/A'}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="5" className="px-4 py-8 text-center text-[#37474F] dark:text-white">
+                            {language === 'ar' ? 'لا توجد مقررات مكتملة' : 'No completed courses available'}
                           </td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -587,71 +578,60 @@ const StudentProfile = () => {
                 </div>
 
                 <div className="space-y-4 mt-6">
-                  {[
-                    ...upcomingAssignments,
-                    {
-                      course: "CS220",
-                      title: "Processor Design Project",
-                      dueDate: "Sep 25, 2023",
-                      status: "Completed",
-                    },
-                    {
-                      course: "CS201",
-                      title: "Binary Tree Implementation",
-                      dueDate: "May 15, 2023",
-                      status: "Completed",
-                    },
-                    {
-                      course: "CS250",
-                      title: "Logic Proof Assignment",
-                      dueDate: "Apr 12, 2023",
-                      status: "Completed",
-                    },
-                  ].map((assignment, index) => (
-                    <div
-                      key={index}
-                      className={`bg-[#F0F4F8] dark:bg-[#2D2D2D] p-4 rounded-lg flex justify-between items-center ${
-                        assignment.status === "Completed"
-                          ? "border-l-4 border-[#FFC107]"
-                          : "border-l-4 border-[#7986CB]"
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center mb-1">
-                          <span className="text-xs bg-[#3949AB] text-white py-0.5 px-2 rounded-full mr-2">
-                            {assignment.course}
-                          </span>
-                          <p className="font-medium text-[#37474F] dark:text-white">
-                            {assignment.title}
-                          </p>
+                  {upcomingAssignments && upcomingAssignments.length > 0 ? (
+                    [
+                      ...upcomingAssignments,
+                      // يمكن إضافة assignments مكتملة من API لو متوفرة
+                    ].map((assignment, index) => (
+                      <div
+                        key={assignment.id || index}
+                        className={`bg-[#F0F4F8] dark:bg-[#2D2D2D] p-4 rounded-lg flex justify-between items-center ${
+                          assignment.status === "Completed" || assignment.status === "مكتمل"
+                            ? "border-l-4 border-[#FFC107]"
+                            : "border-l-4 border-[#7986CB]"
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center mb-1">
+                            <span className="text-xs bg-[#3949AB] text-white py-0.5 px-2 rounded-full mr-2">
+                              {assignment.course || assignment.course_code || 'Course'}
+                            </span>
+                            <p className="font-medium text-[#37474F] dark:text-white">
+                              {assignment.title || assignment.name || 'Assignment'}
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <Clock
+                              size={14}
+                              className="text-[#3949AB] dark:text-[#7986CB] mr-1"
+                            />
+                            <span className="text-xs text-[#3949AB] dark:text-[#7986CB]">
+                              {assignment.due_date || assignment.dueDate || 'TBD'}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center">
-                          <Clock
-                            size={14}
-                            className="text-[#3949AB] dark:text-[#7986CB] mr-1"
-                          />
-                          <span className="text-xs text-[#3949AB] dark:text-[#7986CB]">
-                            {assignment.dueDate}
-                          </span>
-                        </div>
-                      </div>
 
-                      <div className="flex items-center">
-                        <span
-                          className={`text-xs py-1 px-3 rounded-full ${
-                            assignment.status === "Completed"
-                              ? "bg-[#FFC107]/20 text-[#FFC107]"
-                              : "bg-[#7986CB]/20 text-[#7986CB]"
-                          }`}
-                        >
-                          {assignment.status}
-                        </span>
-                        <button className="ml-4 text-[#3949AB] dark:text-[#7986CB]">
-                          <ChevronRight size={18} />
-                        </button>
+                        <div className="flex items-center">
+                          <span
+                            className={`text-xs py-1 px-3 rounded-full ${
+                              assignment.status === "Completed" || assignment.status === "مكتمل"
+                                ? "bg-[#FFC107]/20 text-[#FFC107]"
+                                : "bg-[#7986CB]/20 text-[#7986CB]"
+                            }`}
+                          >
+                            {assignment.status || 'Pending'}
+                          </span>
+                          <button className="ml-4 text-[#3949AB] dark:text-[#7986CB]">
+                            <ChevronRight size={18} />
+                          </button>
+                        </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-[#37474F] dark:text-white">
+                      {language === 'ar' ? 'لا توجد واجبات' : 'No assignments available'}
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
@@ -665,53 +645,47 @@ const StudentProfile = () => {
                 </h3>
 
                 <div className="space-y-4">
-                  {[
-                    ...announcements,
-                    {
-                      title: "Winter Break Schedule",
-                      date: "Sep 30, 2023",
-                      read: true,
-                    },
-                    {
-                      title: "Library Hours Update",
-                      date: "Sep 25, 2023",
-                      read: true,
-                    },
-                  ].map((announcement, index) => (
-                    <div
-                      key={index}
-                      className={`p-4 border-l-4 rounded-r-lg ${
-                        announcement.read
-                          ? "border-[#7986CB] bg-[#F0F4F8]/50 dark:bg-[#2D2D2D]/50"
-                          : "border-[#FFC107] bg-[#F0F4F8] dark:bg-[#2D2D2D]"
-                      }`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4
-                            className={`font-medium ${
-                              announcement.read
-                                ? "text-[#3949AB] dark:text-[#7986CB]"
-                                : "text-[#37474F] dark:text-white"
-                            }`}
-                          >
-                            {announcement.title}
-                            {!announcement.read && (
-                              <span className="ml-2 bg-[#FFC107] text-[#37474F] text-xs px-2 py-0.5 rounded-full">
-                                New
-                              </span>
-                            )}
-                          </h4>
-                          <p className="text-xs text-[#3949AB] dark:text-[#7986CB] mt-1">
-                            {announcement.date}
-                          </p>
+                  {announcements && announcements.length > 0 ? (
+                    announcements.map((announcement, index) => (
+                      <div
+                        key={announcement.id || index}
+                        className={`p-4 border-l-4 rounded-r-lg ${
+                          announcement.read || announcement.is_read
+                            ? "border-[#7986CB] bg-[#F0F4F8]/50 dark:bg-[#2D2D2D]/50"
+                            : "border-[#FFC107] bg-[#F0F4F8] dark:bg-[#2D2D2D]"
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4
+                              className={`font-medium ${
+                                announcement.read || announcement.is_read
+                                  ? "text-[#3949AB] dark:text-[#7986CB]"
+                                  : "text-[#37474F] dark:text-white"
+                              }`}
+                            >
+                              {announcement.title || announcement.subject || 'Announcement'}
+                              {!(announcement.read || announcement.is_read) && (
+                                <span className="ml-2 bg-[#FFC107] text-[#37474F] text-xs px-2 py-0.5 rounded-full">
+                                  {language === 'ar' ? 'جديد' : 'New'}
+                                </span>
+                              )}
+                            </h4>
+                            <p className="text-xs text-[#3949AB] dark:text-[#7986CB] mt-1">
+                              {announcement.date || announcement.created_at || 'N/A'}
+                            </p>
+                          </div>
+                          <button className="text-[#3949AB] dark:text-[#7986CB]">
+                            <ChevronRight size={18} />
+                          </button>
                         </div>
-                        <button className="text-[#3949AB] dark:text-[#7986CB]">
-                          <ChevronRight size={18} />
-                        </button>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-[#37474F] dark:text-white">
+                      {language === 'ar' ? 'لا توجد إعلانات' : 'No announcements available'}
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>

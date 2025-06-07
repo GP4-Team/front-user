@@ -4,6 +4,14 @@ import { Button, Skeleton, Card, Row, Col, Tag, List, Typography } from 'antd';
 import { ClockCircleOutlined, FileTextOutlined, CheckCircleOutlined, TrophyOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useExams } from '../../hooks/api/useExams';
+import { ExamStatusBadge } from '../../components/exams/ExamStatusBadge';
+import { 
+  formatExamDuration, 
+  isExamActionEnabled,
+  getExamStatusLabel,
+  EXAM_STATUS 
+} from '../../services/examProgressService';
 import StartExamModal from '../../components/exams/StartExamModal';
 
 const { Title, Text, Paragraph } = Typography;
@@ -33,8 +41,14 @@ const ExamDetailsPage = () => {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
   
-  const [examData, setExamData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Use the new online exams hook
+  const { 
+    onlineExamDetails, 
+    fetchOnlineExamDetails, 
+    loading, 
+    error 
+  } = useExams();
+  
   const [showStartModal, setShowStartModal] = useState(false);
 
   // Color scheme from the provided image
@@ -49,42 +63,48 @@ const ExamDetailsPage = () => {
     white: '#FFFFFF',
   };
 
-  // Simulating API call to get exam data
+  // Fetch exam data using real API
   useEffect(() => {
-    const fetchExamData = async () => {
+    const loadExamData = async () => {
       try {
-        // In a real app, you would fetch from an API
-        // const response = await examService.getExamById(examId);
-        // setExamData(response.data);
-        
-        // Simulating API delay
-        setTimeout(() => {
-          setExamData(mockExamData);
-          setIsLoading(false);
-        }, 800);
-      } catch (error) {
-        console.error('Error fetching exam data:', error);
-        setIsLoading(false);
+        await fetchOnlineExamDetails(examId);
+      } catch (err) {
+        console.error('Error fetching exam details:', err);
       }
     };
 
-    fetchExamData();
-  }, [examId]);
+    if (examId) {
+      loadExamData();
+    }
+  }, [examId, fetchOnlineExamDetails]);
 
   const handleStartExam = () => {
-    setShowStartModal(true);
+    // Only show modal if exam action is enabled
+    if (onlineExamDetails && isExamActionEnabled(onlineExamDetails.status)) {
+      setShowStartModal(true);
+    }
   };
 
   const confirmStartExam = () => {
     setShowStartModal(false);
-    navigate(`/exams/${examId}/questions`);
+    // Handle different actions based on status
+    switch (onlineExamDetails?.status) {
+      case EXAM_STATUS.START:
+      case EXAM_STATUS.RETRY:
+        navigate(`/exams/${examId}/questions`);
+        break;
+      case EXAM_STATUS.CONTINUE:
+        navigate(`/exams/${examId}/questions?continue=true`);
+        break;
+      case EXAM_STATUS.REVISION:
+        navigate(`/exams/${examId}/review`);
+        break;
+      default:
+        break;
+    }
   };
 
-  const cancelStartExam = () => {
-    setShowStartModal(false);
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="container mx-auto p-6">
         <Skeleton active paragraph={{ rows: 6 }} />
@@ -92,15 +112,15 @@ const ExamDetailsPage = () => {
     );
   }
 
-  if (!examData) {
+  if (error || !onlineExamDetails) {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center">
           <Title level={3}>{language === 'ar' ? 'لم يتم العثور على الامتحان' : 'Exam not found'}</Title>
           <Paragraph>
             {language === 'ar' 
-              ? 'لم نتمكن من العثور على الامتحان المطلوب. يرجى التحقق من الرابط والمحاولة مرة أخرى.' 
-              : 'We could not find the requested exam. Please check the link and try again.'}
+              ? error || 'لم نتمكن من العثور على الامتحان المطلوب.' 
+              : error || 'We could not find the requested exam.'}
           </Paragraph>
           <Button type="primary" onClick={() => navigate('/exams')}>
             {language === 'ar' ? 'العودة إلى الامتحانات' : 'Back to Exams'}
@@ -109,6 +129,12 @@ const ExamDetailsPage = () => {
       </div>
     );
   }
+
+  // Get formatted data
+  const examData = onlineExamDetails;
+  const formattedDuration = formatExamDuration(examData.duration, language);
+  const actionText = getExamStatusLabel(examData.status, language);
+  const isActionEnabled = isExamActionEnabled(examData.status);
 
   return (
     <div className={`container mx-auto p-4 mt-24 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -120,7 +146,7 @@ const ExamDetailsPage = () => {
           {/* Exam Title - Centered */}
           <div className="text-center mb-6">
             <Title level={2} className={isDarkMode ? 'text-white' : ''} style={{ fontSize: '24px' }}>
-              {examData.title}
+              {examData.name || examData.title}
             </Title>
             <div className="p-12">
               <img 
@@ -133,42 +159,61 @@ const ExamDetailsPage = () => {
                 }}
               />
             </div>
+            
+            {/* Status Badge */}
+            <div className="mb-4">
+              <ExamStatusBadge status={examData.status} />
+            </div>
+            
             <Paragraph className={`text-center ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} style={{ fontSize: '16px' }}>
-              {examData.subtitle}
+              {examData.description || (language === 'ar' ? 'امتحان في' : 'Exam in')} {examData.courseName}
             </Paragraph>
           </div>
 
           {/* Exam Details - Stats row */}
           <div className="grid grid-cols-4 gap-2 mb-8 mt-6 text-center">
             <div>
-              <div className="text-sm text-gray-500 mb-1">مدة الامتحان</div>
+              <div className="text-sm text-gray-500 mb-1">
+                {language === 'ar' ? 'مدة الامتحان' : 'Duration'}
+              </div>
               <div className="flex items-center justify-center">
                 <ClockCircleOutlined className="mr-1 text-gray-400" />
-                <span className="font-bold">{examData.timeLimit} دقائق</span>
+                <span className="font-bold">{formattedDuration}</span>
               </div>
             </div>
             
             <div>
-              <div className="text-sm text-gray-500 mb-1">عدد الأسئلة</div>
+              <div className="text-sm text-gray-500 mb-1">
+                {language === 'ar' ? 'عدد الأسئلة' : 'Questions'}
+              </div>
               <div className="flex items-center justify-center">
                 <FileTextOutlined className="mr-1 text-gray-400" />
-                <span className="font-bold">{examData.totalQuestions}</span>
+                <span className="font-bold">{examData.numberOfQuestions || 0}</span>
               </div>
             </div>
             
             <div>
-              <div className="text-sm text-gray-500 mb-1">النسبة المطلوبة</div>
+              <div className="text-sm text-gray-500 mb-1">
+                {language === 'ar' ? 'النسبة المطلوبة' : 'Required Score'}
+              </div>
               <div className="flex items-center justify-center">
                 <TrophyOutlined className="mr-1 text-gray-400" />
-                <span className="font-bold">{examData.passingScore}%</span>
+                <span className="font-bold">{examData.minPercentage || 50}%</span>
               </div>
             </div>
             
             <div>
-              <div className="text-sm text-gray-500 mb-1">المحاولات المتبقية</div>
+              <div className="text-sm text-gray-500 mb-1">
+                {language === 'ar' ? 'المحاولات المتبقية' : 'Attempts Left'}
+              </div>
               <div className="flex items-center justify-center">
                 <InfoCircleOutlined className="mr-1 text-gray-400" />
-                <span className="font-bold">{examData.attempts.remaining}</span>
+                <span className="font-bold">
+                  {examData.allowedChances ? 
+                    (examData.allowedChances - (examData.attemptsUsed || 0)) : 
+                    (language === 'ar' ? 'غير محدد' : 'Unlimited')
+                  }
+                </span>
               </div>
             </div>
           </div>
@@ -178,59 +223,63 @@ const ExamDetailsPage = () => {
             <Button 
               type="primary" 
               size="large" 
+              disabled={!isActionEnabled}
               onClick={handleStartExam}
               style={{ 
-                backgroundColor: colors.purple, // Changed to purple
-                borderColor: colors.purple,     // Changed to purple
+                backgroundColor: isActionEnabled ? colors.purple : undefined,
+                borderColor: isActionEnabled ? colors.purple : undefined,
                 borderRadius: '8px',
                 height: '40px',
                 fontSize: '16px',
                 width: '180px',
+                opacity: isActionEnabled ? 1 : 0.6
               }}
             >
-              {language === 'ar' ? 'بدء الامتحان' : 'Start Exam'}
+              {actionText}
             </Button>
           </div>
         </Card>
 
         {/* Previous Attempts Section */}
-        {examData.previousAttempts.length > 0 && (
+        {examData.lastAttempt && (
           <div className="mt-8">
             <Title level={4} className={`mb-4 ${isDarkMode ? 'text-white' : ''}`}>
-              {language === 'ar' ? 'المحاولات السابقة' : 'Previous Attempts'}
+              {language === 'ar' ? 'المحاولة الأخيرة' : 'Last Attempt'}
             </Title>
             
             <Card className={`shadow-md ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}>
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-2 px-4">التاريخ</th>
-                    <th className="text-center py-2 px-4">النتيجة</th>
-                    <th className="text-center py-2 px-4">الإجابات</th>
-                    <th className="text-right py-2 px-4">الوقت المستغرق</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {examData.previousAttempts.map((attempt, index) => (
-                    <tr key={index} className="border-b border-gray-200">
-                      <td className="py-3 px-4">{attempt.date}</td>
-                      <td className="py-3 px-4 text-center">
-                        <span 
-                          className={`px-2 py-1 rounded-md ${
-                            attempt.score >= examData.passingScore 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {attempt.score}%
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-center">{attempt.answers}</td>
-                      <td className="py-3 px-4 text-right">{attempt.timeSpent}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">
+                    {language === 'ar' ? 'النتيجة' : 'Score'}
+                  </div>
+                  <span 
+                    className={`text-lg font-bold px-2 py-1 rounded-md ${
+                      (examData.lastAttempt.score || 0) >= (examData.minPercentage || 50)
+                        ? 'text-green-600 bg-green-100' 
+                        : 'text-red-600 bg-red-100'
+                    }`}
+                  >
+                    {examData.lastAttempt.score || 0}%
+                  </span>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">
+                    {language === 'ar' ? 'التاريخ' : 'Date'}
+                  </div>
+                  <div className="text-sm">
+                    {examData.lastAttempt.date || new Date().toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">
+                    {language === 'ar' ? 'الوقت المستغرق' : 'Time Spent'}
+                  </div>
+                  <div className="text-sm">
+                    {examData.lastAttempt.timeSpent || (language === 'ar' ? 'غير متوفر' : 'N/A')}
+                  </div>
+                </div>
+              </div>
             </Card>
           </div>
         )}
@@ -240,9 +289,11 @@ const ExamDetailsPage = () => {
       {showStartModal && (
         <StartExamModal
           onConfirm={confirmStartExam}
-          onCancel={cancelStartExam}
+          onCancel={() => setShowStartModal(false)}
           language={language}
           colors={colors}
+          examStatus={examData.status}
+          examTitle={examData.name || examData.title}
         />
       )}
     </div>

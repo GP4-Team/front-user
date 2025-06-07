@@ -10,12 +10,17 @@
  * @returns {Error} Processed error object
  */
 export const handleApiError = (error, defaultMessage = 'An unexpected error occurred') => {
+  console.log('🚫 [ErrorHandler] Processing error:', error);
+  
   // Network error or no response
   if (!error.response) {
+    console.error('🌐 [ErrorHandler] Network error - no response received');
     return new Error('Failed to connect to server. Please check your internet connection.');
   }
 
   const { status, data } = error.response;
+  console.log(`📊 [ErrorHandler] Response status: ${status}, data:`, data);
+  
   let message = defaultMessage;
 
   // Handle different errors based on status code
@@ -30,7 +35,8 @@ export const handleApiError = (error, defaultMessage = 'An unexpected error occu
       message = 'You do not have permission to access this content';
       break;
     case 404:
-      message = 'The requested content was not found';
+      message = 'The requested endpoint was not found. Please check if the API endpoint exists.';
+      console.warn('🔍 [ErrorHandler] 404 - API endpoint may not exist:', error.config?.url);
       break;
     case 422:
       // Validation errors
@@ -46,6 +52,7 @@ export const handleApiError = (error, defaultMessage = 'An unexpected error occu
       break;
     case 500:
       message = 'Server error. Please try again later';
+      console.error('🔥 [ErrorHandler] Server error (500):', data);
       break;
     case 503:
       message = 'Service temporarily unavailable. Please try again later';
@@ -54,6 +61,8 @@ export const handleApiError = (error, defaultMessage = 'An unexpected error occu
       message = data?.message || defaultMessage;
   }
 
+  console.log('ℹ️ [ErrorHandler] Final error message:', message);
+  
   const apiError = new Error(message);
   apiError.status = status;
   apiError.originalError = error;

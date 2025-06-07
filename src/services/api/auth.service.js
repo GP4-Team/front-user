@@ -1,7 +1,7 @@
 // src/services/api/auth.service.js
 import api from '../api';
 import { handleAuthError } from '../utils/errorHandler';
-import { setToken, removeToken, getToken } from '../../utils/tokenHelpers';
+import { setToken, removeToken, getToken, isTokenExpired } from '../../utils/tokenHelpers';
 
 /**
  * Authentication Service - Handle all authentication operations
@@ -212,7 +212,7 @@ class AuthService {
    */
   isAuthenticated() {
     const token = getToken();
-    return !!token;
+    return !!token && !isTokenExpired(token);
   }
 
   /**

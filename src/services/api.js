@@ -82,11 +82,11 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'X-Requested-With': 'XMLHttpRequest' // Important for Laravel to recognize AJAX requests
+    'Accept': 'application/json'
+    // Removed X-Requested-With to avoid CORS preflight in development
   },
   timeout: 30000, // 30 seconds timeout for slow connections
-  withCredentials: false // Disable for now due to CORS issues
+  withCredentials: window.location.hostname !== 'localhost' // Only enable for production to avoid CORS issues
 });
 
 /**
@@ -96,13 +96,48 @@ api.interceptors.request.use(
   (config) => {
     console.log(`🚀 Making ${config.method?.toUpperCase()} request to: ${config.url}`);
     
+    // Don't add Authorization header to login/register endpoints (they don't need existing tokens)
+    // But DO add it to logout/me endpoints (they require valid tokens)
+    const noTokenEndpoints = ['/login', '/register'];
+    const requiresTokenEndpoint = noTokenEndpoints.some(endpoint => config.url?.includes(endpoint));
+    
     // Get token from local storage
     const token = getToken();
     
-    // Add token to authorization header if available
-    if (token) {
+    // Add token to authorization header if available (but not for login/register endpoints)
+    if (token && !requiresTokenEndpoint) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log('🔑 Authorization header added');
+    } else if (requiresTokenEndpoint) {
+      console.log('🚫 Skipping Authorization header for login/register endpoint');
+    } else {
+      console.log('⚠️ No token available');
+    }
+    
+    // Add CSRF token for state-changing requests (only in production)
+    if (['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase())) {
+      // Skip CSRF in development to avoid CORS issues
+      if (window.location.hostname !== 'localhost') {
+        const currentCsrfToken = getCsrfTokenFromCookie();
+        if (currentCsrfToken) {
+          config.headers['X-XSRF-TOKEN'] = currentCsrfToken;
+          console.log('🛡️ CSRF token attached to request');
+        } else {
+          console.warn('⚠️ No CSRF token available for state-changing request');
+        }
+      } else {
+        console.log('🛠️ Development mode: Skipping CSRF token to avoid CORS issues');
+      }
+    }
+    
+    // Add X-Requested-With header for Laravel recognition (but not for login/register endpoints in development)
+    const isDevelopment = window.location.hostname === 'localhost';
+    
+    if (!isDevelopment || !requiresTokenEndpoint) {
+      config.headers['X-Requested-With'] = 'XMLHttpRequest';
+      console.log('🏷️ X-Requested-With header added');
+    } else {
+      console.log('🚫 Skipping X-Requested-With for login/register endpoint in development');
     }
     
     console.log('📋 Request headers:', {

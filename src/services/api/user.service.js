@@ -20,6 +20,38 @@ class UserService {
   }
 
   /**
+   * Get student profile with complete academic information
+   * This method calls the specific student profile endpoint: GET /api/student/profile
+   * @returns {Promise<Object>} Student profile data with courses, exams, and academic info
+   */
+  async getStudentProfile() {
+    try {
+      // Make request to the student profile endpoint
+      const response = await api.get('/student/profile', {
+        headers: {
+          'Accept-Language': 'ar', // Ensure Arabic language preference
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      // Return the response data
+      return response.data;
+    } catch (error) {
+      // Enhanced error handling for student profile
+      const errorMessage = error.response?.data?.message || 'Failed to fetch student profile';
+      console.error('Student Profile API Error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers
+      });
+      
+      throw handleApiError(error, errorMessage);
+    }
+  }
+
+  /**
    * Update user profile
    * @param {Object} profileData - Updated profile data
    * @returns {Promise<Object>} Updated profile

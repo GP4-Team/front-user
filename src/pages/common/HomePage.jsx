@@ -12,8 +12,9 @@ import UserCoursesSection from "../../components/home/UserCoursesSection";
 import SubjectsSection from "../../components/home/SubjectsSection";
 import FeaturedCoursesSection from "../../components/home/FeaturedCoursesSection";
 import ExamsSection from "../../components/home/ExamsSection";
+import { useExams } from "../../hooks/api/useExams";
 import HomeController from "../../controllers/HomeController";
-import { FEATURED_COURSES, TOP_EXAMS } from "../../data/mockData"; // للدعم في حالة فشل الـAPI
+import { FEATURED_COURSES } from "../../data/mockData"; // للدعم في حالة فشل الـAPI
 import { debugFeaturedCourses } from "../../utils/debugHelper"; // Debug helper
 
 // Register GSAP plugins
@@ -26,11 +27,19 @@ const HomePage = () => {
   const { isAuthenticated, user } = useAuth();
   const { language, isRTL } = useLanguage();
   const { isDarkMode } = useTheme();
+  
+  // Use the new online exams hook
+  const { 
+    onlineExams, 
+    loading: examsLoading, 
+    error: examsError, 
+    fetchOnlineExams 
+  } = useExams();
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [featuredCourses, setFeaturedCourses] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [exams, setExams] = useState([]);
   const [userCourses, setUserCourses] = useState([]);
   const isArabic = language === "ar";
   
@@ -72,21 +81,12 @@ const HomePage = () => {
             setCategories(result.categories.data);
           }
           
-          if (result.featuredExams.success) {
-            setExams(result.featuredExams.data);
-          } else {
-            // في حالة فشل جلب الاختبارات، استخدم البيانات الوهمية
-            console.warn('Using mock exams due to API failure');
-            setExams(TOP_EXAMS);
-          }
-          
           setError(null);
         } else {
           setError(result.error);
           // في حالة فشل الـAPI، استخدم البيانات الوهمية
           console.warn('Using mock data due to API failure');
           setFeaturedCourses(FEATURED_COURSES);
-          setExams(TOP_EXAMS);
           console.log('🛠️ Fallback: Featured courses set from MOCK data:', FEATURED_COURSES);
         }
       } catch (err) {
@@ -95,8 +95,7 @@ const HomePage = () => {
         
         // في حالة حدوث استثناء، استخدم البيانات الوهمية
         setFeaturedCourses(FEATURED_COURSES);
-        setExams(TOP_EXAMS);
-        console.log('🊑 Exception: Featured courses set from MOCK data:', FEATURED_COURSES);
+        console.log('🔥 Exception: Featured courses set from MOCK data:', FEATURED_COURSES);
       } finally {
         setLoading(false);
       }
@@ -146,18 +145,62 @@ const HomePage = () => {
     fetchUserCourses();
   }, [isAuthenticated, user]);
 
+  // جلب الامتحانات الجديدة عند تحميل المكون
+  useEffect(() => {
+    const loadOnlineExams = async () => {
+      try {
+        if (DEBUG) {
+          console.log('🔍 Fetching online exams for HomePage...');
+        }
+        
+        // جلب الامتحانات الاونلاين (بدون معاملات خاصة في البداية)
+        await fetchOnlineExams();
+        
+        if (DEBUG) {
+          console.log('✅ Online exams fetched successfully');
+        }
+      } catch (err) {
+        console.error('Error fetching online exams:', err);
+        // الخطأ يُدار بالفعل في الhook
+      }
+    };
+    
+    loadOnlineExams();
+  }, []); // إزالة dependency المشكوك فيه
+
   // تسجيل بيانات للتصحيح
   useEffect(() => {
     if (DEBUG) {
-      console.log('HomePage mounted');
+      console.log('🏠 === HomePage Debug Info ===');
       console.log('Language:', language);
       console.log('Is Arabic:', isArabic);
       console.log('Featured Courses:', featuredCourses);
-      console.log('Exams:', exams);
+      console.log('Online Exams Count:', onlineExams ? onlineExams.length : 0);
+      console.log('Online Exams Data:', onlineExams);
+      console.log('Exams Loading:', examsLoading);
+      console.log('Exams Error:', examsError);
       console.log('Categories:', categories);
       console.log('User Courses:', userCourses);
+      console.log('=================================');
+      
+      // Additional debugging for ExamsSection
+      if (onlineExams && onlineExams.length > 0) {
+        console.log('📊 [HomePage] First 3 exams that will be shown:', onlineExams.slice(0, 3));
+        onlineExams.slice(0, 3).forEach((exam, index) => {
+          console.log(`📋 [HomePage] Exam ${index + 1}:`, {
+            id: exam.id,
+            name: exam.name,
+            status: exam.status,
+            courseName: exam.courseName,
+            duration: exam.duration,
+            numberOfQuestions: exam.numberOfQuestions
+          });
+        });
+      } else {
+        console.log('⚠️ [HomePage] No online exams to display');
+      }
     }
-  }, [language, isArabic, featuredCourses, exams, categories, userCourses]);
+  }, [language, isArabic, featuredCourses, onlineExams, examsLoading, examsError, categories, userCourses]);
 
   // Page-level animations
   useEffect(() => {
@@ -215,8 +258,8 @@ const HomePage = () => {
       ar: "تصفح جميع الدورات"
     },
     upcomingExams: {
-      en: "Upcoming Exams",
-      ar: "الاختبارات القادمة"
+      en: "Online Exams",
+      ar: "الاختبارات الإلكترونية"
     },
     viewAllExams: {
       en: "View All Exams",
@@ -344,7 +387,7 @@ const HomePage = () => {
     error: getText(UI.error)
   };
 
-  // رسالة التحميل
+  // رسالة التحميل - إظهار التحميل فقط إذا كانت البيانات الأساسية قيد التحميل
   if (loading) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-background-dark text-text-light' : 'bg-background-light text-text-dark'}`}>
@@ -393,12 +436,15 @@ const HomePage = () => {
         <FeaturedCoursesSection courses={featuredCourses} translations={translations} />
       </div>
 
-      {/* Exams Section */}
-      {exams && exams.length > 0 && (
-        <div id="exams-section-wrapper">
-          <ExamsSection exams={exams} translations={translations} />
-        </div>
-      )}
+      {/* Online Exams Section - استخدام الامتحانات الجديدة */}
+      <div id="online-exams-section-wrapper">
+        <ExamsSection 
+          exams={onlineExams} 
+          translations={translations} 
+          loading={examsLoading}
+          error={examsError}
+        />
+      </div>
     </div>
   );
 };
