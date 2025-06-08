@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   User, Menu, X, Sun, Moon, Search, Globe, ChevronDown, 
-  Home, BookOpen, GraduationCap, FileText, Bell
+  Home, BookOpen, GraduationCap, FileText
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -16,7 +16,6 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const isArabic = language === 'ar';
@@ -28,8 +27,6 @@ const Navbar = () => {
   const actionsRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const navItemsRef = useRef([]);
-  const notificationsRef = useRef(null);
-  const notificationBadgeRef = useRef(null);
 
   // Handle scroll for navbar appearance
   useEffect(() => {
@@ -48,7 +45,6 @@ const Navbar = () => {
   useEffect(() => {
     setIsMenuOpen(false);
     setIsProfileMenuOpen(false);
-    setShowNotifications(false);
   }, [location.pathname]);
 
   // GSAP animations
@@ -79,34 +75,12 @@ const Navbar = () => {
       "-=0.2"
     );
 
-    // Notification badge animation
-    if (notificationBadgeRef.current) {
-      gsap.fromTo(
-        notificationBadgeRef.current,
-        { scale: 0 },
-        { scale: 1, duration: 0.3, ease: "elastic.out(1, 0.3)", delay: 1 }
-      );
-      
-      // Pulse animation for notification badge
-      gsap.to(
-        notificationBadgeRef.current,
-        { 
-          scale: 1.2, 
-          repeat: -1, 
-          yoyo: true, 
-          duration: 1.5,
-          ease: "sine.inOut"
-        }
-      );
-    }
-
     return () => {
       // Clean up animations
       gsap.killTweensOf([
         logoRef.current, 
         ...navItemsRef.current,
-        actionsRef.current,
-        notificationBadgeRef.current
+        actionsRef.current
       ]);
     };
   }, [isScrolled]);
@@ -139,25 +113,7 @@ const Navbar = () => {
     }
   }, [isMenuOpen, isRTL]);
 
-  // Notifications dropdown animation
-  useEffect(() => {
-    if (notificationsRef.current) {
-      if (showNotifications) {
-        gsap.fromTo(
-          notificationsRef.current,
-          { y: 20, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.3, ease: "back.out(1.5)" }
-        );
-      } else {
-        gsap.to(notificationsRef.current, {
-          y: 20,
-          opacity: 0,
-          duration: 0.2,
-          ease: "power3.in"
-        });
-      }
-    }
-  }, [showNotifications]);
+
 
   // Profile dropdown animation
   useEffect(() => {
@@ -192,39 +148,10 @@ const Navbar = () => {
     login: isArabic ? 'تسجيل الدخول' : 'Login',
     register: isArabic ? 'سجل مجاناً' : 'Register Free',
     logout: isArabic ? 'تسجيل الخروج' : 'Logout',
-    search: isArabic ? 'بحث...' : 'Search...',
-    notifications: isArabic ? 'الإشعارات' : 'Notifications',
-    settings: isArabic ? 'الإعدادات' : 'Settings',
-    newExam: isArabic ? 'امتحان جديد متاح' : 'New exam available',
-    examToday: isArabic ? 'لديك امتحان اليوم' : 'You have an exam today',
-    newCourse: isArabic ? 'تم إضافة كورس جديد' : 'New course added',
-    viewAll: isArabic ? 'عرض الكل' : 'View all'
+    search: isArabic ? 'بحث...' : 'Search...'
   };
 
-  // Sample notifications data
-  const notifications = [
-    {
-      id: 1,
-      title: translations.newExam,
-      message: isArabic ? 'امتحان الكيمياء العضوية متاح الآن' : 'Organic Chemistry exam is now available',
-      time: '5m',
-      isNew: true
-    },
-    {
-      id: 2,
-      title: translations.examToday,
-      message: isArabic ? 'تذكير: امتحان الفيزياء في الساعة 3 مساءً' : 'Reminder: Physics exam at 3 PM',
-      time: '2h',
-      isNew: true
-    },
-    {
-      id: 3,
-      title: translations.newCourse,
-      message: isArabic ? 'تم إضافة كورس "أساسيات البرمجة" إلى المنصة' : 'Course "Programming Basics" has been added to the platform',
-      time: '1d',
-      isNew: false
-    }
-  ];
+
 
   // Check if we should show navbar (not on auth pages)
   if (location.pathname.startsWith('/auth')) {
@@ -355,72 +282,7 @@ const Navbar = () => {
                 />
               </div>
             </div>
-            
-            {/* Notifications - Only for logged in users */}
-            {isAuthenticated && (
-              <div className="relative">
-                <button 
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className={`p-2 rounded-full focus:outline-none relative ${
-                    isDarkMode 
-                      ? 'hover:bg-neutral-800' 
-                      : (isScrolled ? 'hover:bg-neutral-100' : 'hover:bg-primary-dark')
-                  }`}
-                  aria-label={translations.notifications}
-                >
-                  <Bell size={20} className="text-current" />
-                  {/* Notification Badge */}
-                  <span 
-                    ref={notificationBadgeRef}
-                    className="absolute top-0 right-0 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full"
-                  >
-                    2
-                  </span>
-                </button>
-                
-                {/* Notifications Dropdown */}
-                {showNotifications && (
-                  <div 
-                    ref={notificationsRef}
-                    className={`absolute ${isRTL ? 'left-0' : 'right-0'} mt-2 w-80 ${
-                      isDarkMode ? 'bg-background-card-dark border-neutral-700' : 'bg-background-card-light border-neutral-200'
-                    } rounded-lg shadow-lg overflow-hidden border z-50`}
-                  >
-                    <div className={`flex justify-between items-center px-4 py-2 border-b ${
-                      isDarkMode ? 'border-neutral-700' : 'border-neutral-200'
-                    }`}>
-                      <h3 className="font-medium">{translations.notifications}</h3>
-                      <button className="text-xs text-primary-base dark:text-primary-light">
-                        {translations.viewAll}
-                      </button>
-                    </div>
-                    <div className="max-h-72 overflow-y-auto">
-                      {notifications.map((notification) => (
-                        <div 
-                          key={notification.id}
-                          className={`p-3 border-b last:border-b-0 ${
-                            notification.isNew 
-                              ? (isDarkMode ? 'bg-primary-dark/10' : 'bg-primary-light/10') 
-                              : ''
-                          } ${isDarkMode ? 'border-neutral-700 hover:bg-neutral-800' : 'border-neutral-200 hover:bg-neutral-50'} cursor-pointer transition-colors`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <h4 className="font-medium text-sm">{notification.title}</h4>
-                            <span className="text-xs text-neutral-500 dark:text-neutral-400">{notification.time}</span>
-                          </div>
-                          <p className="text-xs mt-1 text-neutral-600 dark:text-neutral-300">
-                            {notification.message}
-                          </p>
-                          {notification.isNew && (
-                            <span className="inline-block w-2 h-2 bg-primary-base rounded-full mt-1"></span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+
             
             {/* Language Toggle */}
             <button 
@@ -474,7 +336,7 @@ const Navbar = () => {
                     <span className={`text-sm font-medium leading-tight ${
                       isDarkMode ? 'text-text-light' : (isScrolled ? 'text-text-dark' : 'text-text-light')
                     }`}>
-                      {user?.name || (isArabic ? 'مرحباً' : 'Welcome')}
+                      {user?.name ? user.name : (isArabic ? 'مرحباً' : 'Welcome')}
                     </span>
                     <span className={`text-xs opacity-75 leading-tight ${
                       isDarkMode ? 'text-neutral-300' : (isScrolled ? 'text-neutral-600' : 'text-neutral-200')

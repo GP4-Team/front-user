@@ -10,52 +10,34 @@ import {
 import { AuthProvider } from "./contexts/AuthContext.jsx";
 import { ThemeProvider } from "./contexts/ThemeContext.jsx";
 import { LanguageProvider } from "./contexts/LanguageContext.jsx";
-import { ToastProvider } from "./contexts/ToastContext.jsx";
 import { TenantProvider } from "./contexts/TenantContext.jsx";
 import ErrorBoundary from "./components/ui/feedback/ErrorBoundary";
 import PageTransition from "./components/ui/PageTransition";
-
-// Import styles
-import "./App.css";
-import "./styles/ExamStyles.css"; // Import the exam styles CSS
-
-// Layout components
 import MainLayout from "./components/layout/MainLayout";
 import GuestLayout from "./layouts/GuestLayout";
-
-// Auth pages
 import Login from "./pages/auth/Login.jsx";
 import Register from "./pages/auth/Register.jsx";
 import AuthPage from "./pages/auth/AuthPage.jsx";
-
-// Main pages
-import Dashboard from "./pages/dashboard/Dashboard.jsx";
-import Home from "./pages/common/HomePage.jsx";
-import Profile from "./pages/user/ProfilePage.jsx";
-
-// Course Pages
 import EnrolledCoursesPage from "./pages/courses/EnrolledCoursesPage.jsx";
 import CourseDetailPage from "./pages/courses/CourseDetailPage.jsx";
 import CourseInfoPage from "./pages/courses/CourseInfoPage.jsx";
 import AllCoursesPage from "./pages/courses/AllCoursesPage.jsx";
-
-// Error pages
 import NotFound from "./pages/common/NotFound.jsx";
 import Unauthorized from "./pages/common/Unauthorized.jsx";
 import ServerError from "./pages/common/ServerError.jsx";
-
-// Exam System pages
 import MyExamsPage from "./pages/exams/MyExamsPage.jsx";
 import ExamDetailsPage from "./pages/exams/ExamDetailsPage.jsx";
 import ExamQuestionsPage from "./pages/exams/ExamQuestionsPage.jsx";
 import ExamResultsPage from "./pages/exams/ExamResultsPage.jsx";
-
-// Testing pages
 import ApiTestPage from "./pages/testing/ApiTestPage.jsx";
 import ExamsApiTestPage from "./pages/testing/ExamsApiTestPage.jsx";
-
-// Protected route component
 import PrivateRoute from "./middleware/PrivateRoute.jsx";
+import "./App.css";
+import "./styles/ExamStyles.css";
+
+// Lazy loaded components
+const Home = React.lazy(() => import("./pages/common/HomePage.jsx"));
+const Profile = React.lazy(() => import("./pages/user/ProfilePage.jsx"));
 
 /**
  * Root layout component with page transition
@@ -68,12 +50,12 @@ const RootLayout = () => {
     <ThemeProvider>
       <LanguageProvider>
         <TenantProvider>
-          <ToastProvider>
-            <AuthProvider>
-              <PageTransition pathname={location.pathname} />
-              <Outlet />
-            </AuthProvider>
-          </ToastProvider>
+          {/* ToastProvider removed as requested */}
+          <AuthProvider>
+            <PageTransition pathname={location.pathname} />
+            <Outlet />
+          </AuthProvider>
+          {/* ToastProvider removed as requested */}
         </TenantProvider>
       </LanguageProvider>
     </ThemeProvider>
@@ -129,10 +111,6 @@ const router = createBrowserRouter([
       },
       
       // Protected Routes
-      {
-        path: "/dashboard",
-        element: <PrivateRoute><MainLayout><Dashboard /></MainLayout></PrivateRoute>
-      },
       {
         path: "/profile",
         element: <PrivateRoute><MainLayout><Profile /></MainLayout></PrivateRoute>

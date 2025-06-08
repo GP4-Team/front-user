@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useExams } from "../../hooks/api/useExams";
-import Navbar from "../../components/navigation/Navbar";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import translations from "../../utils/translations";
@@ -342,8 +341,7 @@ const MyExamsPage = () => {
   if (loading) {
     return (
       <div className={`flex flex-col min-h-screen ${isDarkMode ? 'bg-background-dark' : 'bg-[#F0F4F8]'}`}>
-        <Navbar />
-        <div className="mt-16 flex-grow flex items-center justify-center">
+        <div className="mt-0 flex-grow flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-base mx-auto mb-4"></div>
             <p className={`text-lg ${isDarkMode ? 'text-white' : 'text-gray-600'}`}>
@@ -359,8 +357,7 @@ const MyExamsPage = () => {
   if (error) {
     return (
       <div className={`flex flex-col min-h-screen ${isDarkMode ? 'bg-background-dark' : 'bg-[#F0F4F8]'}`}>
-        <Navbar />
-        <div className="mt-16 flex-grow flex items-center justify-center">
+        <div className="mt-0 flex-grow flex items-center justify-center">
           <div className="text-center">
             <div className="text-red-500 text-6xl mb-4">⚠️</div>
             <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -399,9 +396,6 @@ const MyExamsPage = () => {
       {/* Educational animations */}
       <EducationalAnimations />
 
-      {/* Navbar/Header */}
-      <Navbar />
-
       {/* Motivational message notification */}
       <MotivationalMessage 
         showMotivationalMessage={showMotivationalMessage}
@@ -410,8 +404,8 @@ const MyExamsPage = () => {
         motivationalMessageRef={motivationalMessageRef}
       />
 
-      {/* Main content with top margin to account for fixed navbar */}
-      <div className="mt-16 flex-grow relative z-10">
+      {/* Main content with top margin to account for fixed navbar from GuestLayout */}
+      <div className="mt-0 flex-grow relative z-10">
         <div className="max-w-6xl mx-auto px-4 py-8">
           {/* Page header */}
           <ExamsHeader title={t.pageTitle} />

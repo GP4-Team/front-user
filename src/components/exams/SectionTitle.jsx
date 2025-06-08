@@ -8,11 +8,13 @@ const SectionTitle = ({ title, count }) => {
   const { isRTL } = useLanguage();
 
   return (
-    <div className={`flex items-center ${isRTL ? "justify-end" : "justify-between"} mb-4`}>
+    <div className={`flex items-center justify-between mb-4`}>
       <h2
         className={`text-xl font-bold ${
           isDarkMode ? "text-text-light" : "text-[#37474F]"
-        } section-title ${isRTL ? "text-right order-1 ml-3" : "text-left order-0 mr-3"}`}
+        } section-title ${
+          isRTL ? "text-right" : "text-left"
+        }`}
       >
         {title}
       </h2>
@@ -20,7 +22,7 @@ const SectionTitle = ({ title, count }) => {
       <span
         className={`${
           isDarkMode ? "bg-primary-dark" : "bg-[#4C1C95]"
-        } text-white text-sm px-2 py-1 rounded-full ${isRTL ? "order-0" : "order-1"}`}
+        } text-white text-sm px-2 py-1 rounded-full`}
       >
         {count}
       </span>

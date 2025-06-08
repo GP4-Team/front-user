@@ -124,7 +124,7 @@ export const getExamActionType = (status) => {
 };
 
 /**
- * Parse exam data received from API
+ * Parse exam data received from API - Handle nested API response structure
  * @param {Object} examData - Raw exam data from API
  * @returns {Object} Formatted exam data
  */
@@ -134,40 +134,34 @@ export const parseExamData = (examData) => {
     return null;
   }
 
-  console.log('⚙️ [parseExamData] Parsing exam:', examData);
+  // Debug: Log the exact structure we received
+  console.log('⚙️ [parseExamData] Raw exam data received:');
+  console.log('Data keys:', Object.keys(examData));
+  console.log('Full data:', JSON.stringify(examData, null, 2));
 
-  const parsed = {
-    id: examData.id,
-    name: examData.name || examData.title || examData.exam_name || 'Unknown Exam',
-    title: examData.name || examData.title || examData.exam_name || 'Unknown Exam',
-    description: examData.description || examData.exam_description || '',
-    numberOfQuestions: examData.number_of_questions || examData.questions_count || examData.questionsCount || 0,
-    duration: examData.duration_time || examData.duration || examData.time_limit || 60,
-    courseName: examData.course_name || examData.course?.name || examData.subject || examData.subject_name || 'General',
-    subject: examData.course_name || examData.course?.name || examData.subject || examData.subject_name || 'General',
-    examCategory: examData.exam_category || examData.category || examData.type || 'Online Exam',
-    allowedChances: examData.allowed_chances || examData.max_attempts || examData.attempts_limit || 1,
-    minPercentage: examData.min_percentage || examData.passing_score || examData.pass_percentage || 50,
-    isPublished: examData.is_published !== undefined ? examData.is_published : (examData.published !== undefined ? examData.published : true),
-    educationLevel: examData.education_level || examData.level || examData.grade || 'General',
-    status: examData.status || EXAM_STATUS.START, // Default to START instead of NONE
+  // Handle nested API response structure
+  // API returns: { success: true, data: { actual exam data } }
+  const actualExamData = examData.data || examData;
+  
+  // Return the actual exam data with minimal processing
+  const result = {
+    // Keep original structure
+    ...actualExamData,
     
-    // Additional useful data
-    courseId: examData.course_id || examData.course?.id || examData.subjectId,
-    createdAt: examData.created_at || examData.createdAt,
-    updatedAt: examData.updated_at || examData.updatedAt,
-    startTime: examData.start_time || examData.startTime,
-    endTime: examData.end_time || examData.endTime,
-    timeRemaining: examData.time_remaining || examData.timeRemaining,
-    attemptsUsed: examData.attempts_used || examData.attemptsUsed || 0,
-    lastAttempt: examData.last_attempt || examData.lastAttempt,
-    currentAttempt: examData.current_attempt || examData.currentAttempt,
-    bestScore: examData.best_score || examData.bestScore || 0,
-    averageScore: examData.average_score || examData.averageScore || 0
+    // Ensure we have these common fields for UI compatibility
+    id: actualExamData.id,
+    name: actualExamData.name,
+    title: actualExamData.name, // Use name as title
+    
+    // Keep reference to original API response
+    originalData: examData
   };
 
-  console.log('✅ [parseExamData] Parsed result:', parsed);
-  return parsed;
+  console.log('✅ [parseExamData] Processed result:');
+  console.log('Result keys:', Object.keys(result));
+  console.log('Actual exam data extracted:', actualExamData);
+  
+  return result;
 };
 
 /**

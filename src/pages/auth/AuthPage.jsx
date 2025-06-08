@@ -19,7 +19,7 @@ const AuthPage = () => {
   // Get mode from URL query parameter
   const queryParams = new URLSearchParams(location.search);
   const mode = queryParams.get('mode') || 'login';
-  const returnTo = queryParams.get('returnTo') || '/dashboard';
+  const returnTo = queryParams.get('returnTo') || '/';
   
   // Manage active mode (login or register)
   const [activeMode, setActiveMode] = useState(mode);
@@ -67,7 +67,7 @@ const AuthPage = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(returnTo || '/dashboard');
+      navigate(returnTo || '/');
     }
   }, [isAuthenticated, navigate, returnTo]);
   

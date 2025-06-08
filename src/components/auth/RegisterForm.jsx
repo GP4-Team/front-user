@@ -15,7 +15,7 @@ import { useAuth } from '../../contexts/AuthContext';
  * @param {string} props.returnTo - Path to redirect after successful registration
  * @returns {JSX.Element} - Register form component
  */
-const RegisterForm = ({ returnTo = '/dashboard' }) => {
+const RegisterForm = ({ returnTo = '/' }) => {
   const navigate = useNavigate();
   const { language, isRTL } = useLanguage();
   const { isDarkMode } = useTheme();

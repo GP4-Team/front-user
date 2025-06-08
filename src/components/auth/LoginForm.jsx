@@ -14,7 +14,7 @@ import { useAuth } from '../../contexts/AuthContext';
  * @param {string} props.returnTo - Path to redirect after successful login
  * @returns {JSX.Element} - Login form component
  */
-const LoginForm = ({ returnTo = '/dashboard' }) => {
+const LoginForm = ({ returnTo = '/' }) => {
   const navigate = useNavigate();
   const { language, isRTL } = useLanguage();
   const { isDarkMode } = useTheme();

@@ -27,24 +27,58 @@ export const useExams = () => {
     setError(null);
     
     try {
-      console.log('🚀 [useExams] Fetching online exams with params:', params);
-      const data = await ExamsService.getOnlineExams(params);
-      console.log('📥 [useExams] Raw API response:', data);
+      console.log('🎯 [useExams] Starting fetchOnlineExams with params:', params);
       
-      const parsedExams = (data.exams || data || []).map(exam => {
-        const parsed = parseExamData(exam);
-        console.log('⚙️ [useExams] Parsed exam:', { original: exam, parsed });
-        return parsed;
+      const data = await ExamsService.getOnlineExams(params);
+      console.log('📦 [useExams] Raw data from service:', data);
+      
+      // Handle different response formats
+      let examsArray = [];
+      
+      if (Array.isArray(data)) {
+        examsArray = data;
+      } else if (data && Array.isArray(data.exams)) {
+        examsArray = data.exams;
+      } else if (data && Array.isArray(data.data)) {
+        examsArray = data.data;
+      } else if (data && data.data && Array.isArray(data.data.exams)) {
+        examsArray = data.data.exams;
+      } else {
+        console.warn('⚠️ [useExams] Unknown data format, using empty array');
+        examsArray = [];
+      }
+      
+      console.log('📋 [useExams] Extracted exams array:', examsArray);
+      console.log('📊 [useExams] Number of exams:', examsArray.length);
+      
+      // Parse each exam using the parseExamData function
+      const parsedExams = examsArray.map(exam => {
+        try {
+          return parseExamData(exam);
+        } catch (parseError) {
+          console.error('❌ [useExams] Error parsing exam:', exam, parseError);
+          // Return the original exam if parsing fails
+          return exam;
+        }
       });
       
-      console.log('✅ [useExams] All parsed exams:', parsedExams);
+      console.log('✅ [useExams] Parsed exams:', parsedExams);
+      
       setOnlineExams(parsedExams);
       return { ...data, exams: parsedExams };
+      
     } catch (err) {
-      console.error('❌ [useExams] Error fetching online exams:', err);
+      console.error('❌ [useExams] fetchOnlineExams error:', err);
+      
+      // Set a user-friendly error message
       const errorMessage = err.message || 'فشل جلب الامتحانات الاونلاين';
       setError(errorMessage);
-      throw err;
+      
+      // Don't throw the error, just set empty array
+      // This prevents the app from crashing
+      setOnlineExams([]);
+      
+      return { exams: [] };
     } finally {
       setLoading(false);
     }

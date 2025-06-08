@@ -23,7 +23,7 @@ const Login = () => {
   
   // Extract redirect URL from query parameters or use default
   const searchParams = new URLSearchParams(location.search);
-  const redirectUrl = searchParams.get('redirect') || '/dashboard';
+  const redirectUrl = searchParams.get('redirect') || '/';
   
   // State for login message (e.g., "Your session has expired")
   const [loginMessage, setLoginMessage] = useState({
