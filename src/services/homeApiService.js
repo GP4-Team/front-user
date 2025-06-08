@@ -169,6 +169,20 @@ const HomeApiService = {
       console.error('Error fetching enrolled courses:', error);
       throw error;
     }
+  },
+
+  /**
+   * فلترة الكورسات بالنظام الهرمي (جديد)
+   * @param {Object} params - معلمات الفلترة بما فيها level_id و category_id
+   * @returns {Promise} - Promise مع قائمة الكورسات المفلترة
+   */
+  getHierarchicalFilteredCourses: async (params = {}) => {
+    try {
+      return await coursesService.getHierarchicalFilteredCourses(params);
+    } catch (error) {
+      console.error('Error fetching hierarchical filtered courses:', error);
+      throw error;
+    }
   }
 };
 

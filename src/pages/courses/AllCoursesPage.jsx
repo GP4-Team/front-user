@@ -6,6 +6,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 // Components
 import Navbar from "../../components/navigation/Navbar";
 import SimplifiedCourseCard from "../../components/courses/SimplifiedCourseCard";
+import HierarchicalFilter from "../../components/courses/HierarchicalFilter";
 
 // API Service
 import HomeApiService from "../../services/homeApiService";
@@ -15,21 +16,21 @@ const AllCoursesPage = () => {
   const { isDarkMode } = useTheme();
   const [courses, setCourses] = useState([]);
   const [allCourses, setAllCourses] = useState([]); // لحفظ جميع الكورسات قبل الفلترة
-  const [educationLevels, setEducationLevels] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingLevels, setIsLoadingLevels] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [pagination, setPagination] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState({
-    level: "",
+  const [hierarchicalFilters, setHierarchicalFilters] = useState({
+    level_id: null,
+    category_id: null,
+    levelName: '',
+    categoryName: ''
   });
-  // تم إزالة searchTimeout لأن البحث أصبح محلياً وفورياً
 
   const getText = (ar, en) => (language === "ar" ? ar : en);
 
-  // جلب الكورسات (بدون ربط API للبحث)
+  // جلب الكورسات مع النظام الهرمي الجديد
   useEffect(() => {
     const fetchCourses = async () => {
       setIsLoading(true);
@@ -43,11 +44,17 @@ const AllCoursesPage = () => {
 
         let response;
         
-        // إذا كان هناك فلتر مستوى، استخدم filter API
-        if (filters.level) {
-          params.education_level_ids = filters.level;
-          console.log('🎯 Filtering by level:', filters.level);
-          response = await HomeApiService.getFilteredCourses(params);
+        // إذا كان هناك فلتر هرمي، استخدم الـ API الجديد
+        if (hierarchicalFilters.level_id || hierarchicalFilters.category_id) {
+          if (hierarchicalFilters.level_id) {
+            params.level_id = hierarchicalFilters.level_id;
+          }
+          if (hierarchicalFilters.category_id) {
+            params.category_id = hierarchicalFilters.category_id;
+          }
+          
+          console.log('🎯 Using hierarchical filter with params:', params);
+          response = await HomeApiService.getHierarchicalFilteredCourses(params);
         }
         // بخلاف ذلك، استخدم الـ API العادي
         else {
@@ -59,6 +66,11 @@ const AllCoursesPage = () => {
           setAllCourses(response.data); // حفظ جميع الكورسات
           setCourses(response.data);
           setPagination(response.pagination);
+          
+          // طباعة معلومات الفلترة إذا كانت موجودة
+          if (response.filters_applied) {
+            console.log('✅ Filters applied by API:', response.filters_applied);
+          }
         }
       } catch (err) {
         console.error("Error fetching courses:", err);
@@ -69,40 +81,7 @@ const AllCoursesPage = () => {
     };
 
     fetchCourses();
-  }, [currentPage, filters.level]); // إزالة searchQuery من dependencies
-
-  // جلب مستويات التعليم
-  useEffect(() => {
-    const fetchEducationLevels = async () => {
-      setIsLoadingLevels(true);
-      try {
-        let allLevels = [];
-        let currentPageNum = 1;
-        let hasMorePages = true;
-
-        while (hasMorePages) {
-          const params = { page: currentPageNum, per_page: 15 };
-          const response = await HomeApiService.getEducationLevels(params);
-
-          if (response.success && response.data) {
-            allLevels = [...allLevels, ...response.data];
-            hasMorePages = response.pagination && currentPageNum < response.pagination.last_page;
-            currentPageNum++;
-          } else {
-            hasMorePages = false;
-          }
-        }
-
-        setEducationLevels(allLevels);
-      } catch (err) {
-        console.error("Error fetching education levels:", err);
-      } finally {
-        setIsLoadingLevels(false);
-      }
-    };
-
-    fetchEducationLevels();
-  }, []);
+  }, [currentPage, hierarchicalFilters.level_id, hierarchicalFilters.category_id]);
 
   // بحث محلي في الكورسات المحملة
   useEffect(() => {
@@ -141,26 +120,31 @@ const AllCoursesPage = () => {
   // معالجة تغيير نص البحث (محلي فقط)
   const handleSearchChange = (value) => {
     setSearchQuery(value);
-    // لا حاجة لإعادة تعيين الصفحة أو الفلاتر مع البحث المحلي
   };
 
-  // معالجة تغيير الفلاتر
-  const handleFilterChange = (filterType, value) => {
-    if (filterType === "reset") {
-      setFilters({ level: "" });
+  // معالجة تغيير الفلاتر الهرمية
+  const handleHierarchicalFilterChange = (filterData) => {
+    if (filterData.type === 'reset') {
+      setHierarchicalFilters({
+        level_id: null,
+        category_id: null,
+        levelName: '',
+        categoryName: ''
+      });
       setCurrentPage(1);
       setSearchQuery(""); // مسح البحث عند إعادة التعيين
       return;
     }
 
-    setFilters((prev) => ({
-      ...prev,
-      [filterType]: value,
-    }));
-    
-    setCurrentPage(1);
-    
-    // عدم مسح البحث عند تطبيق فلتر (البحث محلي الآن)
+    if (filterData.type === 'hierarchical') {
+      setHierarchicalFilters({
+        level_id: filterData.level_id,
+        category_id: filterData.category_id,
+        levelName: filterData.levelName,
+        categoryName: filterData.categoryName
+      });
+      setCurrentPage(1); // العودة للصفحة الأولى عند تطبيق فلتر جديد
+    }
   };
 
   if (isLoading) {
@@ -202,7 +186,6 @@ const AllCoursesPage = () => {
                 isDarkMode ? "text-gray-400" : "text-gray-500"
               }`}
             />
-            {/* عدم الحاجة لمؤشر بحث - البحث محلي وفوري */}
           </div>
 
           {pagination && (
@@ -229,7 +212,7 @@ const AllCoursesPage = () => {
       {/* محتوى رئيسي */}
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* جانب الفلاتر */}
+          {/* جانب الفلاتر الهرمية */}
           <div className="lg:w-1/4">
             <div className={`${
               isDarkMode ? "bg-[#1E1E1E] border-[#333333]" : "bg-white border-gray-200"
@@ -238,75 +221,20 @@ const AllCoursesPage = () => {
                 {getText("الفلتر", "Filter")}
               </h2>
 
-              {/* فلتر المرحلة الدراسية */}
+              {/* الفلتر الهرمي الجديد */}
               <div className="mb-6">
                 <h3 className={`font-medium mb-2 pb-2 border-b ${
                   isDarkMode ? "border-[#333333]" : "border-gray-200"
                 }`}>
-                  {getText("المرحلة الدراسية", "Educational Level")}
+                  {getText("المرحلة والصف الدراسي", "Educational Stage & Grade")}
                 </h3>
 
-                {isLoadingLevels ? (
-                  <div className="text-center py-4">
-                    <div className="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-indigo-600"></div>
-                    <p className="text-xs mt-2 text-gray-500">جاري تحميل المستويات...</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 mt-3">
-                    {/* خيار جميع المراحل */}
-                    <label className="block">
-                      <input
-                        type="radio"
-                        name="level"
-                        value=""
-                        checked={filters.level === ""}
-                        onChange={() => handleFilterChange("level", "")}
-                        className="mr-2 rtl:ml-2"
-                      />
-                      {getText("جميع المراحل", "All Levels")}
-                    </label>
-
-                    {/* عرض المستويات من الـ API */}
-                    {educationLevels.map((level) => (
-                      <label key={level.id} className="block">
-                        <input
-                          type="radio"
-                          name="level"
-                          value={level.id}
-                          checked={filters.level === level.id}
-                          onChange={() => handleFilterChange("level", level.id)}
-                          className="mr-2 rtl:ml-2"
-                        />
-                        <span className="flex items-center">
-                          <span
-                            className="w-3 h-3 rounded-full mr-2 rtl:ml-2 rtl:mr-0"
-                            style={{ backgroundColor: level.color }}
-                          ></span>
-                          {level.name}
-                        </span>
-                      </label>
-                    ))}
-
-                    {educationLevels.length === 0 && !isLoadingLevels && (
-                      <p className="text-xs text-gray-500 py-2">
-                        {getText("لا توجد مستويات متاحة", "No levels available")}
-                      </p>
-                    )}
-                  </div>
-                )}
+                <HierarchicalFilter
+                  onFilterChange={handleHierarchicalFilterChange}
+                  currentFilters={hierarchicalFilters}
+                  isLoading={false}
+                />
               </div>
-
-              {/* زر إعادة تعيين الفلاتر */}
-              <button
-                onClick={() => handleFilterChange("reset")}
-                className={`w-full py-2 px-4 rounded-md ${
-                  isDarkMode
-                    ? "bg-[#333333] hover:bg-[#444444] text-white"
-                    : "bg-gray-200 hover:bg-gray-300 text-[#37474F]"
-                } transition duration-200`}
-              >
-                {getText("إعادة تعيين", "Reset")}
-              </button>
             </div>
           </div>
 
@@ -339,11 +267,11 @@ const AllCoursesPage = () => {
                   )}
                 </p>
               )}
-              {filters.level && !searchQuery.trim() && (
+              {(hierarchicalFilters.level_id || hierarchicalFilters.category_id) && !searchQuery.trim() && (
                 <p className="text-sm text-gray-500 mt-2">
                   {getText(
-                    `مفلترة حسب المستوى التعليمي`,
-                    `Filtered by education level`
+                    `مفلترة حسب: ${hierarchicalFilters.categoryName} - ${hierarchicalFilters.levelName}`,
+                    `Filtered by: ${hierarchicalFilters.categoryName} - ${hierarchicalFilters.levelName}`
                   )}
                 </p>
               )}
@@ -468,7 +396,12 @@ const AllCoursesPage = () => {
                 <button
                   onClick={() => {
                     setSearchQuery("");
-                    setFilters({ level: "" });
+                    setHierarchicalFilters({
+                      level_id: null,
+                      category_id: null,
+                      levelName: '',
+                      categoryName: ''
+                    });
                   }}
                   className={`mt-4 ${
                     isDarkMode

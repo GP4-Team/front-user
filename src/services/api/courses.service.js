@@ -643,6 +643,89 @@ class CoursesService {
       throw handleApiError(error, 'Failed to update progress');
     }
   }
+
+  /**
+   * Filter courses by hierarchical education structure (NEW)
+   * @param {Object} params - Filter parameters including level_id and category_id
+   * @returns {Promise<Object>} Filtered courses with pagination
+   */
+  async getHierarchicalFilteredCourses(params = {}) {
+    try {
+      console.log('🎯 Calling hierarchical filter API with params:', params);
+      
+      // إعداد معاملات الـ API حسب الصيغة المطلوبة
+      const filterParams = {
+        page: params.page || 1,
+        per_page: params.per_page || 15
+      };
+      
+      // إضافة فلاتر level_id و category_id
+      if (params.level_id) {
+        filterParams['filter[level_id]'] = params.level_id;
+      }
+      
+      if (params.category_id) {
+        filterParams['filter[category_id]'] = params.category_id;
+      }
+      
+      console.log('📡 Final filter params:', filterParams);
+      
+      const response = await api.get('/courses/filter', { params: filterParams });
+      
+      console.log('✅ Hierarchical filter API response:', response.data);
+      
+      // تحويل البيانات من API format إلى UI format
+      const transformedData = {
+        success: response.data.success,
+        data: response.data.data.data.map(course => ({
+          id: course.id,
+          title: {
+            ar: course.name,
+            en: course.name
+          },
+          description: {
+            ar: `دورة شاملة في ${course.name} للمستوى ${this.getLevelNameAr(course.educational_level_id)}`,
+            en: `Comprehensive course in ${course.name} for ${this.getLevelNameEn(course.educational_level_id)}`
+          },
+          category: {
+            ar: this.getCategoryNameAr(course.educational_department_id),
+            en: this.getCategoryNameEn(course.educational_department_id)
+          },
+          level: {
+            ar: this.getLevelNameAr(course.educational_level_id),
+            en: this.getLevelNameEn(course.educational_level_id)
+          },
+          image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+          color: course.color || '#4285F4',
+          code: course.code,
+          rating: 4.5, // Default rating since not provided by API
+          students: '120+', // Default students count
+          duration: {
+            ar: '8 أسابيع',
+            en: '8 weeks'
+          },
+          educational_level_id: course.educational_level_id,
+          educational_department_id: course.educational_department_id,
+          levelId: this.mapLevelIdForFilter(course.educational_level_id)
+        })),
+        pagination: {
+          current_page: response.data.data.current_page,
+          last_page: response.data.data.last_page,
+          per_page: response.data.data.per_page,
+          total: response.data.data.total,
+          from: response.data.data.from,
+          to: response.data.data.to,
+          next_page_url: response.data.data.next_page_url,
+          prev_page_url: response.data.data.prev_page_url
+        },
+        filters_applied: response.data.filters_applied || {}
+      };
+      
+      return transformedData;
+    } catch (error) {
+      throw handleApiError(error, 'Failed to filter courses hierarchically');
+    }
+  }
 }
 
 // Export single instance of the service
