@@ -16,7 +16,8 @@ const AllCoursesPage = () => {
   const { isDarkMode } = useTheme();
   const [courses, setCourses] = useState([]);
   const [allCourses, setAllCourses] = useState([]); // لحفظ جميع الكورسات قبل الفلترة
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true); // للتحميل الأولي فقط
+  const [isFilterLoading, setIsFilterLoading] = useState(false); // للفلترة فقط
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [pagination, setPagination] = useState(null);
@@ -33,7 +34,12 @@ const AllCoursesPage = () => {
   // جلب الكورسات مع النظام الهرمي الجديد
   useEffect(() => {
     const fetchCourses = async () => {
-      setIsLoading(true);
+      // استخدم isFilterLoading للفلترة العادية و isInitialLoading للتحميل الأولي فقط
+      if (isInitialLoading) {
+        // لا تعرض شاشة تحميل كاملة بعد التحميل الأولي
+      } else {
+        setIsFilterLoading(true);
+      }
       setError(null);
 
       try {
@@ -76,7 +82,8 @@ const AllCoursesPage = () => {
         console.error("Error fetching courses:", err);
         setError("حدث خطأ أثناء تحميل الكورسات");
       } finally {
-        setIsLoading(false);
+        setIsInitialLoading(false);
+        setIsFilterLoading(false);
       }
     };
 
@@ -147,10 +154,18 @@ const AllCoursesPage = () => {
     }
   };
 
-  if (isLoading) {
+  // عرض شاشة تحميل بسيطة للتحميل الأولي فقط
+  if (isInitialLoading) {
     return (
-      <div className={`flex justify-center items-center h-screen ${isDarkMode ? "bg-[#121212]" : "bg-[#F0F4F8]"}`}>
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#3949AB]"></div>
+      <div className={`min-h-screen ${isDarkMode ? "bg-[#121212] text-[#E0E0E0]" : "bg-[#F0F4F8] text-[#37474F]"}`}>
+        <Navbar />
+        <div className="pt-20"></div>
+        <div className="flex justify-center items-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#3949AB] mx-auto mb-4"></div>
+            <p className="text-lg">{getText("جاري تحميل الكورسات...", "Loading courses...")}</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -232,7 +247,7 @@ const AllCoursesPage = () => {
                 <HierarchicalFilter
                   onFilterChange={handleHierarchicalFilterChange}
                   currentFilters={hierarchicalFilters}
-                  isLoading={false}
+                  isLoading={isFilterLoading}
                 />
               </div>
             </div>
@@ -280,6 +295,16 @@ const AllCoursesPage = () => {
             {/* قائمة الكورسات */}
             {courses.length > 0 ? (
               <div>
+                {/* مؤشر تحميل للفلترة */}
+                {isFilterLoading && (
+                  <div className="text-center py-4 mb-6">
+                    <div className="inline-flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-[#3949AB]"></div>
+                      <span className="text-sm">{getText("جاري تطبيق الفلتر...", "Applying filter...")}</span>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {courses.map((course) => (
                     <SimplifiedCourseCard key={course.id} course={course} />

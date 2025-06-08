@@ -156,6 +156,48 @@ html, body {
   overflow-x: hidden;
 }
 
+/* Fix scrollbar positioning for fixed header */
+#root {
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.app-container {
+  min-height: 100vh;
+}
+
+/* Ensure body doesn't interfere with scrolling */
+body {
+  overflow: hidden;
+}
+
+/* Fix scrollbar to start from top of page */
+html {
+  scroll-padding-top: 0;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+body {
+  padding-top: 0;
+  margin: 0;
+  height: 100%;
+}
+
+/* Ensure scrollbar extends full height */
+* {
+  box-sizing: border-box;
+}
+
+/* Container with fixed header */
+.main-content {
+  padding-top: 80px; /* Adjust based on header height */
+}
+
 /* Grid background pattern */
 .bg-grid-pattern {
   background-size: 20px 20px;

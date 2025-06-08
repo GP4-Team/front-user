@@ -36,7 +36,7 @@ const HomePage = () => {
     fetchOnlineExams 
   } = useExams();
   
-  const [loading, setLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [error, setError] = useState(null);
   const [featuredCourses, setFeaturedCourses] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -49,7 +49,7 @@ const HomePage = () => {
   // جلب بيانات الهوم من الـAPI عند تحميل المكون
   useEffect(() => {
     const fetchHomeData = async () => {
-      setLoading(true);
+      // عدم عرض شاشة تحميل كاملة - فقط عند الحاجة
       try {
         // إضافة debug لفحص المشكلة
         if (DEBUG) {
@@ -97,7 +97,7 @@ const HomePage = () => {
         setFeaturedCourses(FEATURED_COURSES);
         console.log('🔥 Exception: Featured courses set from MOCK data:', FEATURED_COURSES);
       } finally {
-        setLoading(false);
+        setIsInitialLoading(false);
       }
     };
     
@@ -387,13 +387,17 @@ const HomePage = () => {
     error: getText(UI.error)
   };
 
-  // رسالة التحميل - إظهار التحميل فقط إذا كانت البيانات الأساسية قيد التحميل
-  if (loading) {
+  // رسالة التحميل - فقط للتحميل الأولي وبشكل بسيط
+  if (isInitialLoading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-background-dark text-text-light' : 'bg-background-light text-text-dark'}`}>
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-base mb-4"></div>
-          <p className="text-lg">{translations.loading}</p>
+      <div className={`min-h-screen ${isDarkMode ? 'bg-background-dark text-text-light' : 'bg-background-light text-text-dark'}`}>
+        <Navbar />
+        <div className="pt-16"></div>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-base mb-4"></div>
+            <p className="text-lg">{translations.loading}</p>
+          </div>
         </div>
       </div>
     );
@@ -404,7 +408,7 @@ const HomePage = () => {
       ref={pageRef}
       className={`min-h-screen ${isDarkMode ? 'bg-background-dark text-text-light' : 'bg-background-light text-text-dark'}`}
     >
-      {/* Using the same Navbar component as in the courses page */}
+      {/* الهيدر الأساسي */}
       <Navbar />
       
       {/* Add space to prevent content from being hidden under the navbar */}

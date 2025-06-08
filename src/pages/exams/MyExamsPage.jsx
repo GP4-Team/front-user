@@ -8,6 +8,9 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import translations from "../../utils/translations";
 
+// Import Navbar
+import Navbar from "../../components/navigation/Navbar";
+
 // Import custom components
 import ExamsHeader from "../../components/exams/ExamsHeader";
 import PerformanceSummary from "../../components/exams/PerformanceSummary";
@@ -340,10 +343,12 @@ const MyExamsPage = () => {
   // Show loading state
   if (loading) {
     return (
-      <div className={`flex flex-col min-h-screen ${isDarkMode ? 'bg-background-dark' : 'bg-[#F0F4F8]'}`}>
-        <div className="mt-0 flex-grow flex items-center justify-center">
+      <div className={`min-h-screen ${isDarkMode ? 'bg-background-dark' : 'bg-[#F0F4F8]'}`}>
+        <Navbar />
+        <div className="pt-20"></div>
+        <div className="flex items-center justify-center h-96">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-base mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-base mx-auto mb-4"></div>
             <p className={`text-lg ${isDarkMode ? 'text-white' : 'text-gray-600'}`}>
               {language === 'ar' ? 'جاري تحميل الامتحانات...' : 'Loading exams...'}
             </p>
@@ -356,8 +361,10 @@ const MyExamsPage = () => {
   // Show error state
   if (error) {
     return (
-      <div className={`flex flex-col min-h-screen ${isDarkMode ? 'bg-background-dark' : 'bg-[#F0F4F8]'}`}>
-        <div className="mt-0 flex-grow flex items-center justify-center">
+      <div className={`min-h-screen ${isDarkMode ? 'bg-background-dark' : 'bg-[#F0F4F8]'}`}>
+        <Navbar />
+        <div className="pt-20"></div>
+        <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="text-red-500 text-6xl mb-4">⚠️</div>
             <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -381,12 +388,18 @@ const MyExamsPage = () => {
   return (
     <div
       ref={pageRef}
-      className={`flex flex-col min-h-screen relative ${isRTL ? "rtl" : "ltr"} ${
+      className={`min-h-screen relative ${isRTL ? "rtl" : "ltr"} ${
         isDarkMode
           ? "bg-background-dark text-text-light dark-mode"
           : "bg-[#F0F4F8] text-[#37474F]"
       }`}
     >
+      {/* الهيدر الأساسي */}
+      <Navbar />
+      
+      {/* Add space to prevent content from being hidden under the navbar */}
+      <div className="pt-20"></div>
+
       {/* Purple background at the top */}
       <PurpleBackground />
       
@@ -404,8 +417,8 @@ const MyExamsPage = () => {
         motivationalMessageRef={motivationalMessageRef}
       />
 
-      {/* Main content with top margin to account for fixed navbar from GuestLayout */}
-      <div className="mt-0 flex-grow relative z-10">
+      {/* Main content */}
+      <div className="relative z-10">
         <div className="max-w-6xl mx-auto px-4 py-8">
           {/* Page header */}
           <ExamsHeader title={t.pageTitle} />
