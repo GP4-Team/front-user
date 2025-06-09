@@ -67,37 +67,11 @@ const MOCK_COURSE_DATA = {
       en: "Mai Hany"
     },
     stats: {
-      totalLessons: 15,
-      totalQuizzes: 3,
-      totalProjects: 2,
+      totalLessons: 8,
+      totalQuizzes: 2,
+      totalProjects: 0,
       estimatedHours: 58
-    },
-    features: [
-      {
-        ar: "دروس يوتيوب تفاعلية",
-        en: "Interactive YouTube lessons"
-      },
-      {
-        ar: "محتوى محمي ومتنوع",
-        en: "Protected and diverse content"
-      },
-      {
-        ar: "امتحانات تجريبية شاملة",
-        en: "Comprehensive experimental exams"
-      },
-      {
-        ar: "مواد تعليمية متعددة الوسائط",
-        en: "Multimedia educational materials"
-      },
-      {
-        ar: "دعم فني متواصل",
-        en: "Continuous technical support"
-      },
-      {
-        ar: "شهادة إتمام معتمدة",
-        en: "Certified completion certificate"
-      }
-    ]
+    }
   },
   sections: [
     {
@@ -106,27 +80,10 @@ const MOCK_COURSE_DATA = {
         ar: "قسم تجربة",
         en: "Experimental Section"
       },
-      lessons: 5,
-      completed: 2,
+      lessons: 6,
+      completed: 0,
       expanded: true,
       lessons: [
-        {
-          id: "overview",
-          type: "info",
-          title: {
-            ar: "نظرة عامة على الكورس",
-            en: "Course Overview"
-          },
-          status: "current",
-          duration: {
-            ar: "5 دقائق",
-            en: "5 minutes"
-          },
-          description: {
-            ar: "معلومات شاملة عن الكورس ومحتوياته",
-            en: "Comprehensive information about the course and its contents"
-          }
-        },
         {
           id: "lesson-1-1",
           type: "video",
@@ -134,10 +91,10 @@ const MOCK_COURSE_DATA = {
             ar: "درس يوتيوب تجريبي",
             en: "Experimental YouTube Lesson"
           },
-          status: "locked",
+          status: "current",
           duration: {
-            ar: "15 دقيقة",
-            en: "15 minutes"
+            ar: "92 دقيقة",
+            en: "92 minutes"
           },
           url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
           description: {
@@ -155,10 +112,10 @@ const MOCK_COURSE_DATA = {
             ar: "يوتيوب محمي",
             en: "Protected YouTube"
           },
-          status: "current",
+          status: "locked",
           duration: {
-            ar: "22 دقيقة",
-            en: "22 minutes"
+            ar: "96 دقيقة",
+            en: "96 minutes"
           },
           url: "https://www.youtube.com/embed/jNQXAC9IVRw",
           description: {
@@ -173,8 +130,8 @@ const MOCK_COURSE_DATA = {
           id: "lesson-1-3",
           type: "image",
           title: {
-            ar: "صورة تجريبية 3",
-            en: "Experimental Image 3"
+            ar: "انفوجرافيك",
+            en: "Infographic"
           },
           status: "locked",
           duration: {
@@ -189,15 +146,33 @@ const MOCK_COURSE_DATA = {
         },
         {
           id: "lesson-1-4",
+          type: "image",
+          title: {
+            ar: "درس صورة تجريبية 1",
+            en: "Experimental Image Lesson 1"
+          },
+          status: "locked",
+          duration: {
+            ar: "8 دقائق",
+            en: "8 minutes"
+          },
+          imageUrl: "/api/placeholder/800/600",
+          description: {
+            ar: "ملخص بصري للمفاهيم المهمة",
+            en: "Visual summary of important concepts"
+          }
+        },
+        {
+          id: "lesson-1-5",
           type: "audio",
           title: {
-            ar: "درس صوت تجريبي",
+            ar: "درس صوت تجربة",
             en: "Experimental Audio Lesson"
           },
           status: "locked",
           duration: {
-            ar: "12 دقيقة",
-            en: "12 minutes"
+            ar: "22 دقيقة",
+            en: "22 minutes"
           },
           audioUrl: "/api/placeholder/audio.mp3",
           description: {
@@ -214,8 +189,8 @@ const MOCK_COURSE_DATA = {
           },
           status: "locked",
           duration: {
-            ar: "30 دقيقة",
-            en: "30 minutes"
+            ar: "10 دقائق",
+            en: "10 minutes"
           },
           questionsCount: 10,
           passingScore: 70,
@@ -229,63 +204,30 @@ const MOCK_COURSE_DATA = {
     {
       id: "section-2",
       title: {
-        ar: "قسم تجربة 2",
-        en: "Experimental Section 2"
+        ar: "مقدمة للقسم 2",
+        en: "Introduction to Section 2"
       },
-      lessons: 4,
+      lessons: 1,
       completed: 0,
       expanded: false,
       lessons: [
         {
-          id: "lesson-2-1",
-          type: "video",
-          title: {
-            ar: "مفاهيم متقدمة",
-            en: "Advanced Concepts"
-          },
-          status: "locked",
-          duration: {
-            ar: "25 دقيقة",
-            en: "25 minutes"
-          }
-        },
-        {
-          id: "lesson-2-2",
-          type: "image",
-          title: {
-            ar: "رسوم بيانية تفصيلية",
-            en: "Detailed Charts"
-          },
-          status: "locked",
-          duration: {
-            ar: "8 دقائق",
-            en: "8 minutes"
-          }
-        },
-        {
-          id: "lesson-2-3",
-          type: "audio",
-          title: {
-            ar: "ملخص صوتي شامل",
-            en: "Comprehensive Audio Summary"
-          },
-          status: "locked",
-          duration: {
-            ar: "18 دقيقة",
-            en: "18 minutes"
-          }
-        },
-        {
           id: "exam-2",
           type: "exam",
           title: {
-            ar: "اختبار التقييم النهائي",
-            en: "Final Assessment Test"
+            ar: "امتحان تجريبي 2",
+            en: "Experimental Exam 2"
           },
           status: "locked",
           duration: {
-            ar: "45 دقيقة",
-            en: "45 minutes"
+            ar: "10 دقائق",
+            en: "10 minutes"
+          },
+          questionsCount: 10,
+          passingScore: 70,
+          description: {
+            ar: "اختبار تقييم للقسم الثاني",
+            en: "Assessment test for section two"
           }
         }
       ]
@@ -296,178 +238,12 @@ const MOCK_COURSE_DATA = {
         ar: "قسم جديد",
         en: "New Section"
       },
-      lessons: 1,
+      lessons: 0,
       completed: 0,
       expanded: false,
-      lessons: [
-        {
-          id: "bonus-exam",
-          type: "exam",
-          title: {
-            ar: "اختبار إضافي",
-            en: "Bonus Exam"
-          },
-          status: "locked",
-          duration: {
-            ar: "20 دقيقة",
-            en: "20 minutes"
-          }
-        }
-      ]
+      lessons: []
     }
   ]
-};
-
-// Course Overview Lesson Component
-const CourseOverviewLesson = ({ course }) => {
-  const { language } = useLanguage();
-  const { isDarkMode } = useTheme();
-  
-  const getText = (obj) => {
-    if (!obj) return "";
-    return obj[language] || obj.en || "";
-  };
-  
-  const courseData = course.courseData;
-  
-  return (
-    <div className="p-6">
-      {/* Course Header */}
-      <div className="mb-8">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Course Image */}
-          <div className="lg:w-1/3">
-            <img 
-              src={courseData.image} 
-              alt={getText(courseData.title)}
-              className="w-full h-48 lg:h-64 object-cover rounded-lg shadow-md"
-              onError={(e) => {
-                e.target.src = 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp';
-              }}
-            />
-          </div>
-          
-          {/* Course Info */}
-          <div className="lg:w-2/3">
-            <h1 className="text-2xl lg:text-3xl font-bold mb-4">
-              {getText(courseData.title)}
-            </h1>
-            
-            <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-              {courseData.description}
-            </p>
-            
-            {/* Course Details Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {language === 'ar' ? 'الفئة' : 'Category'}
-                </div>
-                <div className="font-medium">{getText(courseData.category)}</div>
-              </div>
-              
-              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {language === 'ar' ? 'المستوى' : 'Level'}
-                </div>
-                <div className="font-medium">{getText(courseData.level)}</div>
-              </div>
-              
-              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {language === 'ar' ? 'المدة' : 'Duration'}
-                </div>
-                <div className="font-medium">{courseData.duration_hours} {language === 'ar' ? 'ساعة' : 'hours'}</div>
-              </div>
-              
-              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {language === 'ar' ? 'الطلاب' : 'Students'}
-                </div>
-                <div className="font-medium">{courseData.students_count}+</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Course Features */}
-      <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4">
-          {language === 'ar' ? 'مميزات الكورس' : 'Course Features'}
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {courseData.features?.map((feature, index) => (
-            <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-              <span>{getText(feature)}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      
-      {/* Course Statistics */}
-      <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4">
-          {language === 'ar' ? 'إحصائيات الكورس' : 'Course Statistics'}
-        </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              {courseData.stats?.totalLessons || 0}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-300">
-              {language === 'ar' ? 'درس' : 'Lessons'}
-            </div>
-          </div>
-          
-          <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-              {courseData.stats?.totalQuizzes || 0}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-300">
-              {language === 'ar' ? 'اختبار' : 'Quizzes'}
-            </div>
-          </div>
-          
-          <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-              {courseData.stats?.totalProjects || 0}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-300">
-              {language === 'ar' ? 'مشروع' : 'Projects'}
-            </div>
-          </div>
-          
-          <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-              {courseData.stats?.estimatedHours || 0}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-300">
-              {language === 'ar' ? 'ساعة' : 'Hours'}
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Enrollment Section */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
-          <div>
-            <h3 className="text-xl font-bold mb-2">
-              {language === 'ar' ? 'ابدأ رحلتك التعليمية' : 'Start Your Learning Journey'}
-            </h3>
-            <p className="opacity-90">
-              {language === 'ar' ? 'انضم إلى آلاف الطلاب واحصل على شهادة معتمدة' : 'Join thousands of students and get certified'}
-            </p>
-          </div>
-          <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-            {language === 'ar' ? 'ابدأ الآن' : 'Start Now'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 const CourseDetailPage = () => {
@@ -694,10 +470,6 @@ const CourseDetailPage = () => {
                   
                   {currentLesson.type === "exam" && (
                     <CourseExamLesson lesson={currentLesson} />
-                  )}
-                  
-                  {currentLesson.type === "info" && (
-                    <CourseOverviewLesson course={course} />
                   )}
                 </>
               ) : (
