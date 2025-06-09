@@ -6,6 +6,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import Navbar from "../../components/navigation/Navbar";
 import CoursesService from "../../services/api/courses.service";
+import MaterialsService from "../../services/api/materials.service";
 import {
   CourseVideoLesson,
   CourseImageLesson,
@@ -55,34 +56,77 @@ const formatDuration = (seconds, language) => {
 
 // Helper function to transform API materials to lesson format
 const transformMaterialsToLessons = (materials) => {
-  return materials.map((material, index) => ({
-    id: `material-${material.id}`,
-    type: convertMaterialType(material.type),
-    title: {
-      ar: material.name,
-      en: material.name
-    },
-    status: index === 0 ? 'current' : 'locked', // First material is current
-    duration: {
-      ar: formatDuration(material.duration_in_seconds, 'ar'),
-      en: formatDuration(material.duration_in_seconds, 'en')
-    },
-    description: {
-      ar: material.description || '',
-      en: material.description || ''
-    },
-    // Add material-specific properties
-    url: material.media_url,
-    instructor: material.user?.name || '',
-    materialData: material, // Keep original data
-    // For video lessons
-    maxViews: 5,
-    viewsRemaining: 3,
-    // For PDF lessons
-    pages: material.number_of_pages,
-    // Course idea info
-    courseIdea: material.course_idea
-  }));
+  console.log('🔄 Transforming materials to lessons:', materials);
+  
+  return materials.map((material, index) => {
+    const lesson = {
+      id: `material-${material.id}`,
+      type: convertMaterialType(material.type),
+      title: {
+        ar: material.name || `مادة ${index + 1}`,
+        en: material.name || `Material ${index + 1}`
+      },
+      status: index === 0 ? 'current' : 'unlocked', // الدرس الأول current والباقي unlocked
+      duration: {
+        ar: formatDuration(material.duration_in_seconds, 'ar'),
+        en: formatDuration(material.duration_in_seconds, 'en')
+      },
+      description: {
+        ar: material.description || `وصف المادة: ${material.name}`,
+        en: material.description || `Material description: ${material.name}`
+      },
+      // إضافة جميع البيانات من الـ API
+      url: material.media_url,
+      videoUrl: material.media_url, // للفيديوهات
+      audioUrl: material.media_url, // للصوتيات
+      imageUrl: material.media_url, // للصور
+      pdfUrl: material.media_url, // للـ PDFs
+      downloadUrl: material.media_url, // للتحميل
+      instructor: material.user?.name || 'مدرس متخصص',
+      materialData: material, // الاحتفاظ بجميع البيانات الأصلية
+      
+      // بيانات المدرس
+      instructorAvatar: material.user?.profile_image,
+      instructorEmail: material.user?.email,
+      
+      // بيانات المادة التفصيلية
+      materialId: material.id,
+      courseId: material.course_id,
+      userId: material.user_id,
+      createdAt: material.created_at,
+      updatedAt: material.updated_at,
+      
+      // بيانات إضافية
+      fileSize: material.file_size,
+      mimeType: material.mime_type,
+      pages: material.number_of_pages,
+      
+      // فكرة الكورس
+      courseIdea: material.course_idea,
+      courseIdeaId: material.course_idea_id,
+      
+      // بيانات الكورس من nested object
+      courseInfo: material.course,
+      
+      // إعدادات الفيديو
+      maxViews: 999, // عدد مشاهدات غير محدود
+      viewsRemaining: 999,
+      
+      // حالة المادة
+      isActive: true,
+      isAccessible: true,
+      canDownload: true,
+      
+      // معلومات إضافية للعرض
+      originalType: material.type,
+      apiData: {
+        ...material
+      }
+    };
+    
+    console.log(`📋 Lesson ${index + 1} transformed:`, lesson);
+    return lesson;
+  });
 };
 
 const CourseDetailPage = () => {
@@ -98,6 +142,10 @@ const CourseDetailPage = () => {
   const [error, setError] = useState(null);
   // State for the current lesson
   const [currentLesson, setCurrentLesson] = useState(null);
+  // State for the selected material details
+  const [selectedMaterial, setSelectedMaterial] = useState(null);
+  const [materialLoading, setMaterialLoading] = useState(false);
+  const [materialError, setMaterialError] = useState(null);
   // State for expanded sections
   const [expandedSections, setExpandedSections] = useState({});
 
@@ -105,6 +153,32 @@ const CourseDetailPage = () => {
   const getText = (obj) => {
     if (!obj) return "";
     return obj[language] || obj.en || "";
+  };
+
+  // Function to load material details by ID
+  const loadMaterialDetails = async (materialId) => {
+    try {
+      setMaterialLoading(true);
+      setMaterialError(null);
+      
+      console.log('📎 Loading material details for ID:', materialId);
+      
+      const materialResponse = await MaterialsService.getMaterialById(materialId);
+      
+      console.log('✅ Material details received:', materialResponse);
+      
+      if (materialResponse.success && materialResponse.data) {
+        setSelectedMaterial(materialResponse.data);
+      } else {
+        setMaterialError('فشل في تحميل تفاصيل المادة');
+      }
+      
+    } catch (err) {
+      console.error('❌ Error loading material details:', err);
+      setMaterialError(err.message || 'فشل في تحميل تفاصيل المادة');
+    } finally {
+      setMaterialLoading(false);
+    }
   };
 
   // Effect to load course data and materials from API
@@ -119,7 +193,13 @@ const CourseDetailPage = () => {
         // Fetch course materials from API
         const materialsResponse = await CoursesService.getCourseContent(courseId);
         
-        console.log('✅ Course materials received:', materialsResponse);
+        console.log('✅ Full API Response:', JSON.stringify(materialsResponse, null, 2));
+        console.log('📊 Response structure:', {
+          success: materialsResponse.success,
+          dataExists: !!materialsResponse.data,
+          dataDataExists: !!(materialsResponse.data && materialsResponse.data.data),
+          materialsCount: materialsResponse.data && materialsResponse.data.data ? materialsResponse.data.data.length : 0
+        });
         
         if (materialsResponse.success && materialsResponse.data && materialsResponse.data.data) {
           const materials = materialsResponse.data.data;
@@ -130,6 +210,58 @@ const CourseDetailPage = () => {
           
           // Transform materials to lessons
           const lessons = transformMaterialsToLessons(materials);
+          
+          console.log('📚 All transformed lessons:', lessons);
+          
+          // Group materials by type for better organization
+          const groupedMaterials = lessons.reduce((groups, lesson) => {
+            const type = lesson.type;
+            if (!groups[type]) {
+              groups[type] = [];
+            }
+            groups[type].push(lesson);
+            return groups;
+          }, {});
+          
+          console.log('🗂️ Grouped materials by type:', groupedMaterials);
+          
+          // Create sections for each material type
+          const sections = [];
+          
+          // Main section with all materials
+          sections.push({
+            id: 'all-materials',
+            title: {
+              ar: 'جميع المواد التعليمية',
+              en: 'All Course Materials'
+            },
+            lessons: lessons.length,
+            completed: 0,
+            expanded: true,
+            lessons: lessons
+          });
+          
+          // Add type-specific sections if there are multiple types
+          if (Object.keys(groupedMaterials).length > 1) {
+            Object.entries(groupedMaterials).forEach(([type, typeLessons]) => {
+              const typeNames = {
+                video: { ar: 'الفيديوهات', en: 'Videos' },
+                audio: { ar: 'الملفات الصوتية', en: 'Audio Files' },
+                image: { ar: 'الصور', en: 'Images' },
+                pdf: { ar: 'ملفات PDF', en: 'PDF Files' },
+                document: { ar: 'المستندات', en: 'Documents' }
+              };
+              
+              sections.push({
+                id: `${type}-section`,
+                title: typeNames[type] || { ar: type, en: type },
+                lessons: typeLessons.length,
+                completed: 0,
+                expanded: false,
+                lessons: typeLessons
+              });
+            });
+          }
           
           // Create course data structure
           const courseData = {
@@ -144,40 +276,43 @@ const CourseDetailPage = () => {
               name: courseInfo?.name || 'معسكر تجريبي',
               code: courseInfo?.code || 'COURSE-001',
               color: courseInfo?.color || '#4285F4',
-              image: '/api/placeholder/800/400',
-              description: `مواد تعليمية شاملة في ${courseInfo?.name || 'المادة'}`,
+              image: courseInfo?.image || '/api/placeholder/800/400',
+              description: courseInfo?.description || `مواد تعليمية شاملة في ${courseInfo?.name || 'المادة'}`,
               instructor_name: materials[0]?.user?.name || 'مدرس متخصص',
+              instructor_avatar: materials[0]?.user?.profile_image,
               materials_count: materials.length,
               stats: {
                 totalLessons: materials.length,
                 totalQuizzes: 0,
                 totalProjects: 0,
                 estimatedHours: Math.ceil(materials.reduce((total, m) => total + (m.duration_in_seconds || 0), 0) / 3600)
-              }
+              },
+              // إضافة معلومات الكورس الكاملة
+              ...courseInfo
             },
-            sections: [
-              {
-                id: 'materials-section',
-                title: {
-                  ar: 'مواد الكورس',
-                  en: 'Course Materials'
-                },
-                lessons: lessons.length,
-                completed: 0,
-                expanded: true,
-                lessons: lessons
-              }
-            ]
+            sections: sections,
+            // إضافة البيانات الخام للـ debugging
+            rawMaterials: materials,
+            apiResponse: materialsResponse
           };
           
           setCourse(courseData);
           
-          // Set initial expanded sections
-          setExpandedSections({ 'materials-section': true });
+          // Set initial expanded sections - expand the main section
+          const initialExpanded = { 'all-materials': true };
+          setExpandedSections(initialExpanded);
           
           // Set the first lesson as current
           if (lessons.length > 0) {
             setCurrentLesson(lessons[0]);
+            console.log('🎯 Set current lesson:', lessons[0]);
+            
+            // Load details for the first lesson
+            const firstMaterialId = lessons[0].materialId || lessons[0].materialData?.id || lessons[0].id?.replace('material-', '');
+            if (firstMaterialId) {
+              console.log('🎥 Loading details for first lesson with ID:', firstMaterialId);
+              await loadMaterialDetails(firstMaterialId);
+            }
           }
           
         } else {
@@ -222,8 +357,22 @@ const CourseDetailPage = () => {
   };
 
   // Function to select a lesson
-  const selectLesson = (lesson) => {
+  const selectLesson = async (lesson) => {
+    console.log('🎯 Selecting lesson:', lesson);
+    
     setCurrentLesson(lesson);
+    
+    // Extract material ID from lesson
+    const materialId = lesson.materialId || lesson.materialData?.id || lesson.id?.replace('material-', '');
+    
+    console.log('🔢 Extracted material ID:', materialId);
+    
+    if (materialId) {
+      await loadMaterialDetails(materialId);
+    } else {
+      console.warn('⚠️ No material ID found for lesson:', lesson);
+      setSelectedMaterial(null);
+    }
   };
 
   // If course data is not loaded yet or there's an error
@@ -358,31 +507,76 @@ const CourseDetailPage = () => {
             
             {/* Main content */}
             <div className="lg:w-3/4 xl:w-4/5 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-              {currentLesson ? (
+              {materialLoading ? (
+                // Material loading state
+                <div className="p-8 text-center">
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <Loader className="animate-spin h-12 w-12 text-blue-500 mx-auto mb-4" />
+                    <p className="text-lg">
+                      {language === 'ar' ? 'جاري تحميل المادة...' : 'Loading material...'}
+                    </p>
+                  </div>
+                </div>
+              ) : materialError ? (
+                // Material error state
+                <div className="p-8 text-center">
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-xl font-medium text-red-600 mb-2">
+                      {language === 'ar' ? 'خطأ في تحميل المادة' : 'Error Loading Material'}
+                    </h2>
+                    <p className="text-gray-500 mb-4">{materialError}</p>
+                    <button
+                      onClick={() => currentLesson && selectLesson(currentLesson)}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors"
+                    >
+                      {language === 'ar' ? 'إعادة المحاولة' : 'Try Again'}
+                    </button>
+                  </div>
+                </div>
+              ) : currentLesson ? (
                 <>
                   {/* Render the appropriate lesson component based on the lesson type */}
                   {currentLesson.type === "video" && (
-                    <CourseVideoLesson lesson={currentLesson} />
+                    <CourseVideoLesson 
+                      lesson={currentLesson} 
+                      materialDetails={selectedMaterial}
+                    />
                   )}
                   
                   {currentLesson.type === "pdf" && (
-                    <CourseImageLesson lesson={currentLesson} />
+                    <CourseImageLesson 
+                      lesson={currentLesson}
+                      materialDetails={selectedMaterial}
+                    />
                   )}
                   
                   {currentLesson.type === "document" && (
-                    <CourseImageLesson lesson={currentLesson} />
+                    <CourseImageLesson 
+                      lesson={currentLesson}
+                      materialDetails={selectedMaterial}
+                    />
                   )}
                   
                   {currentLesson.type === "image" && (
-                    <CourseImageLesson lesson={currentLesson} />
+                    <CourseImageLesson 
+                      lesson={currentLesson}
+                      materialDetails={selectedMaterial}
+                    />
                   )}
                   
                   {currentLesson.type === "audio" && (
-                    <CourseAudioLesson lesson={currentLesson} />
+                    <CourseAudioLesson 
+                      lesson={currentLesson}
+                      materialDetails={selectedMaterial}
+                    />
                   )}
                   
                   {currentLesson.type === "exam" && (
-                    <CourseExamLesson lesson={currentLesson} />
+                    <CourseExamLesson 
+                      lesson={currentLesson}
+                      materialDetails={selectedMaterial}
+                    />
                   )}
                 </>
               ) : (
