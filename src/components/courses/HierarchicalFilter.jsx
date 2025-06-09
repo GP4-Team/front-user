@@ -80,6 +80,23 @@ const HierarchicalFilter = ({ onFilterChange, currentFilters, isLoading = false 
     });
   };
 
+  // معالجة اختيار مرحلة كاملة (بدون مستوى محدد)
+  const handleCategorySelect = (category) => {
+    console.log('🎯 Category selection:', {
+      category_id: category.category_id,
+      categoryName: getText(category.name.ar, category.name.en)
+    });
+
+    // إرسال البيانات للمكون الأب
+    onFilterChange({
+      type: 'hierarchical',
+      level_id: null, // لا نحدد مستوى معين
+      category_id: category.category_id,
+      levelName: '',
+      categoryName: getText(category.name.ar, category.name.en)
+    });
+  };
+
   // معالجة إعادة تعيين الفلاتر
   const handleReset = () => {
     onFilterChange({
@@ -122,26 +139,49 @@ const HierarchicalFilter = ({ onFilterChange, currentFilters, isLoading = false 
       {educationStructure.map((category) => (
         <div key={category.id} className={'border-l-2 border-gray-200 dark:border-gray-700 pl-4 rtl:pr-4 rtl:pl-0 rtl:border-l-0 rtl:border-r-2'}>
           {/* عنوان الفئة */}
-          <div
-            className={'flex items-center cursor-pointer py-2'}
-            onClick={() => toggleCategory(category.id)}
-          >
-            <div className={'flex items-center flex-1'}>
+          <div>
+            {/* اختيار المرحلة بالكامل */}
+            <label className={'flex items-center cursor-pointer py-2'}>
+              <input
+                type={'radio'}
+                name={'education-level'}
+                checked={currentFilters.category_id === category.category_id && !currentFilters.level_id}
+                onChange={() => handleCategorySelect(category)}
+                className={`mr-3 rtl:ml-3 rtl:mr-0 ${
+                  isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                }`}
+              />
               <span
                 className={'w-4 h-4 rounded-full mr-3 rtl:ml-3 rtl:mr-0'}
                 style={{ backgroundColor: category.color }}
               ></span>
               <span className={`font-medium ${
                 isDarkMode ? 'text-gray-200' : 'text-gray-800'
+              } ${
+                currentFilters.category_id === category.category_id && !currentFilters.level_id ? 'text-blue-600 dark:text-blue-400' : ''
               }`}>
-                {getText(category.name.ar, category.name.en)}
+                {getText(category.name.ar, category.name.en)} (جميع الصفوف)
               </span>
+            </label>
+            
+            {/* زر توسيع الصفوف */}
+            <div
+              className={'flex items-center cursor-pointer py-1 hover:bg-gray-50 dark:hover:bg-gray-800 rounded'}
+              onClick={() => toggleCategory(category.id)}
+            >
+              <div className={'flex items-center flex-1 pl-8 rtl:pr-8 rtl:pl-0'}>
+                <span className={`text-sm ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>
+                  {getText('عرض الصفوف', 'Show Grades')}
+                </span>
+              </div>
+              {expandedCategories.has(category.id) ? (
+                <ChevronDown size={16} className={isDarkMode ? 'text-gray-400' : 'text-gray-600'} />
+              ) : (
+                <ChevronRight size={16} className={isDarkMode ? 'text-gray-400' : 'text-gray-600'} />
+              )}
             </div>
-            {expandedCategories.has(category.id) ? (
-              <ChevronDown size={16} className={isDarkMode ? 'text-gray-400' : 'text-gray-600'} />
-            ) : (
-              <ChevronRight size={16} className={isDarkMode ? 'text-gray-400' : 'text-gray-600'} />
-            )}
           </div>
 
           {/* الصفوف تحت كل فئة */}

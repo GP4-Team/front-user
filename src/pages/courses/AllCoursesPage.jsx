@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import { Search } from "lucide-react";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -20,6 +20,9 @@ const AllCoursesPage = () => {
   const [isFilterLoading, setIsFilterLoading] = useState(false); // للفلترة فقط
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [hasSearched, setHasSearched] = useState(false);
   const [pagination, setPagination] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [hierarchicalFilters, setHierarchicalFilters] = useState({
@@ -28,18 +31,53 @@ const AllCoursesPage = () => {
     levelName: '',
     categoryName: ''
   });
+  
+  // استخدام useTransition لتجنب مشاكل React 18
+  const [isPending, startTransition] = useTransition();
 
   const getText = (ar, en) => (language === "ar" ? ar : en);
 
-  // جلب الكورسات مع النظام الهرمي الجديد
+  // جلب الكورسات عند تحميل الصفحة أول مرة
   useEffect(() => {
-    const fetchCourses = async () => {
-      // استخدم isFilterLoading للفلترة العادية و isInitialLoading للتحميل الأولي فقط
-      if (isInitialLoading) {
-        // لا تعرض شاشة تحميل كاملة بعد التحميل الأولي
-      } else {
-        setIsFilterLoading(true);
+    const fetchInitialCourses = async () => {
+      setIsInitialLoading(true);
+      setError(null);
+
+      try {
+        const params = {
+          page: 1,
+          per_page: 15,
+        };
+
+        console.log('📋 Loading initial courses');
+        const response = await HomeApiService.getAllCoursesPaginated(params);
+
+        if (response.success && response.data) {
+          setAllCourses(response.data);
+          setCourses(response.data);
+          setPagination(response.pagination);
+          setCurrentPage(1);
+        }
+      } catch (err) {
+        console.error("Error fetching initial courses:", err);
+        setError("حدث خطأ أثناء تحميل الكورسات");
+      } finally {
+        setIsInitialLoading(false);
       }
+    };
+
+    fetchInitialCourses();
+  }, []); // تعمل مرة واحدة فقط عند تحميل المكون
+
+  // جلب الكورسات عند تغيير الصفحة (للpagination فقط)
+  useEffect(() => {
+    // لا تعمل في التحميل الأولي أو عند وجود بحث
+    if (isInitialLoading || hasSearched || currentPage === 1) {
+      return;
+    }
+
+    const fetchPageCourses = async () => {
+      setIsFilterLoading(true);
       setError(null);
 
       try {
@@ -50,7 +88,6 @@ const AllCoursesPage = () => {
 
         let response;
         
-        // إذا كان هناك فلتر هرمي، استخدم الـ API الجديد
         if (hierarchicalFilters.level_id || hierarchicalFilters.category_id) {
           if (hierarchicalFilters.level_id) {
             params.level_id = hierarchicalFilters.level_id;
@@ -59,75 +96,179 @@ const AllCoursesPage = () => {
             params.category_id = hierarchicalFilters.category_id;
           }
           
-          console.log('🎯 Using hierarchical filter with params:', params);
           response = await HomeApiService.getHierarchicalFilteredCourses(params);
-        }
-        // بخلاف ذلك، استخدم الـ API العادي
-        else {
-          console.log('📋 Loading all courses');
+        } else {
           response = await HomeApiService.getAllCoursesPaginated(params);
         }
 
         if (response.success && response.data) {
-          setAllCourses(response.data); // حفظ جميع الكورسات
+          setAllCourses(response.data);
           setCourses(response.data);
           setPagination(response.pagination);
-          
-          // طباعة معلومات الفلترة إذا كانت موجودة
-          if (response.filters_applied) {
-            console.log('✅ Filters applied by API:', response.filters_applied);
-          }
         }
       } catch (err) {
-        console.error("Error fetching courses:", err);
+        console.error("Error fetching page courses:", err);
         setError("حدث خطأ أثناء تحميل الكورسات");
       } finally {
-        setIsInitialLoading(false);
         setIsFilterLoading(false);
       }
     };
 
-    fetchCourses();
-  }, [currentPage, hierarchicalFilters.level_id, hierarchicalFilters.category_id]);
+    fetchPageCourses();
+  }, [currentPage]); // تعمل فقط عند تغيير الصفحة
 
-  // بحث محلي في الكورسات المحملة
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      // إذا لم يكن هناك بحث، اعرض جميع الكورسات المحملة
-      setCourses(allCourses);
+  // دالة البحث باستخدام API
+  const performSearch = async (query) => {
+    if (!query.trim()) {
+      // إذا كان البحث فارغ، أعرض جميع الكورسات
+      setHasSearched(false);
+      setSearchResults([]);
       return;
     }
 
-    // فلترة الكورسات محلياً بناءً على نص البحث
-    const filteredCourses = allCourses.filter(course => {
-      const searchLower = searchQuery.toLowerCase();
-      
-      // بحث في اسم الكورس (عربي وإنجليزي)
-      const titleMatch = course.title?.ar?.toLowerCase().includes(searchLower) ||
-                        course.title?.en?.toLowerCase().includes(searchLower) ||
-                        course.name?.toLowerCase().includes(searchLower);
-      
-      // بحث في الفئة
-      const categoryMatch = course.category?.ar?.toLowerCase().includes(searchLower) ||
-                           course.category?.en?.toLowerCase().includes(searchLower);
-      
-      // بحث في المستوى
-      const levelMatch = course.level?.ar?.toLowerCase().includes(searchLower) ||
-                        course.level?.en?.toLowerCase().includes(searchLower);
-      
-      // بحث في رمز الكورس
-      const codeMatch = course.code?.toLowerCase().includes(searchLower);
-      
-      return titleMatch || categoryMatch || levelMatch || codeMatch;
-    });
+    setIsSearching(true);
+    setError(null);
 
-    setCourses(filteredCourses);
-  }, [searchQuery, allCourses]);
+    try {
+      console.log('🔍 Searching for:', query);
+      
+      const response = await HomeApiService.searchCourses(query, {
+        page: 1,
+        per_page: 15
+      });
 
-  // معالجة تغيير نص البحث (محلي فقط)
-  const handleSearchChange = (value) => {
-    setSearchQuery(value);
+      console.log('✅ Search results:', response);
+
+      if (response.success) {
+        setSearchResults(response.data);
+        setPagination(response.pagination);
+        setHasSearched(true);
+        
+        // إعادة تعيين الصفحة إلى الأولى عند البحث
+        setCurrentPage(1);
+        
+        // إزالة أي فلاتر هرمية عند البحث
+        setHierarchicalFilters({
+          level_id: null,
+          category_id: null,
+          levelName: '',
+          categoryName: ''
+        });
+      } else {
+        setError('فشل في البحث عن الكورسات');
+        setSearchResults([]);
+        setHasSearched(true);
+      }
+    } catch (err) {
+      console.error('Search error:', err);
+      
+      // التعامل مع أخطاء الشبكة
+      if (err.name === 'NetworkError' || err.code === 'NETWORK_ERROR' || !navigator.onLine) {
+        setError('لا يوجد اتصال بالإنترنت. يرجى التحقق من الاتصال والمحاولة مرة أخرى.');
+      } else if (err.response?.status === 404) {
+        setError('لم يتم العثور على نتائج للبحث المطلوب.');
+      } else if (err.response?.status >= 500) {
+        setError('خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.');
+      } else {
+        setError('حدث خطأ أثناء البحث. يرجى المحاولة مرة أخرى.');
+      }
+      
+      setSearchResults([]);
+      setHasSearched(true);
+    } finally {
+      setIsSearching(false);
+    }
   };
+
+  // معالجة تغيير نص البحث مع debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery !== undefined) {
+        // استخدام startTransition لتجنب مشاكل React 18
+        startTransition(() => {
+          performSearch(searchQuery);
+        });
+      }
+    }, 500); // انتظار 500ms بعد توقف المستخدم عن الكتابة
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  // معالجة تغيير نص البحث
+  const handleSearchChange = (value) => {
+    startTransition(() => {
+      setSearchQuery(value);
+      
+      // إذا كان البحث فارغ، اعرض جميع الكورسات مرة أخرى
+      if (!value.trim()) {
+        setHasSearched(false);
+        setSearchResults([]);
+        
+        // إعادة تحميل الكورسات من الصفحة الأولى
+        setCurrentPage(1);
+        
+        // إعادة تحميل الكورسات العادية إذا لم تكن محملة
+        if (courses.length === 0 || currentPage !== 1) {
+          fetchCoursesData();
+        }
+      }
+    });
+  };
+
+  // دالة منفصلة لجلب الكورسات
+  const fetchCoursesData = async () => {
+    setIsFilterLoading(true);
+    setError(null);
+
+    try {
+      const params = {
+        page: 1, // دائماً ابدأ من الصفحة الأولى عند مسح البحث
+        per_page: 15,
+      };
+
+      let response;
+      
+      // إذا كان هناك فلتر هرمي، استخدم الـ API الجديد
+      if (hierarchicalFilters.level_id || hierarchicalFilters.category_id) {
+        if (hierarchicalFilters.level_id) {
+          params.level_id = hierarchicalFilters.level_id;
+        }
+        if (hierarchicalFilters.category_id) {
+          params.category_id = hierarchicalFilters.category_id;
+        }
+        
+        console.log('🎯 Using hierarchical filter with params:', params);
+        response = await HomeApiService.getHierarchicalFilteredCourses(params);
+      }
+      // بخلاف ذلك، استخدم الـ API العادي
+      else {
+        console.log('📋 Loading all courses from page 1');
+        response = await HomeApiService.getAllCoursesPaginated(params);
+      }
+
+      if (response.success && response.data) {
+        setAllCourses(response.data); // حفظ جميع الكورسات
+        setCourses(response.data);
+        setPagination(response.pagination);
+        setCurrentPage(1); // تأكد من أن الصفحة الحالية هي 1
+        
+        // طباعة معلومات الفلترة إذا كانت موجودة
+        if (response.filters_applied) {
+          console.log('✅ Filters applied by API:', response.filters_applied);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching courses:", err);
+      setError("حدث خطأ أثناء تحميل الكورسات");
+    } finally {
+      setIsFilterLoading(false);
+    }
+  };
+
+  // تحديد الكورسات المعروضة (بحث أو فلترة أو جميع الكورسات)
+  const displayedCourses = hasSearched ? searchResults : courses;
+  const isShowingSearchResults = hasSearched && searchQuery.trim();
+  const isShowingFilterResults = !hasSearched && (hierarchicalFilters.level_id || hierarchicalFilters.category_id);
 
   // معالجة تغيير الفلاتر الهرمية
   const handleHierarchicalFilterChange = (filterData) => {
@@ -140,10 +281,22 @@ const AllCoursesPage = () => {
       });
       setCurrentPage(1);
       setSearchQuery(""); // مسح البحث عند إعادة التعيين
+      setHasSearched(false); // إعادة تعيين حالة البحث
+      setSearchResults([]); // مسح نتائج البحث
+      
+      // إعادة تحميل الكورسات من الصفحة الأولى
+      setTimeout(() => {
+        fetchCoursesData();
+      }, 100); // تأخير بسيط لضمان تحديث الحالة
       return;
     }
 
     if (filterData.type === 'hierarchical') {
+      // مسح البحث عند تطبيق فلتر جديد
+      setSearchQuery("");
+      setHasSearched(false);
+      setSearchResults([]);
+      
       setHierarchicalFilters({
         level_id: filterData.level_id,
         category_id: filterData.category_id,
@@ -151,6 +304,11 @@ const AllCoursesPage = () => {
         categoryName: filterData.categoryName
       });
       setCurrentPage(1); // العودة للصفحة الأولى عند تطبيق فلتر جديد
+      
+      // تطبيق الفلتر الجديد فوراً
+      setTimeout(() => {
+        fetchCoursesData();
+      }, 100);
     }
   };
 
@@ -220,6 +378,16 @@ const AllCoursesPage = () => {
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
             <strong className="font-bold ml-1">خطأ:</strong>
             <span className="block sm:inline">{error}</span>
+            {/* زر إعادة المحاولة في حالة البحث */}
+            {hasSearched && searchQuery.trim() && (
+              <button
+                onClick={() => performSearch(searchQuery)}
+                className="mt-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                disabled={isSearching}
+              >
+                {isSearching ? getText("جاري المحاولة...", "Retrying...") : getText("إعادة المحاولة", "Retry")}
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -260,13 +428,13 @@ const AllCoursesPage = () => {
               <h2 className="text-xl font-bold">
                 {pagination ? (
                   getText(
-                    `عرض ${courses.length} دورة من إجمالي ${pagination.total} دورة`,
-                    `Showing ${courses.length} courses of ${pagination.total} total`
+                    `عرض ${displayedCourses.length} دورة من إجمالي ${pagination.total} دورة`,
+                    `Showing ${displayedCourses.length} courses of ${pagination.total} total`
                   )
-                ) : courses.length > 0 ? (
+                ) : displayedCourses.length > 0 ? (
                   getText(
-                    `تم العثور على ${courses.length} دورة`,
-                    `Found ${courses.length} courses`
+                    `تم العثور على ${displayedCourses.length} دورة`,
+                    `Found ${displayedCourses.length} courses`
                   )
                 ) : (
                   getText("لم يتم العثور على نتائج", "No results found")
@@ -274,15 +442,21 @@ const AllCoursesPage = () => {
               </h2>
               
               {/* عرض معلومات البحث أو الفلتر */}
-              {searchQuery.trim() && (
+              {isShowingSearchResults && (
                 <p className="text-sm text-gray-500 mt-2">
                   {getText(
-                    `نتائج البحث المحلي عن: "${searchQuery}"`,
-                    `Local search results for: "${searchQuery}"`
+                    `نتائج البحث عن: "${searchQuery}"`,
+                    `Search results for: "${searchQuery}"`
+                  )}
+                  {isSearching && (
+                    <span className="ml-2">
+                      <div className="inline-block animate-spin rounded-full h-3 w-3 border-t border-b border-blue-500 mr-1"></div>
+                      {getText("جاري البحث...", "Searching...")}
+                    </span>
                   )}
                 </p>
               )}
-              {(hierarchicalFilters.level_id || hierarchicalFilters.category_id) && !searchQuery.trim() && (
+              {isShowingFilterResults && (
                 <p className="text-sm text-gray-500 mt-2">
                   {getText(
                     `مفلترة حسب: ${hierarchicalFilters.categoryName} - ${hierarchicalFilters.levelName}`,
@@ -293,20 +467,24 @@ const AllCoursesPage = () => {
             </div>
 
             {/* قائمة الكورسات */}
-            {courses.length > 0 ? (
+            {displayedCourses.length > 0 ? (
               <div>
                 {/* مؤشر تحميل للفلترة */}
-                {isFilterLoading && (
+                {(isFilterLoading || isSearching || isPending) && (
                   <div className="text-center py-4 mb-6">
                     <div className="inline-flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-[#3949AB]"></div>
-                      <span className="text-sm">{getText("جاري تطبيق الفلتر...", "Applying filter...")}</span>
+                      <span className="text-sm">
+                        {isPending ? getText("جاري التحديث...", "Updating...") :
+                         isSearching ? getText("جاري البحث...", "Searching...") : 
+                         getText("جاري تطبيق الفلتر...", "Applying filter...")}
+                      </span>
                     </div>
                   </div>
                 )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {courses.map((course) => (
+                  {displayedCourses.map((course) => (
                     <SimplifiedCourseCard key={course.id} course={course} />
                   ))}
                 </div>
@@ -412,30 +590,84 @@ const AllCoursesPage = () => {
               <div className={`${
                 isDarkMode ? "bg-[#1E1E1E] text-[#E0E0E0]" : "bg-white text-[#37474F]"
               } rounded-lg shadow-md p-8 text-center`}>
-                <p>
-                  {getText(
-                    "لم يتم العثور على دورات مطابقة لمعايير البحث الخاصة بك. يرجى تجربة معايير مختلفة.",
-                    "No courses found matching your search criteria. Please try different criteria."
-                  )}
-                </p>
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setHierarchicalFilters({
-                      level_id: null,
-                      category_id: null,
-                      levelName: '',
-                      categoryName: ''
-                    });
-                  }}
-                  className={`mt-4 ${
-                    isDarkMode
-                      ? "bg-[#3949AB] hover:bg-[#1A237E]"
-                      : "bg-[#3949AB] hover:bg-[#1A237E]"
-                  } text-white font-medium py-2 px-4 rounded-md transition duration-200`}
-                >
-                  {getText("إعادة تعيين البحث", "Reset Search")}
-                </button>
+                {isShowingSearchResults ? (
+                  <div>
+                    <div className="text-6xl mb-4">🔍</div>
+                    <h3 className="text-xl font-bold mb-2">
+                      {getText("لم يتم العثور على نتائج", "No results found")}
+                    </h3>
+                    <p className="mb-4">
+                      {getText(
+                        `لم يتم العثور على أي دورات تحتوي على "${searchQuery}". جرب استخدام كلمات بحث مختلفة.`,
+                        `No courses found containing "${searchQuery}". Try using different search terms.`
+                      )}
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      <button
+                        onClick={() => {
+                          startTransition(() => {
+                            setSearchQuery("");
+                            setHasSearched(false);
+                            setSearchResults([]);
+                            // إعادة تحميل الكورسات من الصفحة الأولى
+                            fetchCoursesData();
+                          });
+                        }}
+                        className={`${
+                          isDarkMode
+                            ? "bg-[#3949AB] hover:bg-[#1A237E]"
+                            : "bg-[#3949AB] hover:bg-[#1A237E]"
+                        } text-white font-medium py-2 px-4 rounded-md transition duration-200`}
+                      >
+                        {getText("مسح البحث وعرض جميع الدورات", "Clear search and show all courses")}
+                      </button>
+                      <button
+                        onClick={() => performSearch(searchQuery)}
+                        className={`${
+                          isDarkMode
+                            ? "bg-gray-600 hover:bg-gray-700"
+                            : "bg-gray-500 hover:bg-gray-600"
+                        } text-white font-medium py-2 px-4 rounded-md transition duration-200`}
+                        disabled={isSearching}
+                      >
+                        {isSearching ? getText("جاري البحث...", "Searching...") : getText("إعادة البحث", "Search again")}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <p>
+                      {getText(
+                        "لم يتم العثور على دورات مطابقة لمعايير البحث الخاصة بك. يرجى تجربة معايير مختلفة.",
+                        "No courses found matching your search criteria. Please try different criteria."
+                      )}
+                    </p>
+                    <button
+                      onClick={() => {
+                        startTransition(() => {
+                          setSearchQuery("");
+                          setHasSearched(false);
+                          setSearchResults([]);
+                          setHierarchicalFilters({
+                            level_id: null,
+                            category_id: null,
+                            levelName: '',
+                            categoryName: ''
+                          });
+                          // إعادة تحميل الكورسات من الصفحة الأولى
+                          fetchCoursesData();
+                        });
+                      }}
+                      className={`mt-4 ${
+                        isDarkMode
+                          ? "bg-[#3949AB] hover:bg-[#1A237E]"
+                          : "bg-[#3949AB] hover:bg-[#1A237E]"
+                      } text-white font-medium py-2 px-4 rounded-md transition duration-200`}
+                    >
+                      {getText("إعادة تعيين البحث", "Reset Search")}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

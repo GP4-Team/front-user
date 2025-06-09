@@ -35,8 +35,9 @@ import PrivateRoute from "./middleware/PrivateRoute.jsx";
 import "./App.css";
 import "./styles/ExamStyles.css";
 
+import Home from "./pages/common/HomePage.jsx";
+
 // Lazy loaded components
-const Home = React.lazy(() => import("./pages/common/HomePage.jsx"));
 const Profile = React.lazy(() => import("./pages/user/ProfilePage.jsx"));
 
 /**
@@ -113,7 +114,19 @@ const router = createBrowserRouter([
       // Protected Routes
       {
         path: "/profile",
-        element: <PrivateRoute><MainLayout><Profile /></MainLayout></PrivateRoute>
+        element: (
+          <PrivateRoute>
+            <MainLayout>
+              <React.Suspense fallback={
+                <div className="flex justify-center items-center h-96">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+                </div>
+              }>
+                <Profile />
+              </React.Suspense>
+            </MainLayout>
+          </PrivateRoute>
+        )
       },
       {
         path: "/courses/enrolled",
