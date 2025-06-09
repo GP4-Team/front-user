@@ -408,15 +408,21 @@ class CoursesService {
   }
 
   /**
-   * Get course content (materials)
+   * Get course content (materials/lessons) by course ID
    * @param {number|string} courseId - Course ID
-   * @returns {Promise<Array>} List of course materials
+   * @returns {Promise<Object>} Course content with lessons
    */
   async getCourseContent(courseId) {
     try {
+      console.log('📋 Fetching course content for ID:', courseId);
+      
       const response = await api.get(`/materials/course/${courseId}`);
+      
+      console.log('✅ Course content API response:', response.data);
+      
       return response.data;
     } catch (error) {
+      console.error('❌ Error fetching course content:', error);
       throw handleApiError(error, 'Failed to fetch course content');
     }
   }

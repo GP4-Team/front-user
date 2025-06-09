@@ -18,7 +18,9 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
-  Loader
+  Loader,
+  Clock,
+  FileText
 } from "lucide-react";
 import SimpleFooter from "../../components/home/SimpleFooter";
 
@@ -31,6 +33,219 @@ const CourseOverviewLesson = ({ course }) => {
     if (!obj) return "";
     return obj[language] || obj.en || "";
   };
+
+// Course Material Lesson Component - displays real material content from API
+const CourseMaterialLesson = ({ lesson }) => {
+  const { language } = useLanguage();
+  const { isDarkMode } = useTheme();
+  
+  const getText = (obj) => {
+    if (!obj) return "";
+    return obj[language] || obj.en || "";
+  };
+  
+  const material = lesson.materialData;
+  
+  if (!material) {
+    return (
+      <div className="p-8 text-center">
+        <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">
+          {language === 'ar' ? 'لا توجد بيانات للمادة' : 'No material data available'}
+        </h3>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="bg-white dark:bg-gray-800">
+      {/* Material Header */}
+      <div className="border-b border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              {getText(lesson.title)}
+            </h1>
+            {material.description && (
+              <p className="text-gray-600 dark:text-gray-300">
+                {material.description}
+              </p>
+            )}
+          </div>
+          
+          {lesson.duration && (
+            <div className="flex items-center bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-lg">
+              <Clock size={16} className="text-blue-600 dark:text-blue-400 mr-2" />
+              <span className="text-blue-600 dark:text-blue-400 font-medium">
+                {getText(lesson.duration)}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Material Content */}
+      <div className="p-6">
+        {/* Video Content */}
+        {(material.type === 'video' || lesson.type === 'video') && material.url && (
+          <div className="mb-6">
+            <div className="aspect-video bg-black rounded-lg overflow-hidden">
+              {material.url.includes('youtube.com') || material.url.includes('youtu.be') ? (
+                <iframe
+                  src={material.url.replace('watch?v=', 'embed/')}
+                  className="w-full h-full"
+                  frameBorder="0"
+                  allowFullScreen
+                  title={getText(lesson.title)}
+                ></iframe>
+              ) : (
+                <video
+                  src={material.url}
+                  controls
+                  className="w-full h-full"
+                  poster={material.thumbnail}
+                >
+                  {language === 'ar' ? 'متصفحك لا يدعم تشغيل الفيديو' : 'Your browser does not support video playback'}
+                </video>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Image Content */}
+        {(material.type === 'image' || lesson.type === 'image') && material.url && (
+          <div className="mb-6">
+            <img
+              src={material.url}
+              alt={getText(lesson.title)}
+              className="w-full max-w-4xl mx-auto rounded-lg shadow-lg"
+              onError={(e) => {
+                e.target.src = 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp';
+              }}
+            />
+          </div>
+        )}
+        
+        {/* Audio Content */}
+        {(material.type === 'audio' || lesson.type === 'audio') && material.url && (
+          <div className="mb-6">
+            <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
+              <audio
+                src={material.url}
+                controls
+                className="w-full"
+              >
+                {language === 'ar' ? 'متصفحك لا يدعم تشغيل الصوت' : 'Your browser does not support audio playback'}
+              </audio>
+            </div>
+          </div>
+        )}
+        
+        {/* PDF Content */}
+        {(material.type === 'pdf' || material.url?.endsWith('.pdf')) && (
+          <div className="mb-6">
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+              <iframe
+                src={material.url}
+                className="w-full h-96"
+                title={getText(lesson.title)}
+              >
+                <div className="p-4 text-center">
+                  <p className="mb-4">
+                    {language === 'ar' ? 'لا يمكن عرض الملف. يمكنك تحميله من الرابط أدناه.' : 'Cannot display file. You can download it from the link below.'}
+                  </p>
+                  <a
+                    href={material.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg inline-flex items-center"
+                  >
+                    <FileText size={16} className="mr-2" />
+                    {language === 'ar' ? 'تحميل الملف' : 'Download File'}
+                  </a>
+                </div>
+              </iframe>
+            </div>
+          </div>
+        )}
+        
+        {/* Text Content */}
+        {material.content && (
+          <div className="mb-6">
+            <div className="prose prose-lg dark:prose-invert max-w-none">
+              {material.content.split('\n').map((paragraph, index) => (
+                paragraph.trim() && (
+                  <p key={index} className="mb-4 leading-relaxed">
+                    {paragraph}
+                  </p>
+                )
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Download Section */}
+        {material.url && (
+          <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white">
+                  {language === 'ar' ? 'تحميل المادة' : 'Download Material'}
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  {language === 'ar' ? 'يمكنك تحميل هذه المادة للمراجعة اللاحقة' : 'You can download this material for later review'}
+                </p>
+              </div>
+              <a
+                href={material.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg inline-flex items-center transition-colors"
+              >
+                <FileText size={16} className="mr-2" />
+                {language === 'ar' ? 'تحميل' : 'Download'}
+              </a>
+            </div>
+          </div>
+        )}
+        
+        {/* Material Info */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+            <div className="text-sm text-blue-600 dark:text-blue-400">
+              {language === 'ar' ? 'نوع المادة' : 'Material Type'}
+            </div>
+            <div className="font-medium text-blue-700 dark:text-blue-300 mt-1">
+              {material.type || lesson.type || (language === 'ar' ? 'عام' : 'General')}
+            </div>
+          </div>
+          
+          {material.size && (
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+              <div className="text-sm text-green-600 dark:text-green-400">
+                {language === 'ar' ? 'حجم الملف' : 'File Size'}
+              </div>
+              <div className="font-medium text-green-700 dark:text-green-300 mt-1">
+                {material.size}
+              </div>
+            </div>
+          )}
+          
+          {material.created_at && (
+            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+              <div className="text-sm text-purple-600 dark:text-purple-400">
+                {language === 'ar' ? 'تاريخ الإضافة' : 'Added Date'}
+              </div>
+              <div className="font-medium text-purple-700 dark:text-purple-300 mt-1">
+                {new Date(material.created_at).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
   
   const courseData = course.courseData;
   
@@ -205,26 +420,69 @@ const CourseDetailPage = () => {
         
         console.log('🔍 Fetching course details for ID:', courseId);
         
-        // Fetch course details from API
-        const response = await CoursesService.getCourseDetails(courseId);
+        // Fetch both course details and content in parallel
+        const [courseResponse, contentResponse] = await Promise.allSettled([
+          CoursesService.getCourseDetails(courseId),
+          CoursesService.getCourseContent(courseId)
+        ]);
         
-        console.log('✅ Course details received:', response);
+        console.log('✅ Course details received:', courseResponse);
+        console.log('✅ Course content received:', contentResponse);
         
-        if (response.success && response.data) {
-          // Transform API data to component format
-          const transformedCourse = {
-            id: response.data.id,
-            title: response.data.title,
-            progress: 0, // يمكن إضافة تتبع التقدم لاحقاً
-            courseData: response.data, // حفظ البيانات الأصلية
-            sections: [
+        // Handle course details
+        if (courseResponse.status === 'fulfilled' && courseResponse.value.success && courseResponse.value.data) {
+          const courseData = courseResponse.value.data;
+          
+          // Handle course content
+          let courseSections = [];
+          if (contentResponse.status === 'fulfilled' && contentResponse.value.success && contentResponse.value.data) {
+            // Transform content data to sections format
+            const materials = contentResponse.value.data;
+            
+            if (materials && materials.length > 0) {
+              // Group materials by type or create a single section
+              courseSections = [
+                {
+                  id: "course-content",
+                  title: {
+                    en: "Course Materials",
+                    ar: "مواد الكورس"
+                  },
+                  lessons: materials.length,
+                  completed: 0,
+                  expanded: true,
+                  lessons: materials.map((material, index) => ({
+                    id: `material-${material.id || index}`,
+                    type: material.type || "video", // بناءً على نوع المادة
+                    title: {
+                      en: material.title || material.name || `Material ${index + 1}`,
+                      ar: material.title || material.name || `مادة ${index + 1}`
+                    },
+                    duration: material.duration ? {
+                      en: `${material.duration} min`,
+                      ar: `${material.duration} دقيقة`
+                    } : undefined,
+                    status: index === 0 ? "current" : "locked", // أول درس نشط
+                    content: material.content,
+                    url: material.url,
+                    description: material.description,
+                    materialData: material // حفظ البيانات الأصلية
+                  }))
+                }
+              ];
+            }
+          }
+          
+          // If no content found, create default overview section
+          if (courseSections.length === 0) {
+            courseSections = [
               {
                 id: "section-1",
                 title: {
-                  en: "Course Content",
-                  ar: "محتوى الكورس"
+                  en: "Course Overview",
+                  ar: "نظرة عامة على الكورس"
                 },
-                lessons: response.data.stats?.totalLessons || 0,
+                lessons: 1,
                 completed: 0,
                 expanded: true,
                 lessons: [
@@ -232,15 +490,23 @@ const CourseDetailPage = () => {
                     id: "overview",
                     type: "info",
                     title: {
-                      en: "Course Overview",
-                      ar: "نظرة عامة على الكورس"
+                      en: "Course Information",
+                      ar: "معلومات الكورس"
                     },
                     status: "current"
                   }
-                  // يمكن إضافة المزيد من الدروس من API لاحقاً
                 ]
               }
-            ]
+            ];
+          }
+          
+          // Transform API data to component format
+          const transformedCourse = {
+            id: courseData.id,
+            title: courseData.title,
+            progress: 0, // يمكن إضافة تتبع التقدم لاحقاً
+            courseData: courseData, // حفظ البيانات الأصلية
+            sections: courseSections
           };
           
           setCourse(transformedCourse);
@@ -256,9 +522,11 @@ const CourseDetailPage = () => {
           if (transformedCourse.sections[0]?.lessons[0]) {
             setCurrentLesson(transformedCourse.sections[0].lessons[0]);
           }
+        } else {
+          setError('Course not found or invalid response');
         }
       } catch (err) {
-        console.error('❌ Error fetching course details:', err);
+        console.error('❌ Error fetching course data:', err);
         setError(err.message || 'Failed to load course details');
       } finally {
         setLoading(false);
@@ -436,6 +704,10 @@ const CourseDetailPage = () => {
                   
                   {currentLesson.type === "info" && (
                     <CourseOverviewLesson course={course} />
+                  )}
+                  
+                  {currentLesson.materialData && (
+                    <CourseMaterialLesson lesson={currentLesson} />
                   )}
                 </>
               ) : (
