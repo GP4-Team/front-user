@@ -5,7 +5,6 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import Navbar from "../../components/navigation/Navbar";
-import CoursesService from "../../services/api/courses.service";
 import {
   CourseVideoLesson,
   CourseImageLesson,
@@ -18,11 +17,306 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
-  Loader,
-  Clock,
-  FileText
+  Loader
 } from "lucide-react";
 import SimpleFooter from "../../components/home/SimpleFooter";
+
+// Mock course data - fake data as requested
+const MOCK_COURSE_DATA = {
+  id: "experimental-course",
+  title: {
+    ar: "معسكر تجريبي لمنصة اديورا التعليمية",
+    en: "Experimental Camp for Eduara Educational Platform"
+  },
+  progress: 15, // 15% completed
+  courseData: {
+    id: "experimental-course",
+    name: "معسكر تجريبي لمنصة اديورا التعليمية",
+    code: "EDUARA-EXP-2025",
+    color: "#4285F4",
+    image: "/api/placeholder/800/400",
+    description: "معسكر تجريبي شامل لاستكشاف جميع ميزات منصة اديورا التعليمية مع دروس متنوعة وامتحانات تجريبية",
+    instructor_name: "مي هاني",
+    instructor_avatar: "/api/placeholder/100/100",
+    educational_level_id: 12,
+    educational_department_id: 8, // Chemistry
+    price: 299,
+    discounted_price: 199,
+    discount_percentage: 33,
+    currency: "SAR",
+    rating: 4.8,
+    reviews_count: 157,
+    students_count: 1250,
+    duration_hours: 58,
+    materials_count: 15,
+    
+    title: {
+      ar: "معسكر تجريبي لمنصة اديورا التعليمية",
+      en: "Experimental Camp for Eduara Educational Platform"
+    },
+    category: {
+      ar: "الكيمياء",
+      en: "Chemistry"
+    },
+    level: {
+      ar: "الصف الثالث الثانوي",
+      en: "Grade 12"
+    },
+    instructor: {
+      ar: "مي هاني",
+      en: "Mai Hany"
+    },
+    stats: {
+      totalLessons: 15,
+      totalQuizzes: 3,
+      totalProjects: 2,
+      estimatedHours: 58
+    },
+    features: [
+      {
+        ar: "دروس يوتيوب تفاعلية",
+        en: "Interactive YouTube lessons"
+      },
+      {
+        ar: "محتوى محمي ومتنوع",
+        en: "Protected and diverse content"
+      },
+      {
+        ar: "امتحانات تجريبية شاملة",
+        en: "Comprehensive experimental exams"
+      },
+      {
+        ar: "مواد تعليمية متعددة الوسائط",
+        en: "Multimedia educational materials"
+      },
+      {
+        ar: "دعم فني متواصل",
+        en: "Continuous technical support"
+      },
+      {
+        ar: "شهادة إتمام معتمدة",
+        en: "Certified completion certificate"
+      }
+    ]
+  },
+  sections: [
+    {
+      id: "section-1",
+      title: {
+        ar: "قسم تجربة",
+        en: "Experimental Section"
+      },
+      lessons: 5,
+      completed: 2,
+      expanded: true,
+      lessons: [
+        {
+          id: "overview",
+          type: "info",
+          title: {
+            ar: "نظرة عامة على الكورس",
+            en: "Course Overview"
+          },
+          status: "current",
+          duration: {
+            ar: "5 دقائق",
+            en: "5 minutes"
+          },
+          description: {
+            ar: "معلومات شاملة عن الكورس ومحتوياته",
+            en: "Comprehensive information about the course and its contents"
+          }
+        },
+        {
+          id: "lesson-1-1",
+          type: "video",
+          title: {
+            ar: "درس يوتيوب تجريبي",
+            en: "Experimental YouTube Lesson"
+          },
+          status: "locked",
+          duration: {
+            ar: "15 دقيقة",
+            en: "15 minutes"
+          },
+          url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+          description: {
+            ar: "مقدمة تجريبية لاستخدام منصة اديورا التعليمية",
+            en: "Experimental introduction to using Eduara educational platform"
+          },
+          instructor: "مي هاني",
+          maxViews: 5,
+          viewsRemaining: 3
+        },
+        {
+          id: "lesson-1-2",
+          type: "video",
+          title: {
+            ar: "يوتيوب محمي",
+            en: "Protected YouTube"
+          },
+          status: "current",
+          duration: {
+            ar: "22 دقيقة",
+            en: "22 minutes"
+          },
+          url: "https://www.youtube.com/embed/jNQXAC9IVRw",
+          description: {
+            ar: "درس محمي خاص بالطلاب المسجلين",
+            en: "Protected lesson for enrolled students only"
+          },
+          instructor: "مي هاني",
+          maxViews: 3,
+          viewsRemaining: 2
+        },
+        {
+          id: "lesson-1-3",
+          type: "image",
+          title: {
+            ar: "صورة تجريبية 3",
+            en: "Experimental Image 3"
+          },
+          status: "locked",
+          duration: {
+            ar: "5 دقائق",
+            en: "5 minutes"
+          },
+          imageUrl: "/api/placeholder/800/600",
+          description: {
+            ar: "مخطط تفصيلي للمفاهيم الأساسية",
+            en: "Detailed diagram of basic concepts"
+          }
+        },
+        {
+          id: "lesson-1-4",
+          type: "audio",
+          title: {
+            ar: "درس صوت تجريبي",
+            en: "Experimental Audio Lesson"
+          },
+          status: "locked",
+          duration: {
+            ar: "12 دقيقة",
+            en: "12 minutes"
+          },
+          audioUrl: "/api/placeholder/audio.mp3",
+          description: {
+            ar: "ملخص صوتي للمفاهيم المهمة",
+            en: "Audio summary of important concepts"
+          }
+        },
+        {
+          id: "exam-1",
+          type: "exam",
+          title: {
+            ar: "امتحان تجريبي 1",
+            en: "Experimental Exam 1"
+          },
+          status: "locked",
+          duration: {
+            ar: "30 دقيقة",
+            en: "30 minutes"
+          },
+          questionsCount: 10,
+          passingScore: 70,
+          description: {
+            ar: "اختبار شامل للمفاهيم التي تم دراستها",
+            en: "Comprehensive test of studied concepts"
+          }
+        }
+      ]
+    },
+    {
+      id: "section-2",
+      title: {
+        ar: "قسم تجربة 2",
+        en: "Experimental Section 2"
+      },
+      lessons: 4,
+      completed: 0,
+      expanded: false,
+      lessons: [
+        {
+          id: "lesson-2-1",
+          type: "video",
+          title: {
+            ar: "مفاهيم متقدمة",
+            en: "Advanced Concepts"
+          },
+          status: "locked",
+          duration: {
+            ar: "25 دقيقة",
+            en: "25 minutes"
+          }
+        },
+        {
+          id: "lesson-2-2",
+          type: "image",
+          title: {
+            ar: "رسوم بيانية تفصيلية",
+            en: "Detailed Charts"
+          },
+          status: "locked",
+          duration: {
+            ar: "8 دقائق",
+            en: "8 minutes"
+          }
+        },
+        {
+          id: "lesson-2-3",
+          type: "audio",
+          title: {
+            ar: "ملخص صوتي شامل",
+            en: "Comprehensive Audio Summary"
+          },
+          status: "locked",
+          duration: {
+            ar: "18 دقيقة",
+            en: "18 minutes"
+          }
+        },
+        {
+          id: "exam-2",
+          type: "exam",
+          title: {
+            ar: "اختبار التقييم النهائي",
+            en: "Final Assessment Test"
+          },
+          status: "locked",
+          duration: {
+            ar: "45 دقيقة",
+            en: "45 minutes"
+          }
+        }
+      ]
+    },
+    {
+      id: "section-3",
+      title: {
+        ar: "قسم جديد",
+        en: "New Section"
+      },
+      lessons: 1,
+      completed: 0,
+      expanded: false,
+      lessons: [
+        {
+          id: "bonus-exam",
+          type: "exam",
+          title: {
+            ar: "اختبار إضافي",
+            en: "Bonus Exam"
+          },
+          status: "locked",
+          duration: {
+            ar: "20 دقيقة",
+            en: "20 minutes"
+          }
+        }
+      ]
+    }
+  ]
+};
 
 // Course Overview Lesson Component
 const CourseOverviewLesson = ({ course }) => {
@@ -33,219 +327,6 @@ const CourseOverviewLesson = ({ course }) => {
     if (!obj) return "";
     return obj[language] || obj.en || "";
   };
-
-// Course Material Lesson Component - displays real material content from API
-const CourseMaterialLesson = ({ lesson }) => {
-  const { language } = useLanguage();
-  const { isDarkMode } = useTheme();
-  
-  const getText = (obj) => {
-    if (!obj) return "";
-    return obj[language] || obj.en || "";
-  };
-  
-  const material = lesson.materialData;
-  
-  if (!material) {
-    return (
-      <div className="p-8 text-center">
-        <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">
-          {language === 'ar' ? 'لا توجد بيانات للمادة' : 'No material data available'}
-        </h3>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="bg-white dark:bg-gray-800">
-      {/* Material Header */}
-      <div className="border-b border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              {getText(lesson.title)}
-            </h1>
-            {material.description && (
-              <p className="text-gray-600 dark:text-gray-300">
-                {material.description}
-              </p>
-            )}
-          </div>
-          
-          {lesson.duration && (
-            <div className="flex items-center bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-lg">
-              <Clock size={16} className="text-blue-600 dark:text-blue-400 mr-2" />
-              <span className="text-blue-600 dark:text-blue-400 font-medium">
-                {getText(lesson.duration)}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Material Content */}
-      <div className="p-6">
-        {/* Video Content */}
-        {(material.type === 'video' || lesson.type === 'video') && material.url && (
-          <div className="mb-6">
-            <div className="aspect-video bg-black rounded-lg overflow-hidden">
-              {material.url.includes('youtube.com') || material.url.includes('youtu.be') ? (
-                <iframe
-                  src={material.url.replace('watch?v=', 'embed/')}
-                  className="w-full h-full"
-                  frameBorder="0"
-                  allowFullScreen
-                  title={getText(lesson.title)}
-                ></iframe>
-              ) : (
-                <video
-                  src={material.url}
-                  controls
-                  className="w-full h-full"
-                  poster={material.thumbnail}
-                >
-                  {language === 'ar' ? 'متصفحك لا يدعم تشغيل الفيديو' : 'Your browser does not support video playback'}
-                </video>
-              )}
-            </div>
-          </div>
-        )}
-        
-        {/* Image Content */}
-        {(material.type === 'image' || lesson.type === 'image') && material.url && (
-          <div className="mb-6">
-            <img
-              src={material.url}
-              alt={getText(lesson.title)}
-              className="w-full max-w-4xl mx-auto rounded-lg shadow-lg"
-              onError={(e) => {
-                e.target.src = 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp';
-              }}
-            />
-          </div>
-        )}
-        
-        {/* Audio Content */}
-        {(material.type === 'audio' || lesson.type === 'audio') && material.url && (
-          <div className="mb-6">
-            <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
-              <audio
-                src={material.url}
-                controls
-                className="w-full"
-              >
-                {language === 'ar' ? 'متصفحك لا يدعم تشغيل الصوت' : 'Your browser does not support audio playback'}
-              </audio>
-            </div>
-          </div>
-        )}
-        
-        {/* PDF Content */}
-        {(material.type === 'pdf' || material.url?.endsWith('.pdf')) && (
-          <div className="mb-6">
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-              <iframe
-                src={material.url}
-                className="w-full h-96"
-                title={getText(lesson.title)}
-              >
-                <div className="p-4 text-center">
-                  <p className="mb-4">
-                    {language === 'ar' ? 'لا يمكن عرض الملف. يمكنك تحميله من الرابط أدناه.' : 'Cannot display file. You can download it from the link below.'}
-                  </p>
-                  <a
-                    href={material.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg inline-flex items-center"
-                  >
-                    <FileText size={16} className="mr-2" />
-                    {language === 'ar' ? 'تحميل الملف' : 'Download File'}
-                  </a>
-                </div>
-              </iframe>
-            </div>
-          </div>
-        )}
-        
-        {/* Text Content */}
-        {material.content && (
-          <div className="mb-6">
-            <div className="prose prose-lg dark:prose-invert max-w-none">
-              {material.content.split('\n').map((paragraph, index) => (
-                paragraph.trim() && (
-                  <p key={index} className="mb-4 leading-relaxed">
-                    {paragraph}
-                  </p>
-                )
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* Download Section */}
-        {material.url && (
-          <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900 dark:text-white">
-                  {language === 'ar' ? 'تحميل المادة' : 'Download Material'}
-                </h4>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                  {language === 'ar' ? 'يمكنك تحميل هذه المادة للمراجعة اللاحقة' : 'You can download this material for later review'}
-                </p>
-              </div>
-              <a
-                href={material.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg inline-flex items-center transition-colors"
-              >
-                <FileText size={16} className="mr-2" />
-                {language === 'ar' ? 'تحميل' : 'Download'}
-              </a>
-            </div>
-          </div>
-        )}
-        
-        {/* Material Info */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-            <div className="text-sm text-blue-600 dark:text-blue-400">
-              {language === 'ar' ? 'نوع المادة' : 'Material Type'}
-            </div>
-            <div className="font-medium text-blue-700 dark:text-blue-300 mt-1">
-              {material.type || lesson.type || (language === 'ar' ? 'عام' : 'General')}
-            </div>
-          </div>
-          
-          {material.size && (
-            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-              <div className="text-sm text-green-600 dark:text-green-400">
-                {language === 'ar' ? 'حجم الملف' : 'File Size'}
-              </div>
-              <div className="font-medium text-green-700 dark:text-green-300 mt-1">
-                {material.size}
-              </div>
-            </div>
-          )}
-          
-          {material.created_at && (
-            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-              <div className="text-sm text-purple-600 dark:text-purple-400">
-                {language === 'ar' ? 'تاريخ الإضافة' : 'Added Date'}
-              </div>
-              <div className="font-medium text-purple-700 dark:text-purple-300 mt-1">
-                {new Date(material.created_at).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
   
   const courseData = course.courseData;
   
@@ -273,7 +354,7 @@ const CourseMaterialLesson = ({ lesson }) => {
             </h1>
             
             <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-              {getText(courseData.description)}
+              {courseData.description}
             </p>
             
             {/* Course Details Grid */}
@@ -296,14 +377,14 @@ const CourseMaterialLesson = ({ lesson }) => {
                 <div className="text-sm text-gray-500 dark:text-gray-400">
                   {language === 'ar' ? 'المدة' : 'Duration'}
                 </div>
-                <div className="font-medium">{getText(courseData.duration)}</div>
+                <div className="font-medium">{courseData.duration_hours} {language === 'ar' ? 'ساعة' : 'hours'}</div>
               </div>
               
               <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
                 <div className="text-sm text-gray-500 dark:text-gray-400">
                   {language === 'ar' ? 'الطلاب' : 'Students'}
                 </div>
-                <div className="font-medium">{courseData.students}</div>
+                <div className="font-medium">{courseData.students_count}+</div>
               </div>
             </div>
           </div>
@@ -411,130 +492,43 @@ const CourseDetailPage = () => {
     return obj[language] || obj.en || "";
   };
 
-  // Effect to fetch course data from API
+  // Effect to load mock course data
   useEffect(() => {
-    const fetchCourseData = async () => {
+    const loadCourseData = () => {
       try {
         setLoading(true);
         setError(null);
         
-        console.log('🔍 Fetching course details for ID:', courseId);
+        console.log('🔍 Loading mock course data for ID:', courseId);
         
-        // Fetch both course details and content in parallel
-        const [courseResponse, contentResponse] = await Promise.allSettled([
-          CoursesService.getCourseDetails(courseId),
-          CoursesService.getCourseContent(courseId)
-        ]);
-        
-        console.log('✅ Course details received:', courseResponse);
-        console.log('✅ Course content received:', contentResponse);
-        
-        // Handle course details
-        if (courseResponse.status === 'fulfilled' && courseResponse.value.success && courseResponse.value.data) {
-          const courseData = courseResponse.value.data;
-          
-          // Handle course content
-          let courseSections = [];
-          if (contentResponse.status === 'fulfilled' && contentResponse.value.success && contentResponse.value.data) {
-            // Transform content data to sections format
-            const materials = contentResponse.value.data;
-            
-            if (materials && materials.length > 0) {
-              // Group materials by type or create a single section
-              courseSections = [
-                {
-                  id: "course-content",
-                  title: {
-                    en: "Course Materials",
-                    ar: "مواد الكورس"
-                  },
-                  lessons: materials.length,
-                  completed: 0,
-                  expanded: true,
-                  lessons: materials.map((material, index) => ({
-                    id: `material-${material.id || index}`,
-                    type: material.type || "video", // بناءً على نوع المادة
-                    title: {
-                      en: material.title || material.name || `Material ${index + 1}`,
-                      ar: material.title || material.name || `مادة ${index + 1}`
-                    },
-                    duration: material.duration ? {
-                      en: `${material.duration} min`,
-                      ar: `${material.duration} دقيقة`
-                    } : undefined,
-                    status: index === 0 ? "current" : "locked", // أول درس نشط
-                    content: material.content,
-                    url: material.url,
-                    description: material.description,
-                    materialData: material // حفظ البيانات الأصلية
-                  }))
-                }
-              ];
-            }
-          }
-          
-          // If no content found, create default overview section
-          if (courseSections.length === 0) {
-            courseSections = [
-              {
-                id: "section-1",
-                title: {
-                  en: "Course Overview",
-                  ar: "نظرة عامة على الكورس"
-                },
-                lessons: 1,
-                completed: 0,
-                expanded: true,
-                lessons: [
-                  {
-                    id: "overview",
-                    type: "info",
-                    title: {
-                      en: "Course Information",
-                      ar: "معلومات الكورس"
-                    },
-                    status: "current"
-                  }
-                ]
-              }
-            ];
-          }
-          
-          // Transform API data to component format
-          const transformedCourse = {
-            id: courseData.id,
-            title: courseData.title,
-            progress: 0, // يمكن إضافة تتبع التقدم لاحقاً
-            courseData: courseData, // حفظ البيانات الأصلية
-            sections: courseSections
-          };
-          
-          setCourse(transformedCourse);
+        // Simulate API delay
+        setTimeout(() => {
+          setCourse(MOCK_COURSE_DATA);
           
           // Set initial expanded sections
           const initialExpanded = {};
-          transformedCourse.sections.forEach((section) => {
+          MOCK_COURSE_DATA.sections.forEach((section) => {
             initialExpanded[section.id] = section.expanded || false;
           });
           setExpandedSections(initialExpanded);
           
           // Set the first lesson as current
-          if (transformedCourse.sections[0]?.lessons[0]) {
-            setCurrentLesson(transformedCourse.sections[0].lessons[0]);
+          if (MOCK_COURSE_DATA.sections[0]?.lessons[0]) {
+            setCurrentLesson(MOCK_COURSE_DATA.sections[0].lessons[0]);
           }
-        } else {
-          setError('Course not found or invalid response');
-        }
+          
+          setLoading(false);
+        }, 800);
+        
       } catch (err) {
-        console.error('❌ Error fetching course data:', err);
+        console.error('❌ Error loading mock course data:', err);
         setError(err.message || 'Failed to load course details');
-      } finally {
         setLoading(false);
       }
     };
     
     if (courseId) {
-      fetchCourseData();
+      loadCourseData();
     }
   }, [courseId]);
 
@@ -704,10 +698,6 @@ const CourseDetailPage = () => {
                   
                   {currentLesson.type === "info" && (
                     <CourseOverviewLesson course={course} />
-                  )}
-                  
-                  {currentLesson.materialData && (
-                    <CourseMaterialLesson lesson={currentLesson} />
                   )}
                 </>
               ) : (
