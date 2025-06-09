@@ -299,7 +299,7 @@ const StudentProfile = () => {
                     {getText(translations.remaining)}
                   </p>
                   <p className="text-2xl font-bold text-[#37474F] dark:text-white">
-                    {academicInfo?.requiredCredits ? (academicInfo.requiredCredits - (academicInfo.totalCredits || 0)) : 'N/A'}
+                    {academicInfo?.remainingCredits || 'N/A'}
                   </p>
                 </div>
               </div>
@@ -407,8 +407,14 @@ const StudentProfile = () => {
                         </div>
                       ))
                     ) : (
-                      <div className={`text-center py-8 text-[#37474F] dark:text-white ${isRTL ? 'text-right' : 'text-left'}`}>
-                        {language === 'ar' ? 'لا توجد مقررات حالية' : 'No current courses available'}
+                      <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-6 rounded-lg text-center">
+                        <div className="text-6xl mb-4">📚</div>
+                        <h4 className="text-lg font-medium text-[#37474F] dark:text-white mb-2">
+                          {language === 'ar' ? 'لا توجد مقررات حالية' : 'No Current Courses'}
+                        </h4>
+                        <p className="text-sm text-[#3949AB] dark:text-[#7986CB]">
+                          {language === 'ar' ? 'سيتم عرض مقرراتك هنا عند التسجيل فيها' : 'Your enrolled courses will appear here'}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -453,10 +459,71 @@ const StudentProfile = () => {
                         </div>
                       ))
                     ) : (
-                      <div className="text-center py-8 text-[#37474F] dark:text-white">
-                        {language === 'ar' ? 'لا توجد واجبات قادمة' : 'No upcoming assignments'}
+                      <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-6 rounded-lg text-center">
+                        <div className="text-4xl mb-4">📝</div>
+                        <h4 className="text-md font-medium text-[#37474F] dark:text-white mb-2">
+                          {language === 'ar' ? 'لا توجد واجبات قادمة' : 'No Assignments'}
+                        </h4>
+                        <p className="text-xs text-[#3949AB] dark:text-[#7986CB]">
+                          {language === 'ar' ? 'سيتم عرض واجباتك هنا' : 'Assignments will appear here'}
+                        </p>
                       </div>
                     )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Additional Information Section */}
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Quick Actions Card */}
+              <div className="bg-white dark:bg-[#1E1E1E] rounded-xl shadow-md overflow-hidden">
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold text-[#37474F] dark:text-white mb-4">
+                    {language === 'ar' ? 'إجراءات سريعة' : 'Quick Actions'}
+                  </h3>
+                  <div className="space-y-3">
+                    <button className="w-full flex items-center justify-between p-3 bg-[#F0F4F8] dark:bg-[#2D2D2D] rounded-lg hover:bg-[#E0E4E8] dark:hover:bg-[#3D3D3D] transition-colors">
+                      <span className="text-[#37474F] dark:text-white">{language === 'ar' ? 'تحديث البيانات الشخصية' : 'Update Personal Info'}</span>
+                      <Edit size={16} className="text-[#3949AB] dark:text-[#7986CB]" />
+                    </button>
+                    <button className="w-full flex items-center justify-between p-3 bg-[#F0F4F8] dark:bg-[#2D2D2D] rounded-lg hover:bg-[#E0E4E8] dark:hover:bg-[#3D3D3D] transition-colors">
+                      <span className="text-[#37474F] dark:text-white">{language === 'ar' ? 'تغيير كلمة المرور' : 'Change Password'}</span>
+                      <ChevronRight size={16} className={`text-[#3949AB] dark:text-[#7986CB] ${isRTL ? 'rotate-180' : ''}`} />
+                    </button>
+                    <button className="w-full flex items-center justify-between p-3 bg-[#F0F4F8] dark:bg-[#2D2D2D] rounded-lg hover:bg-[#E0E4E8] dark:hover:bg-[#3D3D3D] transition-colors">
+                      <span className="text-[#37474F] dark:text-white">{language === 'ar' ? 'تحميل الشهادات' : 'Download Certificates'}</span>
+                      <Award size={16} className="text-[#3949AB] dark:text-[#7986CB]" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Academic Summary Card */}
+              <div className="bg-white dark:bg-[#1E1E1E] rounded-xl shadow-md overflow-hidden">
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold text-[#37474F] dark:text-white mb-4">
+                    {language === 'ar' ? 'ملخص أكاديمي' : 'Academic Summary'}
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-[#3949AB] dark:text-[#7986CB]">{language === 'ar' ? 'البرنامج:' : 'Program:'}</span>
+                      <span className="text-sm font-medium text-[#37474F] dark:text-white">{basicInfo?.program || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-[#3949AB] dark:text-[#7986CB]">{language === 'ar' ? 'التخصص:' : 'Concentration:'}</span>
+                      <span className="text-sm font-medium text-[#37474F] dark:text-white">{basicInfo?.concentration || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-[#3949AB] dark:text-[#7986CB]">{language === 'ar' ? 'المرشد الأكاديمي:' : 'Academic Advisor:'}</span>
+                      <span className="text-sm font-medium text-[#37474F] dark:text-white">{academicInfo?.advisorName || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-[#3949AB] dark:text-[#7986CB]">{language === 'ar' ? 'حالة الطالب:' : 'Student Status:'}</span>
+                      <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 py-1 px-2 rounded-full">
+                        {basicInfo?.status || 'Active'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -535,8 +602,16 @@ const StudentProfile = () => {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="5" className="px-4 py-8 text-center text-[#37474F] dark:text-white">
-                            {language === 'ar' ? 'لا توجد مقررات مكتملة' : 'No completed courses available'}
+                          <td colSpan="5" className="px-4 py-8">
+                            <div className="text-center">
+                              <div className="text-6xl mb-4">🎓</div>
+                              <h4 className="text-lg font-medium text-[#37474F] dark:text-white mb-2">
+                                {language === 'ar' ? 'لا توجد مقررات مكتملة' : 'No Completed Courses'}
+                              </h4>
+                              <p className="text-sm text-[#3949AB] dark:text-[#7986CB]">
+                                {language === 'ar' ? 'سيتم عرض المقررات المكتملة هنا بعد إنهائها' : 'Completed courses will appear here after finishing them'}
+                              </p>
+                            </div>
                           </td>
                         </tr>
                       )}
@@ -628,10 +703,16 @@ const StudentProfile = () => {
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-8 text-[#37474F] dark:text-white">
-                      {language === 'ar' ? 'لا توجد واجبات' : 'No assignments available'}
-                    </div>
-                  )}
+                  <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-8 rounded-lg text-center">
+                  <div className="text-6xl mb-4">📝</div>
+                    <h4 className="text-lg font-medium text-[#37474F] dark:text-white mb-2">
+                        {language === 'ar' ? 'لا توجد واجبات' : 'No Assignments'}
+                        </h4>
+                        <p className="text-sm text-[#3949AB] dark:text-[#7986CB]">
+                          {language === 'ar' ? 'سيتم عرض جميع واجباتك هنا' : 'All your assignments will appear here'}
+                        </p>
+                      </div>
+                    )}
                 </div>
               </div>
             </div>
@@ -682,10 +763,16 @@ const StudentProfile = () => {
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-8 text-[#37474F] dark:text-white">
-                      {language === 'ar' ? 'لا توجد إعلانات' : 'No announcements available'}
-                    </div>
-                  )}
+                  <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-8 rounded-lg text-center">
+                  <div className="text-6xl mb-4">📢</div>
+                    <h4 className="text-lg font-medium text-[#37474F] dark:text-white mb-2">
+                        {language === 'ar' ? 'لا توجد إعلانات' : 'No Announcements'}
+                        </h4>
+                        <p className="text-sm text-[#3949AB] dark:text-[#7986CB]">
+                          {language === 'ar' ? 'سيتم عرض الإعلانات والإشعارات هنا' : 'Announcements and notifications will appear here'}
+                        </p>
+                      </div>
+                    )}
                 </div>
               </div>
             </div>

@@ -112,83 +112,102 @@ const useStudentProfile = () => {
 
   // Helper functions to extract specific data from profile
   const getBasicInfo = useCallback(() => {
-    if (!profileData) return null;
+    if (!profileData || !profileData.data) return null;
+    
+    const personalInfo = profileData.data.personal_info || {};
     
     return {
-      id: profileData.id || profileData.student_id || 'N/A',
-      name: profileData.name || profileData.full_name || 'Unknown',
-      email: profileData.email || 'N/A',
-      phone: profileData.phone || profileData.phone_number || 'N/A',
-      avatar: profileData.avatar || profileData.photo || profileData.profile_picture || null,
-      department: profileData.department || profileData.department_name || 'N/A',
-      level: profileData.level || profileData.academic_level || 'N/A',
-      gpa: profileData.gpa || profileData.grade_point_average || 0,
-      status: profileData.status || profileData.academic_status || 'Active'
+      id: personalInfo.student_id || 'N/A',
+      name: personalInfo.name || 'Unknown',
+      email: personalInfo.email || 'N/A',
+      phone: personalInfo.phone || 'N/A',
+      address: personalInfo.address || 'N/A',
+      avatar: personalInfo.avatar || null,
+      program: personalInfo.program || 'N/A',
+      concentration: personalInfo.concentration || 'N/A',
+      department: personalInfo.program || personalInfo.concentration || 'N/A',
+      gpa: profileData.data.academic_progress?.current_gpa || 'N/A',
+      status: 'Active' // Default status
     };
   }, [profileData]);
 
   const getAcademicInfo = useCallback(() => {
-    if (!profileData) return null;
+    if (!profileData || !profileData.data) return null;
+    
+    const academicProgress = profileData.data.academic_progress || {};
+    const dates = profileData.data.dates || {};
     
     return {
-      totalCredits: profileData.total_credits || profileData.completed_credits || 0,
-      requiredCredits: profileData.required_credits || profileData.total_required_credits || 120,
-      currentSemester: profileData.current_semester || 'N/A',
-      enrollmentDate: profileData.enrollment_date || profileData.joined_at || null,
-      expectedGraduation: profileData.expected_graduation || null
+      currentYear: academicProgress.year_level || 'N/A',
+      level: academicProgress.year_level || 'N/A',
+      totalCredits: academicProgress.completed_hours || 0,
+      completedCredits: academicProgress.completed_hours || 0,
+      requiredCredits: (academicProgress.completed_hours || 0) + (academicProgress.remaining_hours || 0),
+      remainingCredits: academicProgress.remaining_hours || 0,
+      currentSemester: 'Current Semester',
+      enrollmentDate: dates.registration_date || null,
+      expectedGraduation: dates.expected_graduation || null,
+      advisorName: profileData.data.academic_advisor || 'N/A'
     };
   }, [profileData]);
 
   const getCurrentCourses = useCallback(() => {
-    if (!profileData) return [];
+    if (!profileData || !profileData.data) return [];
     
-    return profileData.current_courses || 
-           profileData.enrolled_courses || 
-           profileData.courses || 
+    // البيانات لا تحتوي على courses حالياً، سنرجع مصفوفة فارغة
+    // يمكن إضافة endpoint منفصل للكورسات لاحقاً
+    return profileData.data.current_courses || 
+           profileData.data.enrolled_courses || 
+           profileData.data.courses || 
            [];
   }, [profileData]);
 
   const getExamHistory = useCallback(() => {
-    if (!profileData) return [];
+    if (!profileData || !profileData.data) return [];
     
-    return profileData.exam_history || 
-           profileData.exams || 
-           profileData.past_exams || 
+    // البيانات لا تحتوي على exam history حالياً
+    return profileData.data.exam_history || 
+           profileData.data.exams || 
+           profileData.data.past_exams || 
            [];
   }, [profileData]);
 
   const getUpcomingExams = useCallback(() => {
-    if (!profileData) return [];
+    if (!profileData || !profileData.data) return [];
     
-    return profileData.upcoming_exams || 
-           profileData.scheduled_exams || 
+    // البيانات لا تحتوي على upcoming exams حالياً
+    return profileData.data.upcoming_exams || 
+           profileData.data.scheduled_exams || 
            [];
   }, [profileData]);
 
   const getUpcomingAssignments = useCallback(() => {
-    if (!profileData) return [];
+    if (!profileData || !profileData.data) return [];
     
-    return profileData.upcoming_assignments || 
-           profileData.assignments || 
-           profileData.homework || 
+    // البيانات لا تحتوي على assignments حالياً
+    return profileData.data.upcoming_assignments || 
+           profileData.data.assignments || 
+           profileData.data.homework || 
            [];
   }, [profileData]);
 
   const getCompletedCourses = useCallback(() => {
-    if (!profileData) return [];
+    if (!profileData || !profileData.data) return [];
     
-    return profileData.completed_courses || 
-           profileData.course_history || 
-           profileData.past_courses || 
+    // البيانات لا تحتوي على completed courses حالياً
+    return profileData.data.completed_courses || 
+           profileData.data.course_history || 
+           profileData.data.past_courses || 
            [];
   }, [profileData]);
 
   const getAnnouncements = useCallback(() => {
-    if (!profileData) return [];
+    if (!profileData || !profileData.data) return [];
     
-    return profileData.announcements || 
-           profileData.notifications || 
-           profileData.news || 
+    // البيانات لا تحتوي على announcements حالياً
+    return profileData.data.announcements || 
+           profileData.data.notifications || 
+           profileData.data.news || 
            [];
   }, [profileData]);
 
