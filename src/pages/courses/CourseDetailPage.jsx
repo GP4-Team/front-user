@@ -5,6 +5,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import Navbar from "../../components/navigation/Navbar";
+import CoursesService from "../../services/api/courses.service";
 import {
   CourseVideoLesson,
   CourseImageLesson,
@@ -21,229 +22,67 @@ import {
 } from "lucide-react";
 import SimpleFooter from "../../components/home/SimpleFooter";
 
-// Mock course data - fake data as requested
-const MOCK_COURSE_DATA = {
-  id: "experimental-course",
-  title: {
-    ar: "معسكر تجريبي لمنصة اديورا التعليمية",
-    en: "Experimental Camp for Eduara Educational Platform"
-  },
-  progress: 15, // 15% completed
-  courseData: {
-    id: "experimental-course",
-    name: "معسكر تجريبي لمنصة اديورا التعليمية",
-    code: "EDUARA-EXP-2025",
-    color: "#4285F4",
-    image: "/api/placeholder/800/400",
-    description: "معسكر تجريبي شامل لاستكشاف جميع ميزات منصة اديورا التعليمية مع دروس متنوعة وامتحانات تجريبية",
-    instructor_name: "مي هاني",
-    instructor_avatar: "/api/placeholder/100/100",
-    educational_level_id: 12,
-    educational_department_id: 8, // Chemistry
-    price: 299,
-    discounted_price: 199,
-    discount_percentage: 33,
-    currency: "SAR",
-    rating: 4.8,
-    reviews_count: 157,
-    students_count: 1250,
-    duration_hours: 58,
-    materials_count: 15,
-    
+// Helper function to convert API material type to component type
+const convertMaterialType = (apiType) => {
+  const typeMap = {
+    'YoutubeVideo': 'video',
+    'Audio': 'audio',
+    'Pdf': 'pdf',
+    'Image': 'image',
+    'Document': 'document'
+  };
+  return typeMap[apiType] || 'document';
+};
+
+// Helper function to convert seconds to readable duration
+const formatDuration = (seconds, language) => {
+  if (!seconds) return language === 'ar' ? 'غير محدد' : 'N/A';
+  
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  
+  if (hours > 0) {
+    return language === 'ar' ? 
+      `${hours} ساعة ${remainingMinutes} دقيقة` : 
+      `${hours}h ${remainingMinutes}m`;
+  }
+  
+  return language === 'ar' ? 
+    `${minutes} دقيقة` : 
+    `${minutes} minutes`;
+};
+
+// Helper function to transform API materials to lesson format
+const transformMaterialsToLessons = (materials) => {
+  return materials.map((material, index) => ({
+    id: `material-${material.id}`,
+    type: convertMaterialType(material.type),
     title: {
-      ar: "معسكر تجريبي لمنصة اديورا التعليمية",
-      en: "Experimental Camp for Eduara Educational Platform"
+      ar: material.name,
+      en: material.name
     },
-    category: {
-      ar: "الكيمياء",
-      en: "Chemistry"
+    status: index === 0 ? 'current' : 'locked', // First material is current
+    duration: {
+      ar: formatDuration(material.duration_in_seconds, 'ar'),
+      en: formatDuration(material.duration_in_seconds, 'en')
     },
-    level: {
-      ar: "الصف الثالث الثانوي",
-      en: "Grade 12"
+    description: {
+      ar: material.description || '',
+      en: material.description || ''
     },
-    instructor: {
-      ar: "مي هاني",
-      en: "Mai Hany"
-    },
-    stats: {
-      totalLessons: 8,
-      totalQuizzes: 2,
-      totalProjects: 0,
-      estimatedHours: 58
-    }
-  },
-  sections: [
-    {
-      id: "section-1",
-      title: {
-        ar: "قسم تجربة",
-        en: "Experimental Section"
-      },
-      lessons: 6,
-      completed: 0,
-      expanded: true,
-      lessons: [
-        {
-          id: "lesson-1-1",
-          type: "video",
-          title: {
-            ar: "درس يوتيوب تجريبي",
-            en: "Experimental YouTube Lesson"
-          },
-          status: "current",
-          duration: {
-            ar: "92 دقيقة",
-            en: "92 minutes"
-          },
-          url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-          description: {
-            ar: "مقدمة تجريبية لاستخدام منصة اديورا التعليمية",
-            en: "Experimental introduction to using Eduara educational platform"
-          },
-          instructor: "مي هاني",
-          maxViews: 5,
-          viewsRemaining: 3
-        },
-        {
-          id: "lesson-1-2",
-          type: "video",
-          title: {
-            ar: "يوتيوب محمي",
-            en: "Protected YouTube"
-          },
-          status: "locked",
-          duration: {
-            ar: "96 دقيقة",
-            en: "96 minutes"
-          },
-          url: "https://www.youtube.com/embed/jNQXAC9IVRw",
-          description: {
-            ar: "درس محمي خاص بالطلاب المسجلين",
-            en: "Protected lesson for enrolled students only"
-          },
-          instructor: "مي هاني",
-          maxViews: 3,
-          viewsRemaining: 2
-        },
-        {
-          id: "lesson-1-3",
-          type: "image",
-          title: {
-            ar: "انفوجرافيك",
-            en: "Infographic"
-          },
-          status: "locked",
-          duration: {
-            ar: "5 دقائق",
-            en: "5 minutes"
-          },
-          imageUrl: "/api/placeholder/800/600",
-          description: {
-            ar: "مخطط تفصيلي للمفاهيم الأساسية",
-            en: "Detailed diagram of basic concepts"
-          }
-        },
-        {
-          id: "lesson-1-4",
-          type: "image",
-          title: {
-            ar: "درس صورة تجريبية 1",
-            en: "Experimental Image Lesson 1"
-          },
-          status: "locked",
-          duration: {
-            ar: "8 دقائق",
-            en: "8 minutes"
-          },
-          imageUrl: "/api/placeholder/800/600",
-          description: {
-            ar: "ملخص بصري للمفاهيم المهمة",
-            en: "Visual summary of important concepts"
-          }
-        },
-        {
-          id: "lesson-1-5",
-          type: "audio",
-          title: {
-            ar: "درس صوت تجربة",
-            en: "Experimental Audio Lesson"
-          },
-          status: "locked",
-          duration: {
-            ar: "22 دقيقة",
-            en: "22 minutes"
-          },
-          audioUrl: "/api/placeholder/audio.mp3",
-          description: {
-            ar: "ملخص صوتي للمفاهيم المهمة",
-            en: "Audio summary of important concepts"
-          }
-        },
-        {
-          id: "exam-1",
-          type: "exam",
-          title: {
-            ar: "امتحان تجريبي 1",
-            en: "Experimental Exam 1"
-          },
-          status: "locked",
-          duration: {
-            ar: "10 دقائق",
-            en: "10 minutes"
-          },
-          questionsCount: 10,
-          passingScore: 70,
-          description: {
-            ar: "اختبار شامل للمفاهيم التي تم دراستها",
-            en: "Comprehensive test of studied concepts"
-          }
-        }
-      ]
-    },
-    {
-      id: "section-2",
-      title: {
-        ar: "مقدمة للقسم 2",
-        en: "Introduction to Section 2"
-      },
-      lessons: 1,
-      completed: 0,
-      expanded: false,
-      lessons: [
-        {
-          id: "exam-2",
-          type: "exam",
-          title: {
-            ar: "امتحان تجريبي 2",
-            en: "Experimental Exam 2"
-          },
-          status: "locked",
-          duration: {
-            ar: "10 دقائق",
-            en: "10 minutes"
-          },
-          questionsCount: 10,
-          passingScore: 70,
-          description: {
-            ar: "اختبار تقييم للقسم الثاني",
-            en: "Assessment test for section two"
-          }
-        }
-      ]
-    },
-    {
-      id: "section-3",
-      title: {
-        ar: "قسم جديد",
-        en: "New Section"
-      },
-      lessons: 0,
-      completed: 0,
-      expanded: false,
-      lessons: []
-    }
-  ]
+    // Add material-specific properties
+    url: material.media_url,
+    instructor: material.user?.name || '',
+    materialData: material, // Keep original data
+    // For video lessons
+    maxViews: 5,
+    viewsRemaining: 3,
+    // For PDF lessons
+    pages: material.number_of_pages,
+    // Course idea info
+    courseIdea: material.course_idea
+  }));
 };
 
 const CourseDetailPage = () => {
@@ -268,37 +107,103 @@ const CourseDetailPage = () => {
     return obj[language] || obj.en || "";
   };
 
-  // Effect to load mock course data
+  // Effect to load course data and materials from API
   useEffect(() => {
-    const loadCourseData = () => {
+    const loadCourseData = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        console.log('🔍 Loading mock course data for ID:', courseId);
+        console.log('🔍 Loading course materials for ID:', courseId);
         
-        // Simulate API delay
-        setTimeout(() => {
-          setCourse(MOCK_COURSE_DATA);
+        // Fetch course materials from API
+        const materialsResponse = await CoursesService.getCourseContent(courseId);
+        
+        console.log('✅ Course materials received:', materialsResponse);
+        
+        if (materialsResponse.success && materialsResponse.data && materialsResponse.data.data) {
+          const materials = materialsResponse.data.data;
+          const pagination = materialsResponse.data;
+          
+          // Get course info from first material (they all have the same course info)
+          const courseInfo = materials[0]?.course;
+          
+          // Transform materials to lessons
+          const lessons = transformMaterialsToLessons(materials);
+          
+          // Create course data structure
+          const courseData = {
+            id: courseId,
+            title: {
+              ar: courseInfo?.name || 'معسكر تجريبي لمنصة اديورا',
+              en: courseInfo?.name || 'Experimental Camp for Eduara'
+            },
+            progress: 15,
+            courseData: {
+              id: courseId,
+              name: courseInfo?.name || 'معسكر تجريبي',
+              code: courseInfo?.code || 'COURSE-001',
+              color: courseInfo?.color || '#4285F4',
+              image: '/api/placeholder/800/400',
+              description: `مواد تعليمية شاملة في ${courseInfo?.name || 'المادة'}`,
+              instructor_name: materials[0]?.user?.name || 'مدرس متخصص',
+              materials_count: materials.length,
+              stats: {
+                totalLessons: materials.length,
+                totalQuizzes: 0,
+                totalProjects: 0,
+                estimatedHours: Math.ceil(materials.reduce((total, m) => total + (m.duration_in_seconds || 0), 0) / 3600)
+              }
+            },
+            sections: [
+              {
+                id: 'materials-section',
+                title: {
+                  ar: 'مواد الكورس',
+                  en: 'Course Materials'
+                },
+                lessons: lessons.length,
+                completed: 0,
+                expanded: true,
+                lessons: lessons
+              }
+            ]
+          };
+          
+          setCourse(courseData);
           
           // Set initial expanded sections
-          const initialExpanded = {};
-          MOCK_COURSE_DATA.sections.forEach((section) => {
-            initialExpanded[section.id] = section.expanded || false;
-          });
-          setExpandedSections(initialExpanded);
+          setExpandedSections({ 'materials-section': true });
           
           // Set the first lesson as current
-          if (MOCK_COURSE_DATA.sections[0]?.lessons[0]) {
-            setCurrentLesson(MOCK_COURSE_DATA.sections[0].lessons[0]);
+          if (lessons.length > 0) {
+            setCurrentLesson(lessons[0]);
           }
           
-          setLoading(false);
-        }, 800);
+        } else {
+          // If no materials found, show empty course
+          const emptyFallback = {
+            id: courseId,
+            title: {
+              ar: 'لا توجد مواد',
+              en: 'No Materials Found'
+            },
+            progress: 0,
+            courseData: {
+              id: courseId,
+              name: 'لا توجد مواد',
+              materials_count: 0,
+              stats: { totalLessons: 0, totalQuizzes: 0, totalProjects: 0, estimatedHours: 0 }
+            },
+            sections: []
+          };
+          setCourse(emptyFallback);
+        }
         
       } catch (err) {
-        console.error('❌ Error loading mock course data:', err);
-        setError(err.message || 'Failed to load course details');
+        console.error('❌ Error loading course materials:', err);
+        setError(err.message || 'Failed to load course materials');
+      } finally {
         setLoading(false);
       }
     };
@@ -458,6 +363,14 @@ const CourseDetailPage = () => {
                   {/* Render the appropriate lesson component based on the lesson type */}
                   {currentLesson.type === "video" && (
                     <CourseVideoLesson lesson={currentLesson} />
+                  )}
+                  
+                  {currentLesson.type === "pdf" && (
+                    <CourseImageLesson lesson={currentLesson} />
+                  )}
+                  
+                  {currentLesson.type === "document" && (
+                    <CourseImageLesson lesson={currentLesson} />
                   )}
                   
                   {currentLesson.type === "image" && (
