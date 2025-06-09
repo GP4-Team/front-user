@@ -5,7 +5,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import Navbar from "../../components/navigation/Navbar";
-// import { SimpleFooter } from "../../components/home";
+import CoursesService from "../../services/api/courses.service";
 import {
   CourseVideoLesson,
   CourseImageLesson,
@@ -17,165 +17,161 @@ import {
 import {
   ChevronDown,
   ChevronUp,
-  AlertCircle
+  AlertCircle,
+  Loader
 } from "lucide-react";
 import SimpleFooter from "../../components/home/SimpleFooter";
 
-// Mock course data - this would come from your API in a real app
-const MOCK_COURSE = {
-  id: "physics-101",
-  title: {
-    en: "Experimental Camp for Eduara Educational Platform",
-    ar: "معسكر تجريبي لمنصة اديورا التعليمية"
-  },
-  progress: 38.46,
-  sections: [
-    {
-      id: "section-1",
-      title: {
-        en: "Experimental Section",
-        ar: "قسم تجربة"
-      },
-      lessons: 7,
-      completed: 2,
-      expanded: true,
-      lessons: [
-        {
-          id: "lesson-1-1",
-          type: "video",
-          title: {
-            en: "Experimental YouTube Video",
-            ar: "درس يوتيوب تجريبي"
-          },
-          duration: {
-            en: "92 min",
-            ar: "92 دقيقة"
-          },
-          status: "completed",
-          viewsRemaining: 45,
-          maxViews: 100
-        },
-        {
-          id: "lesson-1-2",
-          type: "video",
-          title: {
-            en: "Protected YouTube Video",
-            ar: "يوتيوب محمي"
-          },
-          duration: {
-            en: "96 min",
-            ar: "96 دقيقة"
-          },
-          status: "completed",
-          viewsRemaining: 85,
-          maxViews: 100
-        },
-        {
-          id: "lesson-1-3",
-          type: "image",
-          title: {
-            en: "Infographics",
-            ar: "انفوجرافيك"
-          },
-          status: "completed",
-          viewsRemaining: null // unlimited views
-        },
-        {
-          id: "lesson-1-4",
-          type: "image",
-          title: {
-            en: "Experimental Image Lesson 1",
-            ar: "درس صورة تجريبية 1"
-          },
-          status: "completed",
-          viewsRemaining: null
-        },
-        {
-          id: "lesson-1-5",
-          type: "audio",
-          title: {
-            en: "Experimental Audio Lesson",
-            ar: "درس صوت تجربة"
-          },
-          duration: {
-            en: "22 min",
-            ar: "22 دقيقة"
-          },
-          status: "current",
-          viewsRemaining: 22,
-          maxViews: 50
-        },
-        {
-          id: "exam-1",
-          type: "exam",
-          title: {
-            en: "Experimental Exam 1",
-            ar: "امتحان تجريبي 1"
-          },
-          questions: 9,
-          status: "current", // changed from "locked" to "current" to show the exam content
-          passingScore: 35,
-          duration: {
-            en: "10 min",
-            ar: "10 دقائق"
-          }
-        },
-        {
-          id: "exam-2",
-          type: "exam",
-          title: {
-            en: "Experimental Exam 2",
-            ar: "امتحان تجريبي 2"
-          },
-          questions: 5,
-          status: "locked",
-          passingScore: 35,
-          duration: {
-            en: "10 min",
-            ar: "10 دقائق"
-          }
-        }
-      ]
-    },
-    {
-      id: "section-2",
-      title: {
-        en: "Experimental Section 2",
-        ar: "قسم تجربة 2"
-      },
-      lessons: 5,
-      completed: 1,
-      expanded: false,
-      lessons: [
-        {
-          id: "lesson-2-1",
-          type: "video",
-          title: {
-            en: "Introduction to Section 2",
-            ar: "مقدمة للقسم 2"
-          },
-          duration: {
-            en: "30 min",
-            ar: "30 دقيقة"
-          },
-          status: "locked",
-          viewsRemaining: 50,
-          maxViews: 50
-        }
-      ]
-    },
-    {
-      id: "section-new",
-      title: {
-        en: "New Section",
-        ar: "قسم جديد"
-      },
-      lessons: 0,
-      completed: 0,
-      expanded: false,
-      lessons: []
-    }
-  ]
+// Course Overview Lesson Component
+const CourseOverviewLesson = ({ course }) => {
+  const { language } = useLanguage();
+  const { isDarkMode } = useTheme();
+  
+  const getText = (obj) => {
+    if (!obj) return "";
+    return obj[language] || obj.en || "";
+  };
+  
+  const courseData = course.courseData;
+  
+  return (
+    <div className="p-6">
+      {/* Course Header */}
+      <div className="mb-8">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Course Image */}
+          <div className="lg:w-1/3">
+            <img 
+              src={courseData.image} 
+              alt={getText(courseData.title)}
+              className="w-full h-48 lg:h-64 object-cover rounded-lg shadow-md"
+              onError={(e) => {
+                e.target.src = 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp';
+              }}
+            />
+          </div>
+          
+          {/* Course Info */}
+          <div className="lg:w-2/3">
+            <h1 className="text-2xl lg:text-3xl font-bold mb-4">
+              {getText(courseData.title)}
+            </h1>
+            
+            <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+              {getText(courseData.description)}
+            </p>
+            
+            {/* Course Details Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {language === 'ar' ? 'الفئة' : 'Category'}
+                </div>
+                <div className="font-medium">{getText(courseData.category)}</div>
+              </div>
+              
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {language === 'ar' ? 'المستوى' : 'Level'}
+                </div>
+                <div className="font-medium">{getText(courseData.level)}</div>
+              </div>
+              
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {language === 'ar' ? 'المدة' : 'Duration'}
+                </div>
+                <div className="font-medium">{getText(courseData.duration)}</div>
+              </div>
+              
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {language === 'ar' ? 'الطلاب' : 'Students'}
+                </div>
+                <div className="font-medium">{courseData.students}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Course Features */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold mb-4">
+          {language === 'ar' ? 'مميزات الكورس' : 'Course Features'}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {courseData.features?.map((feature, index) => (
+            <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+              <span>{getText(feature)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Course Statistics */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold mb-4">
+          {language === 'ar' ? 'إحصائيات الكورس' : 'Course Statistics'}
+        </h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              {courseData.stats?.totalLessons || 0}
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-300">
+              {language === 'ar' ? 'درس' : 'Lessons'}
+            </div>
+          </div>
+          
+          <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {courseData.stats?.totalQuizzes || 0}
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-300">
+              {language === 'ar' ? 'اختبار' : 'Quizzes'}
+            </div>
+          </div>
+          
+          <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              {courseData.stats?.totalProjects || 0}
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-300">
+              {language === 'ar' ? 'مشروع' : 'Projects'}
+            </div>
+          </div>
+          
+          <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+              {courseData.stats?.estimatedHours || 0}
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-300">
+              {language === 'ar' ? 'ساعة' : 'Hours'}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Enrollment Section */}
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 className="text-xl font-bold mb-2">
+              {language === 'ar' ? 'ابدأ رحلتك التعليمية' : 'Start Your Learning Journey'}
+            </h3>
+            <p className="opacity-90">
+              {language === 'ar' ? 'انضم إلى آلاف الطلاب واحصل على شهادة معتمدة' : 'Join thousands of students and get certified'}
+            </p>
+          </div>
+          <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+            {language === 'ar' ? 'ابدأ الآن' : 'Start Now'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const CourseDetailPage = () => {
@@ -186,7 +182,9 @@ const CourseDetailPage = () => {
   const { isAuthenticated } = useAuth();
   
   // State for the course data
-  const [course, setCourse] = useState(MOCK_COURSE);
+  const [course, setCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   // State for the current lesson
   const [currentLesson, setCurrentLesson] = useState(null);
   // State for expanded sections
@@ -198,31 +196,78 @@ const CourseDetailPage = () => {
     return obj[language] || obj.en || "";
   };
 
-  // Effect to fetch course data
+  // Effect to fetch course data from API
   useEffect(() => {
-    // In a real app, this would be an API call
-    // For now, we'll use the mock data
-    // Simulate API call delay
-    const timer = setTimeout(() => {
-      setCourse(MOCK_COURSE);
-      
-      // Set initial expanded sections
-      const initialExpanded = {};
-      MOCK_COURSE.sections.forEach((section) => {
-        initialExpanded[section.id] = section.expanded || false;
-      });
-      setExpandedSections(initialExpanded);
-      
-      // Specifically set to show the exam as the current lesson
-      const examLesson = MOCK_COURSE.sections[0].lessons.find(
-        (lesson) => lesson.id === "exam-1"
-      );
-      
-      setCurrentLesson(examLesson);
-      
-    }, 500);
+    const fetchCourseData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        console.log('🔍 Fetching course details for ID:', courseId);
+        
+        // Fetch course details from API
+        const response = await CoursesService.getCourseDetails(courseId);
+        
+        console.log('✅ Course details received:', response);
+        
+        if (response.success && response.data) {
+          // Transform API data to component format
+          const transformedCourse = {
+            id: response.data.id,
+            title: response.data.title,
+            progress: 0, // يمكن إضافة تتبع التقدم لاحقاً
+            courseData: response.data, // حفظ البيانات الأصلية
+            sections: [
+              {
+                id: "section-1",
+                title: {
+                  en: "Course Content",
+                  ar: "محتوى الكورس"
+                },
+                lessons: response.data.stats?.totalLessons || 0,
+                completed: 0,
+                expanded: true,
+                lessons: [
+                  {
+                    id: "overview",
+                    type: "info",
+                    title: {
+                      en: "Course Overview",
+                      ar: "نظرة عامة على الكورس"
+                    },
+                    status: "current"
+                  }
+                  // يمكن إضافة المزيد من الدروس من API لاحقاً
+                ]
+              }
+            ]
+          };
+          
+          setCourse(transformedCourse);
+          
+          // Set initial expanded sections
+          const initialExpanded = {};
+          transformedCourse.sections.forEach((section) => {
+            initialExpanded[section.id] = section.expanded || false;
+          });
+          setExpandedSections(initialExpanded);
+          
+          // Set the first lesson as current
+          if (transformedCourse.sections[0]?.lessons[0]) {
+            setCurrentLesson(transformedCourse.sections[0].lessons[0]);
+          }
+        }
+      } catch (err) {
+        console.error('❌ Error fetching course details:', err);
+        setError(err.message || 'Failed to load course details');
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    return () => clearTimeout(timer);
+    if (courseId) {
+      fetchCourseData();
+    }
   }, [courseId]);
 
   // Function to toggle a section
@@ -238,11 +283,58 @@ const CourseDetailPage = () => {
     setCurrentLesson(lesson);
   };
 
-  // If course data is not loaded yet
+  // If course data is not loaded yet or there's an error
+  if (loading) {
+    return (
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+        <Navbar />
+        <div className="pt-16 flex items-center justify-center h-96">
+          <div className="text-center">
+            <Loader className="animate-spin h-12 w-12 text-blue-500 mx-auto mb-4" />
+            <p className="text-lg">
+              {language === 'ar' ? 'جاري تحميل تفاصيل الكورس...' : 'Loading course details...'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+        <Navbar />
+        <div className="pt-16 flex items-center justify-center h-96">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-medium mb-2">
+              {language === 'ar' ? 'خطأ في تحميل الكورس' : 'Error Loading Course'}
+            </h2>
+            <p className="text-gray-500 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors"
+            >
+              {language === 'ar' ? 'إعادة المحاولة' : 'Try Again'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!course) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+        <Navbar />
+        <div className="pt-16 flex items-center justify-center h-96">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-xl font-medium">
+              {language === 'ar' ? 'الكورس غير موجود' : 'Course Not Found'}
+            </h2>
+          </div>
+        </div>
       </div>
     );
   }
@@ -340,6 +432,10 @@ const CourseDetailPage = () => {
                   
                   {currentLesson.type === "exam" && (
                     <CourseExamLesson lesson={currentLesson} />
+                  )}
+                  
+                  {currentLesson.type === "info" && (
+                    <CourseOverviewLesson course={course} />
                   )}
                 </>
               ) : (

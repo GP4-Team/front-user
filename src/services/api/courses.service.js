@@ -277,15 +277,132 @@ class CoursesService {
   }
 
   /**
-   * Get specific course details
+   * Get specific course details by ID with complete information
    * @param {number|string} courseId - Course ID
-   * @returns {Promise<Object>} Course details
+   * @returns {Promise<Object>} Complete course details
    */
-  async getCourseById(courseId) {
+  async getCourseDetails(courseId) {
     try {
+      console.log('🔍 Fetching course details for ID:', courseId);
+      
       const response = await api.get(`/courses/${courseId}`);
+      
+      console.log('✅ Course details API response:', response.data);
+      
+      // تحويل البيانات من API format إلى UI format
+      if (response.data.success && response.data.data) {
+        const course = response.data.data;
+        
+        const transformedData = {
+          success: true,
+          data: {
+            id: course.id,
+            name: course.name,
+            code: course.code,
+            color: course.color || '#4285F4',
+            image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+            educational_level_id: course.educational_level_id,
+            educational_department_id: course.educational_department_id,
+            
+            // إضافة البيانات المحولة للواجهة
+            title: {
+              ar: course.name,
+              en: course.name
+            },
+            description: {
+              ar: `دورة شاملة في ${course.name} للمستوى ${this.getLevelNameAr(course.educational_level_id)}`,
+              en: `Comprehensive course in ${course.name} for ${this.getLevelNameEn(course.educational_level_id)}`
+            },
+            category: {
+              ar: this.getCategoryNameAr(course.educational_department_id),
+              en: this.getCategoryNameEn(course.educational_department_id)
+            },
+            level: {
+              ar: this.getLevelNameAr(course.educational_level_id),
+              en: this.getLevelNameEn(course.educational_level_id)
+            },
+            rating: 4.5, // Default rating
+            students: '120+', // Default students count
+            duration: {
+              ar: '8 أسابيع',
+              en: '8 weeks'
+            },
+            instructor: {
+              ar: 'أستاذ متخصص',
+              en: 'Specialized Instructor'
+            },
+            price: {
+              original: 299,
+              discounted: 199,
+              currency: 'SAR'
+            },
+            features: [
+              {
+                ar: 'محتوى تفاعلي عالي الجودة',
+                en: 'High-quality interactive content'
+              },
+              {
+                ar: 'اختبارات وتقييمات شاملة',
+                en: 'Comprehensive tests and assessments'
+              },
+              {
+                ar: 'دعم فني متواصل',
+                en: 'Continuous technical support'
+              },
+              {
+                ar: 'شهادة إتمام معتمدة',
+                en: 'Certified completion certificate'
+              }
+            ],
+            curriculum: [
+              {
+                title: {
+                  ar: 'الوحدة الأولى',
+                  en: 'Unit One'
+                },
+                lessons: [
+                  {
+                    ar: 'مقدمة في المادة',
+                    en: 'Introduction to the Subject'
+                  },
+                  {
+                    ar: 'المفاهيم الأساسية',
+                    en: 'Basic Concepts'
+                  }
+                ]
+              },
+              {
+                title: {
+                  ar: 'الوحدة الثانية',
+                  en: 'Unit Two'
+                },
+                lessons: [
+                  {
+                    ar: 'التطبيقات العملية',
+                    en: 'Practical Applications'
+                  },
+                  {
+                    ar: 'حل المسائل',
+                    en: 'Problem Solving'
+                  }
+                ]
+              }
+            ],
+            stats: {
+              totalLessons: 24,
+              totalQuizzes: 8,
+              totalProjects: 3,
+              estimatedHours: 40
+            }
+          }
+        };
+        
+        return transformedData;
+      }
+      
       return response.data;
     } catch (error) {
+      console.error('❌ Error fetching course details:', error);
       throw handleApiError(error, 'Failed to fetch course details');
     }
   }
@@ -659,18 +776,25 @@ class CoursesService {
         per_page: params.per_page || 15
       };
       
-      // إضافة فلاتر level_id و category_id
+      // إضافة فلاتر level_id و category_id مباشرة
       if (params.level_id) {
-        filterParams['filter[level_id]'] = params.level_id;
+        filterParams.level_id = params.level_id;
       }
       
       if (params.category_id) {
-        filterParams['filter[category_id]'] = params.category_id;
+        filterParams.category_id = params.category_id;
       }
       
       console.log('📡 Final filter params:', filterParams);
       
-      const response = await api.get('/courses/filter', { params: filterParams });
+      let endpoint = '/courses';
+      
+      // إذا كان هناك فلاتر، استخدم /courses/filter
+      if (params.level_id || params.category_id) {
+        endpoint = '/courses/filter';
+      }
+      
+      const response = await api.get(endpoint, { params: filterParams });
       
       console.log('✅ Hierarchical filter API response:', response.data);
       
