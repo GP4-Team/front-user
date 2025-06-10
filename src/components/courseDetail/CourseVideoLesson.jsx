@@ -200,16 +200,6 @@ const CourseVideoLesson = ({ lesson, materialDetails }) => {
                   )}
                 </div>
               )}
-              
-              {/* Debug info for development */}
-              {process.env.NODE_ENV === 'development' && materialDetails && (
-                <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-left text-xs">
-                  <h4 className="font-bold mb-2">🐛 Debug Info:</h4>
-                  <pre className="whitespace-pre-wrap">
-                    {JSON.stringify(materialDetails, null, 2)}
-                  </pre>
-                </div>
-              )}
             </div>
           </>
         )}
