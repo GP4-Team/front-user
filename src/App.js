@@ -31,6 +31,7 @@ import ExamQuestionsPage from "./pages/exams/ExamQuestionsPage.jsx";
 import ExamResultsPage from "./pages/exams/ExamResultsPage.jsx";
 import ApiTestPage from "./pages/testing/ApiTestPage.jsx";
 import ExamsApiTestPage from "./pages/testing/ExamsApiTestPage.jsx";
+import TestApiPage from "./pages/TestApiPage.jsx";
 import PrivateRoute from "./middleware/PrivateRoute.jsx";
 import "./App.css";
 import "./styles/ExamStyles.css";
@@ -105,6 +106,10 @@ const router = createBrowserRouter([
       {
         path: "/api-test",
         element: <GuestLayout><ApiTestPage /></GuestLayout>
+      },
+      {
+        path: "/test-apis",
+        element: <GuestLayout><TestApiPage /></GuestLayout>
       },
       {
         path: "/exams-api-test",

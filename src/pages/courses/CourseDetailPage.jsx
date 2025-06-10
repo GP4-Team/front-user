@@ -21,7 +21,6 @@ import {
   AlertCircle,
   Loader
 } from "lucide-react";
-import SimpleFooter from "../../components/home/SimpleFooter";
 
 // Helper function to convert API material type to component type
 const convertMaterialType = (apiType) => {
@@ -380,7 +379,7 @@ const CourseDetailPage = () => {
     return (
       <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
         <Navbar />
-        <div className="pt-16 flex items-center justify-center h-96">
+        <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <Loader className="animate-spin h-12 w-12 text-blue-500 mx-auto mb-4" />
             <p className="text-lg">
@@ -396,7 +395,7 @@ const CourseDetailPage = () => {
     return (
       <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
         <Navbar />
-        <div className="pt-16 flex items-center justify-center h-96">
+        <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-medium mb-2">
@@ -419,7 +418,7 @@ const CourseDetailPage = () => {
     return (
       <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
         <Navbar />
-        <div className="pt-16 flex items-center justify-center h-96">
+        <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h2 className="text-xl font-medium">
@@ -436,8 +435,8 @@ const CourseDetailPage = () => {
       {/* Navbar */}
       <Navbar />
       
-      {/* Main Content with top padding for navbar */}
-      <div className="pt-16">
+      {/* Main Content - إزالة padding من فوق */}
+      <div>
         {/* Progress bar */}
         <div className="relative h-1 bg-gray-200 dark:bg-gray-700">
           <div 
@@ -600,9 +599,6 @@ const CourseDetailPage = () => {
           </div>
         </div>
       </div>
-      
-      {/* Footer */}
-      <SimpleFooter />
     </div>
   );
 };
