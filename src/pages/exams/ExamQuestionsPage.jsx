@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Button, Layout, Image, Tooltip } from 'antd';
-import { ClockCircleOutlined, LogoutOutlined } from '@ant-design/icons';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Button, Layout, Image, Tooltip, message, Spin } from 'antd';
+import { ClockCircleOutlined, LogoutOutlined, SaveOutlined } from '@ant-design/icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
+import useOnlineExamQuestions from '../../hooks/api/useOnlineExamQuestions';
 import ExamTimer from '../../components/exams/ExamTimer';
 import ExamProgress from '../../components/exams/ExamProgress';
 import QuestionNavigation from '../../components/exams/QuestionNavigation';
@@ -13,117 +15,141 @@ import ExamCompletionModal from '../../components/exams/ExamCompletionModal';
 
 const { Content } = Layout;
 
-// This would come from an API
-const mockExamData = {
-  id: 'exam-123',
-  title: 'تدريب الباب الأول',
-  time: 600, // 10 minutes in seconds
-  passingScore: 70,
-  questions: [
-    {
-      id: 1,
-      text: 'أوجد قراءة التيار الذي بالشكل',
-      image: '/images/exams/question1.png',
-      type: 'mcq',
-      options: [
-        { id: 'a', text: '15 أمبير' },
-        { id: 'b', text: '20 أمبير' },
-        { id: 'c', text: '25 أمبير' },
-        { id: 'd', text: '10 أمبير' }
-      ],
-      correctAnswer: 'a'
-    },
-    {
-      id: 2,
-      text: 'حدد العبارة الصحيحة؟',
-      type: 'true-false',
-      options: [
-        { id: 'true', text: 'صحيح' },
-        { id: 'false', text: 'خطأ' }
-      ],
-      correctAnswer: 'true'
-    },
-    {
-      id: 3,
-      text: 'اشرح كيف يعمل المحول الكهربائي؟',
-      type: 'essay',
-      correctAnswer: null // No direct correct answer for essays
-    },
-    {
-      id: 4,
-      text: 'ما هي وحدة قياس الطاقة الكهربائية؟',
-      type: 'mcq',
-      options: [
-        { id: 'a', text: 'Watt' },
-        { id: 'b', text: 'Joule' },
-        { id: 'c', text: 'kWh' },
-        { id: 'd', text: 'Ampere' }
-      ],
-      correctAnswer: 'c'
-    },
-    {
-      id: 5,
-      text: 'وصل الدوائر الكهربائية على التوازي يزيد من التيار الكلي.',
-      type: 'true-false',
-      options: [
-        { id: 'true', text: 'صحيح' },
-        { id: 'false', text: 'خطأ' }
-      ],
-      correctAnswer: 'true'
-    }
-  ]
-};
-
 const ExamQuestionsPage = () => {
   const { examId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
+  const { isAuthenticated, user } = useAuth();
   
-  const [examData, setExamData] = useState(null);
+  // Use the online exam questions hook
+  const {
+    loading,
+    error,
+    examData,
+    questions,
+    userAnswers,
+    examStatus,
+    timeRemaining,
+    submitLoading,
+    saveLoading,
+    startExam,
+    retryExam,
+    continueExam,
+    reviewExam,
+    updateAnswer,
+    saveProgress,
+    submitExam,
+    getAnsweredCount,
+    getProgressPercentage,
+    isAllAnswered,
+    clearError,
+    updateTimeRemaining
+  } = useOnlineExamQuestions();
+  
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState({});
-  const [timeRemaining, setTimeRemaining] = useState(0);
   const [isExamEnded, setIsExamEnded] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [lastSaveTime, setLastSaveTime] = useState(Date.now());
+  const [autoSaveInterval, setAutoSaveInterval] = useState(null);
 
-  // Simulating API call to get exam data
+  // Load exam data based on URL parameters
   useEffect(() => {
-    const fetchExamData = async () => {
+    if (!isAuthenticated || !user) {
+      message.error(language === 'ar' ? 'يجب تسجيل الدخول أولاً' : 'Please login first');
+      navigate('/auth?mode=login');
+      return;
+    }
+
+    if (!examId) {
+      message.error(language === 'ar' ? 'معرف الامتحان مطلوب' : 'Exam ID is required');
+      navigate('/exams');
+      return;
+    }
+
+    const loadExam = async () => {
       try {
-        // In a real app, you would fetch from an API
-        // const response = await examService.getExamById(examId);
-        // setExamData(response.data);
-        setExamData(mockExamData);
-        setTimeRemaining(mockExamData.time);
+        clearError();
         
-        // Initialize user answers
-        const initialAnswers = {};
-        mockExamData.questions.forEach(q => {
-          initialAnswers[q.id] = null;
-        });
-        setUserAnswers(initialAnswers);
+        // Determine action based on URL parameters
+        const urlParams = new URLSearchParams(location.search);
+        const isContinue = urlParams.get('continue') === 'true';
+        const isReview = location.pathname.includes('/review');
         
-        setIsLoading(false);
+        let result;
+        
+        if (isReview) {
+          result = await reviewExam(examId);
+        } else if (isContinue) {
+          result = await continueExam(examId);
+        } else {
+          // Default to start exam
+          result = await startExam(examId);
+        }
+        
+        if (!result.success) {
+          if (result.status === 'unavailable') {
+            message.error(result.error || (language === 'ar' ? 'هذا الامتحان غير متاح حالياً' : 'This exam is not available'));
+            navigate(`/exams/${examId}`);
+          } else {
+            message.error(result.error || (language === 'ar' ? 'خطأ في تحميل الامتحان' : 'Error loading exam'));
+          }
+        }
       } catch (error) {
-        console.error('Error fetching exam data:', error);
-        setIsLoading(false);
+        console.error('Error loading exam:', error);
+        message.error(language === 'ar' ? 'خطأ في الاتصال بالخادم' : 'Server connection error');
       }
     };
 
-    fetchExamData();
-  }, [examId]);
+    loadExam();
+  }, [examId, location.search, location.pathname, isAuthenticated, user, language, navigate, startExam, continueExam, reviewExam, clearError]);
+
+  // Auto-save functionality
+  useEffect(() => {
+    if (examData && !isExamEnded && examStatus !== 'revision') {
+      // Set up auto-save every 30 seconds
+      const interval = setInterval(async () => {
+        const now = Date.now();
+        if (now - lastSaveTime > 30000) { // Only save if 30 seconds have passed
+          const result = await saveProgress(examId, timeRemaining);
+          if (result.success) {
+            setLastSaveTime(now);
+            console.log('💾 Auto-saved progress');
+          }
+        }
+      }, 30000);
+      
+      setAutoSaveInterval(interval);
+      
+      return () => {
+        if (interval) {
+          clearInterval(interval);
+        }
+      };
+    }
+  }, [examData, isExamEnded, examStatus, examId, timeRemaining, saveProgress, lastSaveTime]);
+
+  // Manual save on answer change
+  useEffect(() => {
+    if (examData && Object.keys(userAnswers).length > 0) {
+      const saveTimeout = setTimeout(async () => {
+        const result = await saveProgress(examId, timeRemaining);
+        if (result.success) {
+          setLastSaveTime(Date.now());
+        }
+      }, 2000); // Save 2 seconds after last answer change
+      
+      return () => clearTimeout(saveTimeout);
+    }
+  }, [userAnswers, examData, examId, timeRemaining, saveProgress]);
 
   const handleAnswerChange = (questionId, answer) => {
-    setUserAnswers(prev => ({
-      ...prev,
-      [questionId]: answer
-    }));
+    updateAnswer(questionId, answer);
   };
 
   const goToNextQuestion = () => {
-    if (currentQuestionIndex < examData.questions.length - 1) {
+    if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     }
   };
@@ -135,7 +161,7 @@ const ExamQuestionsPage = () => {
   };
 
   const goToQuestion = (index) => {
-    if (index >= 0 && index < examData?.questions.length) {
+    if (index >= 0 && index < questions.length) {
       setCurrentQuestionIndex(index);
     }
   };
@@ -144,56 +170,127 @@ const ExamQuestionsPage = () => {
     setShowCompletionModal(true);
   };
 
-  const confirmEndExam = () => {
+  const confirmEndExam = async () => {
     setIsExamEnded(true);
     setShowCompletionModal(false);
     
-    // Save answers to API and navigate to results
-    // examService.submitExam(examId, userAnswers).then(() => {
-    navigate(`/exams/${examId}/results`, { 
-      state: { 
-        examData: examData,
-        userAnswers: userAnswers,
-        timeSpent: examData.time - timeRemaining
-      } 
-    });
-    // });
+    try {
+      // Submit exam answers
+      const result = await submitExam(examId);
+      
+      if (result.success) {
+        message.success(language === 'ar' ? 'تم إرسال الإجابات بنجاح' : 'Answers submitted successfully');
+        
+        // Navigate to results page
+        navigate(`/exams/${examId}/results`, { 
+          state: { 
+            examData: examData,
+            userAnswers: userAnswers,
+            timeSpent: (examData?.duration || 0) - timeRemaining,
+            submissionData: result.data
+          } 
+        });
+      } else {
+        message.error(result.error || (language === 'ar' ? 'خطأ في إرسال الإجابات' : 'Error submitting answers'));
+        setIsExamEnded(false);
+      }
+    } catch (error) {
+      console.error('Error submitting exam:', error);
+      message.error(language === 'ar' ? 'خطأ في الاتصال بالخادم' : 'Server connection error');
+      setIsExamEnded(false);
+    }
   };
 
   const cancelEndExam = () => {
     setShowCompletionModal(false);
   };
 
-  const handleTimeEnd = () => {
+  const handleTimeEnd = async () => {
     setIsExamEnded(true);
     
-    // Auto-submit and navigate to results
-    navigate(`/exams/${examId}/results`, { 
-      state: { 
-        examData: examData,
-        userAnswers: userAnswers,
-        timeSpent: examData.time
-      } 
-    });
+    try {
+      // Auto-submit when time ends
+      const result = await submitExam(examId);
+      
+      message.info(language === 'ar' ? 'انتهى الوقت المحدد وتم إرسال الإجابات' : 'Time is up, answers have been submitted');
+      
+      // Navigate to results page
+      navigate(`/exams/${examId}/results`, { 
+        state: { 
+          examData: examData,
+          userAnswers: userAnswers,
+          timeSpent: examData?.duration || 0,
+          submissionData: result.data,
+          timeUp: true
+        } 
+      });
+    } catch (error) {
+      console.error('Error auto-submitting exam:', error);
+      message.error(language === 'ar' ? 'خطأ في إرسال الإجابات التلقائي' : 'Error auto-submitting answers');
+    }
   };
 
-  if (isLoading) {
+  // Handle loading state
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="spinner"></div>
-        <p className="mt-4">جاري تحميل الامتحان...</p>
+      <div className={`flex items-center justify-center h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
+        <div className="text-center">
+          <Spin size="large" />
+          <p className="mt-4 text-lg">
+            {language === 'ar' ? 'جاري تحميل الامتحان...' : 'Loading exam...'}
+          </p>
+        </div>
       </div>
     );
   }
 
-  if (!examData) {
-    return <div>لم يتم العثور على الامتحان.</div>;
+  // Handle error state
+  if (error) {
+    return (
+      <div className={`flex items-center justify-center h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
+        <div className="text-center max-w-md">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold mb-4">
+            {language === 'ar' ? 'خطأ في تحميل الامتحان' : 'Error Loading Exam'}
+          </h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <div className="space-x-4">
+            <Button type="primary" onClick={() => navigate(`/exams/${examId}`)}>
+              {language === 'ar' ? 'العودة لتفاصيل الامتحان' : 'Back to Exam Details'}
+            </Button>
+            <Button onClick={() => navigate('/exams')}>
+              {language === 'ar' ? 'العودة للامتحانات' : 'Back to Exams'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  const currentQuestion = examData.questions[currentQuestionIndex];
-  const progressPercentage = 
-    (Object.values(userAnswers).filter(answer => answer !== null).length / 
-    examData.questions.length) * 100;
+  // Handle no questions state
+  if (!questions || questions.length === 0) {
+    return (
+      <div className={`flex items-center justify-center h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
+        <div className="text-center">
+          <div className="text-gray-400 text-6xl mb-4">📝</div>
+          <h2 className="text-xl font-bold mb-2">
+            {language === 'ar' ? 'لا توجد أسئلة متاحة' : 'No Questions Available'}
+          </h2>
+          <p className="text-gray-600 mb-4">
+            {language === 'ar' ? 'هذا الامتحان لا يحتوي على أسئلة حالياً' : 'This exam currently has no questions'}
+          </p>
+          <Button type="primary" onClick={() => navigate(`/exams/${examId}`)}>
+            {language === 'ar' ? 'العودة' : 'Go Back'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const currentQuestion = questions[currentQuestionIndex];
+  const progressPercentage = getProgressPercentage();
+  const answeredQuestionsCount = getAnsweredCount();
+  const allQuestionsAnswered = isAllAnswered();
 
   // Color scheme from the provided image
   const colors = {
@@ -206,10 +303,6 @@ const ExamQuestionsPage = () => {
     bgLight: '#ECEFF1',    // Background Light
     white: '#FFFFFF',      // White
   };
-
-  // Calculate the number of answered questions
-  const answeredQuestionsCount = Object.values(userAnswers).filter(answer => answer !== null && answer !== undefined).length;
-  const allQuestionsAnswered = answeredQuestionsCount === examData.questions.length;
 
   // Style for end exam button matching screenshots
   const endExamButtonStyle = {
@@ -269,7 +362,7 @@ const ExamQuestionsPage = () => {
             </div>
             <div className={`sticky top-32 rounded-lg shadow-md p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
               <QuestionNavigation 
-                questions={examData.questions}
+                questions={questions}
                 currentIndex={currentQuestionIndex}
                 userAnswers={userAnswers}
                 onQuestionSelect={goToQuestion}
@@ -278,18 +371,34 @@ const ExamQuestionsPage = () => {
               
               {/* End Exam Button - Fixed at the bottom of the navigation */}
               <div className="mt-6 pt-3 border-t border-gray-200">
-                <Button 
-                  type="primary"
-                  onClick={handleEndExam}
-                  className="flex items-center justify-center"
-                  icon={<LogoutOutlined />}
-                  style={endExamButtonStyle}
-                >
-                  {language === 'ar' ? 'إنهاء الامتحان' : 'End Exam'}
-                </Button>
+                {examStatus !== 'revision' ? (
+                  <Button 
+                    type="primary"
+                    loading={submitLoading}
+                    onClick={handleEndExam}
+                    className="flex items-center justify-center"
+                    icon={<LogoutOutlined />}
+                    style={endExamButtonStyle}
+                    disabled={isExamEnded}
+                  >
+                    {submitLoading 
+                      ? (language === 'ar' ? 'جاري الإرسال...' : 'Submitting...') 
+                      : (language === 'ar' ? 'إنهاء الامتحان' : 'End Exam')
+                    }
+                  </Button>
+                ) : (
+                  <Button 
+                    type="default"
+                    onClick={() => navigate(`/exams/${examId}`)}
+                    className="flex items-center justify-center"
+                    style={endExamButtonStyle}
+                  >
+                    {language === 'ar' ? 'العودة للامتحان' : 'Back to Exam'}
+                  </Button>
+                )}
                 
                 {/* Show extra indicator if all questions are answered */}
-                {allQuestionsAnswered && (
+                {allQuestionsAnswered && examStatus !== 'revision' && (
                   <div className="mt-2 text-center text-green-500 text-xs font-semibold">
                     {language === 'ar' 
                       ? 'تمت الإجابة على جميع الأسئلة!' 
@@ -307,11 +416,18 @@ const ExamQuestionsPage = () => {
                 {language === 'ar' ? `السؤال ${currentQuestionIndex + 1}` : `Question ${currentQuestionIndex + 1}`}
               </h1>
               <div className="flex items-center space-x-4">
+                {/* Auto-save indicator */}
+                {saveLoading && (
+                  <Tooltip title={language === 'ar' ? 'جاري الحفظ...' : 'Saving...'}>
+                    <SaveOutlined className="text-blue-500 animate-spin" />
+                  </Tooltip>
+                )}
                 <ExamTimer 
                   initialTime={timeRemaining} 
                   onTimeEnd={handleTimeEnd} 
                   isExamEnded={isExamEnded}
                   colors={colors}
+                  onTimeUpdate={updateTimeRemaining}
                 />
               </div>
             </div>
@@ -326,12 +442,13 @@ const ExamQuestionsPage = () => {
                 isDarkMode={isDarkMode}
                 colors={colors}
                 imageMaxWidth={400} // Control image size
+                isReviewMode={examStatus === 'revision'}
               />
 
               <div className="mt-8">
                 <NavigationButtons 
                   currentQuestionIndex={currentQuestionIndex}
-                  totalQuestions={examData.questions.length}
+                  totalQuestions={questions.length}
                   onPrevious={goToPreviousQuestion}
                   onNext={goToNextQuestion}
                   language={language}
@@ -339,16 +456,21 @@ const ExamQuestionsPage = () => {
                 />
                 
                 {/* Extra End Exam button for better visibility */}
-                {(currentQuestionIndex === examData.questions.length - 1 || allQuestionsAnswered) && (
+                {(currentQuestionIndex === questions.length - 1 || allQuestionsAnswered) && examStatus !== 'revision' && (
                   <div className="flex justify-center mt-6">
                     <Button 
                       type="primary"
+                      loading={submitLoading}
                       onClick={handleEndExam}
                       className="flex items-center"
                       icon={<LogoutOutlined />}
                       style={floatingEndExamButtonStyle}
+                      disabled={isExamEnded}
                     >
-                      {language === 'ar' ? 'إنهاء الامتحان' : 'End Exam'}
+                      {submitLoading 
+                        ? (language === 'ar' ? 'جاري الإرسال...' : 'Submitting...') 
+                        : (language === 'ar' ? 'إنهاء الامتحان' : 'End Exam')
+                      }
                     </Button>
                   </div>
                 )}
@@ -364,6 +486,9 @@ const ExamQuestionsPage = () => {
           onCancel={cancelEndExam}
           language={language}
           colors={colors}
+          loading={submitLoading}
+          answeredCount={answeredQuestionsCount}
+          totalQuestions={questions.length}
         />
       )}
     </Layout>

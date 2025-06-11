@@ -1,0 +1,1 @@
+// This file has been removed - API status component not needed

@@ -7,7 +7,7 @@ import SectionTitle from "./SectionTitle";
 
 const ExamList = ({ 
   title, 
-  exams, 
+  exams = [], // Default to empty array
   viewMode, 
   toggleFavorite, 
   handleSelectExam, 
@@ -19,8 +19,11 @@ const ExamList = ({
   const { isDarkMode } = useTheme();
   const { isRTL, language } = useLanguage();
 
+  // Ensure exams is always an array
+  const examsList = Array.isArray(exams) ? exams : [];
+
   // Show empty state if no exams
-  if (!exams || exams.length === 0) {
+  if (examsList.length === 0) {
     return (
       <div className="mb-8 animate-fadeIn">
         <SectionTitle title={title} count={0} />
@@ -42,7 +45,7 @@ const ExamList = ({
 
   return (
     <div className="mb-8 animate-fadeIn">
-      <SectionTitle title={title} count={exams.length} />
+      <SectionTitle title={title} count={examsList.length} />
       
       <div
         className={`grid ${
@@ -51,8 +54,8 @@ const ExamList = ({
             : "grid-cols-1"
         } gap-4`}
       >
-        {exams.map((exam, index) => (
-          <div key={exam.id} ref={(el) => cardRefs.current[index] = el}>
+        {examsList.map((exam, index) => (
+          <div key={exam.id || index} ref={(el) => cardRefs.current[index] = el}>
             <ExamCard
               exam={exam}
               index={index}
