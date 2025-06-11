@@ -52,6 +52,42 @@ class UserService {
   }
 
   /**
+   * Get student registered courses
+   * This method calls the registered courses endpoint: GET /api/student/registered-courses
+   * @returns {Promise<Object>} Registered courses data with semester and course details
+   */
+  async getStudentRegisteredCourses() {
+    try {
+      console.log('📚 Fetching student registered courses...');
+      
+      // Make request to the student registered courses endpoint
+      const response = await api.get('/student/registered-courses', {
+        headers: {
+          'Accept-Language': 'ar', // Ensure Arabic language preference
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      console.log('✅ Student registered courses received:', response.data);
+      
+      // Return the response data
+      return response.data;
+    } catch (error) {
+      // Enhanced error handling for registered courses
+      const errorMessage = error.response?.data?.message || 'Failed to fetch student registered courses';
+      console.error('Student Registered Courses API Error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers
+      });
+      
+      throw handleApiError(error, errorMessage);
+    }
+  }
+
+  /**
    * Update user profile
    * @param {Object} profileData - Updated profile data
    * @returns {Promise<Object>} Updated profile

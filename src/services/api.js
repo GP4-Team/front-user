@@ -99,7 +99,9 @@ api.interceptors.request.use(
     // Don't add Authorization header to login/register endpoints (they don't need existing tokens)
     // But DO add it to logout/me endpoints (they require valid tokens)
     const noTokenEndpoints = ['/login', '/register'];
-    const requiresTokenEndpoint = noTokenEndpoints.some(endpoint => config.url?.includes(endpoint));
+    const requiresTokenEndpoint = noTokenEndpoints.some(endpoint => 
+      config.url === endpoint && config.url?.indexOf('student') === -1
+    );
     
     // Get token from local storage
     const token = getToken();

@@ -183,6 +183,21 @@ const HomeApiService = {
       console.error('Error fetching hierarchical filtered courses:', error);
       throw error;
     }
+  },
+
+  /**
+   * فلترة الكورسات حسب المستوى التعليمي (API جديد)
+   * @param {number} educationalLevelId - معرف المستوى التعليمي
+   * @param {Object} params - معلمات إضافية (page, per_page, إلخ)
+   * @returns {Promise} - Promise مع قائمة الكورسات المفلترة
+   */
+  getCoursesByEducationalLevel: async (educationalLevelId, params = {}) => {
+    try {
+      return await coursesService.getCoursesByEducationalLevel(educationalLevelId, params);
+    } catch (error) {
+      console.error('Error fetching courses by educational level:', error);
+      throw error;
+    }
   }
 };
 

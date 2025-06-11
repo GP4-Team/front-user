@@ -28,6 +28,7 @@ const AllCoursesPage = () => {
   const [hierarchicalFilters, setHierarchicalFilters] = useState({
     level_id: null,
     category_id: null,
+    educational_level_id: null, // إضافة جديدة للـ API
     levelName: '',
     categoryName: ''
   });
@@ -69,11 +70,16 @@ const AllCoursesPage = () => {
     fetchInitialCourses();
   }, []); // تعمل مرة واحدة فقط عند تحميل المكون
 
-  // جلب الكورسات عند تغيير الصفحة (للpagination فقط)
+  // جلب الكورسات عند تغيير الصفحة أو الفلاتر
   useEffect(() => {
     // لا تعمل في التحميل الأولي أو عند وجود بحث
-    if (isInitialLoading || hasSearched || currentPage === 1) {
+    if (isInitialLoading || hasSearched) {
       return;
+    }
+
+    // تجنب التكرار المفرط
+    if (currentPage === 1 && !hierarchicalFilters.educational_level_id && !hierarchicalFilters.level_id && !hierarchicalFilters.category_id) {
+      return; // البيانات محملة مسبقاً في initial load
     }
 
     const fetchPageCourses = async () => {
@@ -88,7 +94,13 @@ const AllCoursesPage = () => {
 
         let response;
         
-        if (hierarchicalFilters.level_id || hierarchicalFilters.category_id) {
+        // إذا كان هناك educational_level_id محدد، استخدم الـ API الجديد
+        if (hierarchicalFilters.educational_level_id) {
+          console.log('🎯 Using new educational level filter API with level ID:', hierarchicalFilters.educational_level_id);
+          response = await HomeApiService.getCoursesByEducationalLevel(hierarchicalFilters.educational_level_id, params);
+        }
+        // إذا كان هناك فلتر هرمي قديم، استخدم الـ API القديم
+        else if (hierarchicalFilters.level_id || hierarchicalFilters.category_id) {
           if (hierarchicalFilters.level_id) {
             params.level_id = hierarchicalFilters.level_id;
           }
@@ -96,8 +108,10 @@ const AllCoursesPage = () => {
             params.category_id = hierarchicalFilters.category_id;
           }
           
+          console.log('🎯 Using hierarchical filter with params:', params);
           response = await HomeApiService.getHierarchicalFilteredCourses(params);
         } else {
+          console.log('📋 Loading all courses from page', currentPage);
           response = await HomeApiService.getAllCoursesPaginated(params);
         }
 
@@ -105,6 +119,11 @@ const AllCoursesPage = () => {
           setAllCourses(response.data);
           setCourses(response.data);
           setPagination(response.pagination);
+          
+          // طباعة معلومات الفلترة إذا كانت موجودة
+          if (response.filters_applied) {
+            console.log('✅ Filters applied by API:', response.filters_applied);
+          }
         }
       } catch (err) {
         console.error("Error fetching page courses:", err);
@@ -115,7 +134,7 @@ const AllCoursesPage = () => {
     };
 
     fetchPageCourses();
-  }, [currentPage]); // تعمل فقط عند تغيير الصفحة
+  }, [currentPage, hierarchicalFilters.educational_level_id, hierarchicalFilters.level_id, hierarchicalFilters.category_id]); // تعمل عند تغيير الصفحة أو الفلاتر
 
   // دالة البحث باستخدام API
   const performSearch = async (query) => {
@@ -151,6 +170,7 @@ const AllCoursesPage = () => {
         setHierarchicalFilters({
           level_id: null,
           category_id: null,
+          educational_level_id: null, // إضافة جديدة
           levelName: '',
           categoryName: ''
         });
@@ -215,7 +235,7 @@ const AllCoursesPage = () => {
     });
   };
 
-  // دالة منفصلة لجلب الكورسات
+  // دالة منفصلة لجلب الكورسات (تستخدم فقط عند إعادة التعيين)
   const fetchCoursesData = async () => {
     setIsFilterLoading(true);
     setError(null);
@@ -226,36 +246,14 @@ const AllCoursesPage = () => {
         per_page: 15,
       };
 
-      let response;
-      
-      // إذا كان هناك فلتر هرمي، استخدم الـ API الجديد
-      if (hierarchicalFilters.level_id || hierarchicalFilters.category_id) {
-        if (hierarchicalFilters.level_id) {
-          params.level_id = hierarchicalFilters.level_id;
-        }
-        if (hierarchicalFilters.category_id) {
-          params.category_id = hierarchicalFilters.category_id;
-        }
-        
-        console.log('🎯 Using hierarchical filter with params:', params);
-        response = await HomeApiService.getHierarchicalFilteredCourses(params);
-      }
-      // بخلاف ذلك، استخدم الـ API العادي
-      else {
-        console.log('📋 Loading all courses from page 1');
-        response = await HomeApiService.getAllCoursesPaginated(params);
-      }
+      console.log('📋 Loading all courses from page 1 (reset)');
+      const response = await HomeApiService.getAllCoursesPaginated(params);
 
       if (response.success && response.data) {
         setAllCourses(response.data); // حفظ جميع الكورسات
         setCourses(response.data);
         setPagination(response.pagination);
         setCurrentPage(1); // تأكد من أن الصفحة الحالية هي 1
-        
-        // طباعة معلومات الفلترة إذا كانت موجودة
-        if (response.filters_applied) {
-          console.log('✅ Filters applied by API:', response.filters_applied);
-        }
       }
     } catch (err) {
       console.error("Error fetching courses:", err);
@@ -268,7 +266,7 @@ const AllCoursesPage = () => {
   // تحديد الكورسات المعروضة (بحث أو فلترة أو جميع الكورسات)
   const displayedCourses = hasSearched ? searchResults : courses;
   const isShowingSearchResults = hasSearched && searchQuery.trim();
-  const isShowingFilterResults = !hasSearched && (hierarchicalFilters.level_id || hierarchicalFilters.category_id);
+  const isShowingFilterResults = !hasSearched && hierarchicalFilters.educational_level_id;
 
   // معالجة تغيير الفلاتر الهرمية
   const handleHierarchicalFilterChange = (filterData) => {
@@ -276,6 +274,7 @@ const AllCoursesPage = () => {
       setHierarchicalFilters({
         level_id: null,
         category_id: null,
+        educational_level_id: null, // إضافة جديدة
         levelName: '',
         categoryName: ''
       });
@@ -285,9 +284,7 @@ const AllCoursesPage = () => {
       setSearchResults([]); // مسح نتائج البحث
       
       // إعادة تحميل الكورسات من الصفحة الأولى
-      setTimeout(() => {
-        fetchCoursesData();
-      }, 100); // تأخير بسيط لضمان تحديث الحالة
+      fetchCoursesData();
       return;
     }
 
@@ -300,15 +297,11 @@ const AllCoursesPage = () => {
       setHierarchicalFilters({
         level_id: filterData.level_id,
         category_id: filterData.category_id,
+        educational_level_id: filterData.educational_level_id, // إضافة جديدة
         levelName: filterData.levelName,
         categoryName: filterData.categoryName
       });
       setCurrentPage(1); // العودة للصفحة الأولى عند تطبيق فلتر جديد
-      
-      // تطبيق الفلتر الجديد فوراً
-      setTimeout(() => {
-        fetchCoursesData();
-      }, 100);
     }
   };
 
@@ -459,8 +452,8 @@ const AllCoursesPage = () => {
               {isShowingFilterResults && (
                 <p className="text-sm text-gray-500 mt-2">
                   {getText(
-                    `مفلترة حسب: ${hierarchicalFilters.categoryName} - ${hierarchicalFilters.levelName}`,
-                    `Filtered by: ${hierarchicalFilters.categoryName} - ${hierarchicalFilters.levelName}`
+                    `مفلترة حسب: ${hierarchicalFilters.levelName}`,
+                    `Filtered by: ${hierarchicalFilters.levelName}`
                   )}
                 </p>
               )}
@@ -651,6 +644,7 @@ const AllCoursesPage = () => {
                           setHierarchicalFilters({
                             level_id: null,
                             category_id: null,
+                            educational_level_id: null, // إضافة جديدة
                             levelName: '',
                             categoryName: ''
                           });

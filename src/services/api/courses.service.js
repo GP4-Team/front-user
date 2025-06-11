@@ -13,13 +13,60 @@ class CoursesService {
    */
   async getAllCoursesPaginated(params = {}) {
     try {
+      console.log('📋 Calling getAllCoursesPaginated with params:', params);
+      
       // استدعاء الـ API الجديد لجميع الكورسات مع pagination
       const response = await api.get('/courses', { params });
       
+      console.log('✅ getAllCoursesPaginated API response:', response.data);
+      
+      // تحديد هيكل البيانات الصحيح
+      let coursesData = [];
+      let paginationData = {};
+      
+      if (response.data.success) {
+        // محاولة العثور على البيانات بطرق مختلفة
+        if (response.data.data && Array.isArray(response.data.data.data)) {
+          // Structure: response.data.data.data (Laravel pagination)
+          coursesData = response.data.data.data;
+          paginationData = {
+            current_page: response.data.data.current_page,
+            last_page: response.data.data.last_page,
+            per_page: response.data.data.per_page,
+            total: response.data.data.total,
+            from: response.data.data.from,
+            to: response.data.data.to,
+            next_page_url: response.data.data.next_page_url,
+            prev_page_url: response.data.data.prev_page_url
+          };
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          // Structure: response.data.data (direct array)
+          coursesData = response.data.data;
+          paginationData = {
+            current_page: response.data.current_page || 1,
+            last_page: response.data.last_page || 1,
+            per_page: response.data.per_page || 15,
+            total: response.data.total || coursesData.length,
+            from: response.data.from || 1,
+            to: response.data.to || coursesData.length,
+            next_page_url: response.data.next_page_url || null,
+            prev_page_url: response.data.prev_page_url || null
+          };
+        } else {
+          console.error('❌ Unexpected API response structure:', response.data);
+          throw new Error('Unexpected API response structure');
+        }
+      } else {
+        throw new Error(response.data.message || 'API request failed');
+      }
+      
+      console.log('🚀 Courses found:', coursesData.length);
+      console.log('📄 Pagination info:', paginationData);
+      
       // تحويل البيانات من API format إلى UI format
       const transformedData = {
-        success: response.data.success,
-        data: response.data.data.data.map(course => ({
+        success: true,
+        data: coursesData.map(course => ({
           id: course.id,
           title: {
             ar: course.name,
@@ -50,20 +97,19 @@ class CoursesService {
           educational_department_id: course.educational_department_id,
           levelId: this.mapLevelIdForFilter(course.educational_level_id)
         })),
-        pagination: {
-          current_page: response.data.data.current_page,
-          last_page: response.data.data.last_page,
-          per_page: response.data.data.per_page,
-          total: response.data.data.total,
-          from: response.data.data.from,
-          to: response.data.data.to,
-          next_page_url: response.data.data.next_page_url,
-          prev_page_url: response.data.data.prev_page_url
-        }
+        pagination: paginationData
       };
+      
+      console.log('✨ Transformed data ready:', {
+        coursesCount: transformedData.data.length,
+        currentPage: transformedData.pagination.current_page,
+        totalPages: transformedData.pagination.last_page,
+        total: transformedData.pagination.total
+      });
       
       return transformedData;
     } catch (error) {
+      console.error('❌ getAllCoursesPaginated error:', error);
       throw handleApiError(error, 'Failed to fetch courses with pagination');
     }
   }
@@ -598,6 +644,118 @@ class CoursesService {
       return transformedData;
     } catch (error) {
       throw handleApiError(error, 'Failed to fetch education levels');
+    }
+  }
+
+  /**
+   * Filter courses by educational level ID using the new API format
+   * @param {number} educationalLevelId - Educational level ID
+   * @param {Object} params - Additional parameters (page, per_page, etc.)
+   * @returns {Promise<Object>} Filtered courses with pagination
+   */
+  async getCoursesByEducationalLevel(educationalLevelId, params = {}) {
+    try {
+      console.log('🎯 Filtering courses by educational level ID:', educationalLevelId);
+      
+      // إعداد معاملات الـ API حسب الصيغة المطلوبة
+      const filterParams = {
+        'filter[educational_level_id]': educationalLevelId,
+        page: params.page || 1,
+        per_page: params.per_page || 15,
+        ...params
+      };
+      
+      console.log('📡 API request params:', filterParams);
+      
+      const response = await api.get('/courses/filter', { params: filterParams });
+      
+      console.log('✅ Educational level filter API response:', response.data);
+      
+      // تحديد هيكل البيانات الصحيح
+      let coursesData = [];
+      let paginationData = {};
+      
+      if (response.data.success) {
+        // محاولة العثور على البيانات بطرق مختلفة
+        if (response.data.data && Array.isArray(response.data.data.data)) {
+          // Structure: response.data.data.data (Laravel pagination)
+          coursesData = response.data.data.data;
+          paginationData = {
+            current_page: response.data.data.current_page,
+            last_page: response.data.data.last_page,
+            per_page: response.data.data.per_page,
+            total: response.data.data.total,
+            from: response.data.data.from,
+            to: response.data.data.to,
+            next_page_url: response.data.data.next_page_url,
+            prev_page_url: response.data.data.prev_page_url
+          };
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          // Structure: response.data.data (direct array)
+          coursesData = response.data.data;
+          paginationData = {
+            current_page: response.data.current_page || 1,
+            last_page: response.data.last_page || 1,
+            per_page: response.data.per_page || 15,
+            total: response.data.total || coursesData.length,
+            from: response.data.from || 1,
+            to: response.data.to || coursesData.length,
+            next_page_url: response.data.next_page_url || null,
+            prev_page_url: response.data.prev_page_url || null
+          };
+        } else {
+          console.error('❌ Unexpected API response structure for filter:', response.data);
+          throw new Error('Unexpected API response structure');
+        }
+      } else {
+        throw new Error(response.data.message || 'API filter request failed');
+      }
+      
+      console.log('🚀 Filtered courses found:', coursesData.length);
+      console.log('📄 Filter pagination info:', paginationData);
+      
+      // تحويل البيانات من API format إلى UI format
+      const transformedData = {
+        success: true,
+        data: coursesData.map(course => ({
+          id: course.id,
+          title: {
+            ar: course.name,
+            en: course.name
+          },
+          description: {
+            ar: `دورة شاملة في ${course.name} للمستوى ${this.getLevelNameAr(course.educational_level_id)}`,
+            en: `Comprehensive course in ${course.name} for ${this.getLevelNameEn(course.educational_level_id)}`
+          },
+          category: {
+            ar: this.getCategoryNameAr(course.educational_department_id),
+            en: this.getCategoryNameEn(course.educational_department_id)
+          },
+          level: {
+            ar: this.getLevelNameAr(course.educational_level_id),
+            en: this.getLevelNameEn(course.educational_level_id)
+          },
+          image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+          color: course.color || '#4285F4',
+          code: course.code,
+          rating: 4.5, // Default rating since not provided by API
+          students: '120+', // Default students count
+          duration: {
+            ar: '8 أسابيع',
+            en: '8 weeks'
+          },
+          educational_level_id: course.educational_level_id,
+          educational_department_id: course.educational_department_id,
+          levelId: this.mapLevelIdForFilter(course.educational_level_id)
+        })),
+        pagination: paginationData,
+        filters_applied: response.data.filters_applied || {}
+      };
+      
+      return transformedData;
+    } catch (error) {
+      console.error('❌ Error filtering courses by educational level:', error);
+      throw handleApiError(error, 'Failed to filter courses by educational level');
     }
   }
   
