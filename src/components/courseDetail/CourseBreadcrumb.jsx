@@ -14,8 +14,8 @@ const CourseBreadcrumb = ({ course, currentLesson }) => {
   };
 
   const Separator = () => (
-    <span className="text-gray-400 mx-2">
-      {isRTL ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+    <span className="flex items-center text-gray-300 dark:text-gray-600 mx-2">
+      {isRTL ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
     </span>
   );
 
@@ -31,10 +31,10 @@ const CourseBreadcrumb = ({ course, currentLesson }) => {
   }
 
   return (
-    <nav className="flex items-center text-sm">
+    <nav className="flex items-center text-sm text-gray-500 dark:text-gray-400" dir={isRTL ? 'rtl' : 'ltr'}>
       <Link 
         to="/" 
-        className="text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"
+        className="flex items-center hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
       >
         <Home size={16} />
       </Link>
@@ -43,33 +43,21 @@ const CourseBreadcrumb = ({ course, currentLesson }) => {
       
       <Link 
         to="/courses" 
-        className="text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"
+        className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
       >
         {language === "ar" ? "الدورات التعليمية" : "Courses"}
       </Link>
       
       <Separator />
       
-      <Link 
-        to={`/courses/${course.id}`} 
-        className="text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 truncate max-w-[150px]"
-      >
+      <span className="text-gray-700 dark:text-gray-300 font-semibold truncate max-w-[200px]">
         {getText(course.title)}
-      </Link>
-      
-      {currentSection && (
-        <>
-          <Separator />
-          <span className="text-gray-500 dark:text-gray-400 truncate max-w-[100px]">
-            {getText(currentSection.title)}
-          </span>
-        </>
-      )}
+      </span>
       
       {currentLesson && (
         <>
           <Separator />
-          <span className="text-blue-500 dark:text-blue-400 truncate max-w-[120px]">
+          <span className="text-blue-600 dark:text-blue-400 font-medium truncate max-w-[150px]">
             {getText(currentLesson.title)}
           </span>
         </>
