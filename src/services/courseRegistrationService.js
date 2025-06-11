@@ -83,15 +83,34 @@ class CourseRegistrationService {
     } catch (error) {
       console.error('❌ Error registering courses:', error);
       
+      // Add detailed error logging
+      console.log('🔍 === DETAILED ERROR ANALYSIS ===');
+      console.log('Error status:', error.response?.status);
+      console.log('Error response data (JSON):', JSON.stringify(error.response?.data, null, 2));
+      console.log('Error response headers:', error.response?.headers);
+      console.log('Request that failed:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        data: JSON.parse(error.config?.data || '{}')
+      });
+      console.log('================================');
+      
       // Handle different error response structures
       let errorMessage = 'فشل في تسجيل المواد';
       
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
+        console.log('📝 Backend message:', error.response.data.message);
       } else if (error.response?.data?.errors) {
         // Handle validation errors
         const errors = error.response.data.errors;
+        console.log('⚠️ Validation errors object:', errors);
+        
         if (typeof errors === 'object') {
+          // Log each validation error
+          Object.keys(errors).forEach(field => {
+            console.log(`❌ Field "${field}":`, errors[field]);
+          });
           errorMessage = Object.values(errors).flat().join(', ');
         } else {
           errorMessage = errors;
@@ -105,7 +124,8 @@ class CourseRegistrationService {
         error: errorMessage,
         status: error.response?.status,
         details: error.response?.data,
-        validation_errors: error.response?.data?.errors || null
+        validation_errors: error.response?.data?.errors || null,
+        full_error_response: error.response  // For complete debugging
       };
     }
   }

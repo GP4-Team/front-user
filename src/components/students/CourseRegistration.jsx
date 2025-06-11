@@ -57,7 +57,9 @@ const CourseRegistrationContent = () => {
   const [registering, setRegistering] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const [currentSemester, setCurrentSemester] = useState({ id: 5, name: 'Current Semester' });
+  const [currentSemester, setCurrentSemester] = useState({ id: 1, name: 'Current Semester' });
+  const [showEducationLevelSelector, setShowEducationLevelSelector] = useState(false);
+  const [availableEducationLevels, setAvailableEducationLevels] = useState([]);
 
   const isArabic = language === 'ar';
 
@@ -209,7 +211,13 @@ const CourseRegistrationContent = () => {
 
     try {
       const courseIds = selectedCourses.map(course => course.id);
-      console.log('🎯 Registering courses:', { course_ids: courseIds, semester_id: currentSemester.id });
+      
+      console.log('🎯 === REGISTRATION REQUEST DEBUG ===');
+      console.log('Selected courses:', selectedCourses);
+      console.log('Course IDs:', courseIds);
+      console.log('Current semester:', currentSemester);
+      console.log('Request data will be:', { course_ids: courseIds, semester_id: currentSemester.id });
+      console.log('===================================');
       
       const response = await courseRegistrationService.registerCourses(courseIds, currentSemester.id);
 
@@ -222,7 +230,20 @@ const CourseRegistrationContent = () => {
           fetchAvailableCourses();
         }, 1000);
       } else {
-        setError(response.error || getText('registrationError'));
+        console.log('🚨 === REGISTRATION FAILED ===');
+        console.log('Response:', response);
+        console.log('Error message:', response.error);
+        console.log('🔍 VALIDATION ERRORS DETAILS:');
+        console.log('Validation errors (JSON):', JSON.stringify(response.validation_errors, null, 2));
+        console.log('Full details (JSON):', JSON.stringify(response.details, null, 2));
+        console.log('==============================');
+        
+        // Check if the error is about education level
+        if (response.error && response.error.includes('education level')) {
+          setError('لا يمكن تسجيل المواد بدون تحديد المرحلة التعليمية. ارجع إلى البروفايل لتحديث بياناتك.');
+        } else {
+          setError(response.error || getText('registrationError'));
+        }
       }
     } catch (err) {
       setError(language === 'ar' ? 'فشل التسجيل. حاول مرة أخرى.' : 'Registration failed. Please try again.');

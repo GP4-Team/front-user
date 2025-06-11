@@ -47,7 +47,13 @@ const StudentProfile = () => {
     refreshProfile,
     upcomingAssignments,
     completedCourses,
-    announcements
+    announcements,
+    // إضافة متغيرات الكورسات المسجلة
+    registeredCourses,
+    coursesLoading,
+    coursesError,
+    refreshRegisteredCourses,
+    hasCoursesData
   } = useStudentProfile();
 
   // إزالة التعليق لأن البيانات أصبحت من الAPI
@@ -565,84 +571,199 @@ const StudentProfile = () => {
           <TabsContent value="courses" className="mt-0">
             <div className="bg-white dark:bg-[#1E1E1E] rounded-xl shadow-md overflow-hidden">
               <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-semibold text-[#37474F] dark:text-white">
-                    Course History
+                <div className={`flex justify-between items-center mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <h3 className={`text-lg font-semibold text-[#37474F] dark:text-white ${isRTL ? 'text-right' : 'text-left'}`}>
+                    {getText({
+                      ar: 'المقررات المسجلة',
+                      en: 'Registered Courses'
+                    })}
                   </h3>
                   <div className="flex items-center space-x-2">
-                    <select className="bg-[#F0F4F8] dark:bg-[#2D2D2D] text-[#37474F] dark:text-white text-sm rounded-md px-3 py-1.5 border-0">
-                      <option>All Terms</option>
-                      <option>Fall 2023</option>
-                      <option>Spring 2023</option>
-                      <option>Fall 2022</option>
-                      <option>Spring 2022</option>
-                    </select>
+                    {coursesLoading && (
+                      <div className="flex items-center space-x-2">
+                        <Loader className="animate-spin h-4 w-4 text-[#3949AB]" />
+                        <span className="text-sm text-[#3949AB] dark:text-[#7986CB]">
+                          {getText({
+                            ar: 'جاري التحميل...',
+                            en: 'Loading...'
+                          })}
+                        </span>
+                      </div>
+                    )}
+                    <button 
+                      onClick={refreshRegisteredCourses}
+                      disabled={coursesLoading}
+                      className="bg-[#3949AB] hover:bg-[#3949AB]/90 disabled:bg-[#3949AB]/50 text-white px-3 py-1.5 rounded-md text-sm flex items-center space-x-1"
+                    >
+                      <Clock size={14} />
+                      <span>{getText({
+                        ar: 'تحديث',
+                        en: 'Refresh'
+                      })}</span>
+                    </button>
                   </div>
                 </div>
+
+                {/* عرض أخطاء تحميل المقررات */}
+                {coursesError && (
+                  <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded mb-4">
+                    <p className="text-sm">{coursesError}</p>
+                    <button 
+                      onClick={refreshRegisteredCourses}
+                      className="mt-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+                    >
+                      {getText(translations.retry)}
+                    </button>
+                  </div>
+                )}
 
                 <div className="overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
                       <tr className="bg-[#F0F4F8] dark:bg-[#2D2D2D] text-left">
-                        <th className="px-4 py-3 text-sm font-medium text-[#3949AB] dark:text-[#7986CB] rounded-l-lg">
-                          Course Code
+                        <th className={`px-4 py-3 text-sm font-medium text-[#3949AB] dark:text-[#7986CB] ${isRTL ? 'rounded-r-lg' : 'rounded-l-lg'}`}>
+                          {getText({
+                            ar: 'كود المقرر',
+                            en: 'Course Code'
+                          })}
                         </th>
                         <th className="px-4 py-3 text-sm font-medium text-[#3949AB] dark:text-[#7986CB]">
-                          Course Name
+                          {getText({
+                            ar: 'اسم المقرر',
+                            en: 'Course Name'
+                          })}
                         </th>
                         <th className="px-4 py-3 text-sm font-medium text-[#3949AB] dark:text-[#7986CB]">
-                          Credits
+                          {getText({
+                            ar: 'الساعات المعتمدة',
+                            en: 'Credits'
+                          })}
                         </th>
                         <th className="px-4 py-3 text-sm font-medium text-[#3949AB] dark:text-[#7986CB]">
-                          Grade
+                          {getText({
+                            ar: 'المدرس',
+                            en: 'Instructor'
+                          })}
                         </th>
-                        <th className="px-4 py-3 text-sm font-medium text-[#3949AB] dark:text-[#7986CB] rounded-r-lg">
-                          Semester
+                        <th className="px-4 py-3 text-sm font-medium text-[#3949AB] dark:text-[#7986CB]">
+                          {getText({
+                            ar: 'الفصل الدراسي',
+                            en: 'Semester'
+                          })}
+                        </th>
+                        <th className={`px-4 py-3 text-sm font-medium text-[#3949AB] dark:text-[#7986CB] ${isRTL ? 'rounded-l-lg' : 'rounded-r-lg'}`}>
+                          {getText({
+                            ar: 'الحالة',
+                            en: 'Status'
+                          })}
                         </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#F0F4F8] dark:divide-[#2D2D2D]">
-                      {completedCourses && completedCourses.length > 0 ? (
-                        completedCourses.map((course, index) => (
-                          <tr key={course.id || index}>
+                      {!coursesLoading && currentCourses && currentCourses.length > 0 ? (
+                        currentCourses.map((course, index) => (
+                          <tr key={course.id || index} className="hover:bg-[#F9FAFB] dark:hover:bg-[#2D2D2D] transition-colors">
                             <td className="px-4 py-4 text-sm font-medium text-[#37474F] dark:text-white">
-                              {course.code || course.course_code || 'N/A'}
+                              <div className="flex items-center">
+                                <BookOpen size={16} className="text-[#3949AB] dark:text-[#7986CB] mr-2" />
+                                {course.course_code || course.code || 'N/A'}
+                              </div>
                             </td>
                             <td className="px-4 py-4 text-sm text-[#37474F] dark:text-white">
-                              {course.name || course.course_name || course.title || 'N/A'}
+                              <div>
+                                <p className="font-medium">{course.course_name || course.name || course.title || 'N/A'}</p>
+                                {course.description && (
+                                  <p className="text-xs text-[#3949AB] dark:text-[#7986CB] mt-1">
+                                    {course.description.length > 50 
+                                      ? course.description.substring(0, 50) + '...' 
+                                      : course.description
+                                    }
+                                  </p>
+                                )}
+                              </div>
                             </td>
                             <td className="px-4 py-4 text-sm text-[#3949AB] dark:text-[#7986CB]">
-                              {course.credits || course.credit_hours || 3}
-                            </td>
-                            <td className="px-4 py-4">
-                              <span
-                                className={`text-sm py-1 px-2 rounded-full ${
-                                  course.grade === "A" || course.grade === "A-"
-                                    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                    : course.grade?.startsWith("B")
-                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                                    : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                                }`}
-                              >
-                                {course.grade || 'N/A'}
+                              <span className="bg-[#E3F2FD] dark:bg-[#1E3A8A]/20 text-[#1976D2] dark:text-[#60A5FA] px-2 py-1 rounded-full text-xs font-medium">
+                                {course.credits || course.credit_hours || 3} 
+                                {getText({
+                                  ar: 'ساعة',
+                                  en: 'hrs'
+                                })}
                               </span>
                             </td>
+                            <td className="px-4 py-4 text-sm text-[#37474F] dark:text-white">
+                              <div className="flex items-center">
+                                <User size={14} className="text-[#3949AB] dark:text-[#7986CB] mr-1" />
+                                {course.instructor_name || course.instructor || 'N/A'}
+                              </div>
+                            </td>
                             <td className="px-4 py-4 text-sm text-[#3949AB] dark:text-[#7986CB]">
-                              {course.semester || course.term || 'N/A'}
+                              <span className="bg-[#F3E5F5] dark:bg-[#4A148C]/20 text-[#7B1FA2] dark:text-[#CE93D8] px-2 py-1 rounded-full text-xs">
+                                {course.semester || course.term || getText({
+                                  ar: 'الفصل الحالي',
+                                  en: 'Current'
+                                })}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4">
+                              <span className={`text-xs py-1 px-2 rounded-full ${
+                                course.status === 'active' || course.status === 'enrolled' || !course.status
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                  : course.status === 'completed'
+                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                                  : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                              }`}>
+                                {course.status === 'active' || course.status === 'enrolled' || !course.status
+                                  ? getText({ ar: 'نشط', en: 'Active' })
+                                  : course.status === 'completed'
+                                  ? getText({ ar: 'مكتمل', en: 'Completed' })
+                                  : course.status || getText({ ar: 'نشط', en: 'Active' })
+                                }
+                              </span>
                             </td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="5" className="px-4 py-8">
+                          <td colSpan="6" className="px-4 py-8">
                             <div className="text-center">
-                              <div className="text-6xl mb-4">🎓</div>
-                              <h4 className="text-lg font-medium text-[#37474F] dark:text-white mb-2">
-                                {language === 'ar' ? 'لا توجد مقررات مكتملة' : 'No Completed Courses'}
-                              </h4>
-                              <p className="text-sm text-[#3949AB] dark:text-[#7986CB]">
-                                {language === 'ar' ? 'سيتم عرض المقررات المكتملة هنا بعد إنهائها' : 'Completed courses will appear here after finishing them'}
-                              </p>
+                              {coursesLoading ? (
+                                <div className="flex flex-col items-center">
+                                  <Loader className="animate-spin h-8 w-8 text-[#3949AB] mb-4" />
+                                  <p className="text-lg text-[#37474F] dark:text-white mb-2">
+                                    {getText({
+                                      ar: 'جاري تحميل المقررات...',
+                                      en: 'Loading courses...'
+                                    })}
+                                  </p>
+                                </div>
+                              ) : (
+                                <div>
+                                  <div className="text-6xl mb-4">📚</div>
+                                  <h4 className="text-lg font-medium text-[#37474F] dark:text-white mb-2">
+                                    {getText({
+                                      ar: 'لا توجد مقررات مسجلة',
+                                      en: 'No Registered Courses'
+                                    })}
+                                  </h4>
+                                  <p className="text-sm text-[#3949AB] dark:text-[#7986CB] mb-4">
+                                    {getText({
+                                      ar: 'لم تقم بالتسجيل في أي مقررات بعد',
+                                      en: 'You have not registered for any courses yet'
+                                    })}
+                                  </p>
+                                  <button 
+                                    onClick={() => setActiveTab('courseRegistration')}
+                                    className="bg-[#3949AB] hover:bg-[#3949AB]/90 text-white px-4 py-2 rounded-lg text-sm flex items-center mx-auto"
+                                  >
+                                    <UserPlus size={16} className="mr-2" />
+                                    {getText({
+                                      ar: 'سجل في مقررات جديدة',
+                                      en: 'Register for Courses'
+                                    })}
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -650,6 +771,45 @@ const StudentProfile = () => {
                     </tbody>
                   </table>
                 </div>
+
+                {/* إحصائيات سريعة */}
+                {!coursesLoading && currentCourses && currentCourses.length > 0 && (
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-4 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-[#3949AB] dark:text-[#7986CB]">
+                        {currentCourses.length}
+                      </div>
+                      <div className="text-sm text-[#37474F] dark:text-white">
+                        {getText({
+                          ar: 'إجمالي المقررات',
+                          en: 'Total Courses'
+                        })}
+                      </div>
+                    </div>
+                    <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-4 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-[#3949AB] dark:text-[#7986CB]">
+                        {currentCourses.reduce((total, course) => total + (course.credits || course.credit_hours || 3), 0)}
+                      </div>
+                      <div className="text-sm text-[#37474F] dark:text-white">
+                        {getText({
+                          ar: 'إجمالي الساعات',
+                          en: 'Total Credits'
+                        })}
+                      </div>
+                    </div>
+                    <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-4 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-[#3949AB] dark:text-[#7986CB]">
+                        {currentCourses.filter(course => course.status === 'active' || course.status === 'enrolled' || !course.status).length}
+                      </div>
+                      <div className="text-sm text-[#37474F] dark:text-white">
+                        {getText({
+                          ar: 'المقررات النشطة',
+                          en: 'Active Courses'
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>

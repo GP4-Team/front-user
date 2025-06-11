@@ -216,21 +216,33 @@ const useStudentProfile = () => {
   const getCurrentCourses = useCallback(() => {
     // استخدام البيانات من الـ API الجديد إذا كانت متوفرة
     if (registeredCourses && registeredCourses.data) {
+      // Helper function to safely extract string from object or return string
+      const extractValue = (value, fallback = 'N/A') => {
+        if (typeof value === 'object' && value !== null) {
+          return value.name || value.title || value.value || fallback;
+        }
+        return value || fallback;
+      };
+      
       // تحويل البيانات لتطابق الشكل المطلوب في الواجهة
       return registeredCourses.data.map(course => ({
         id: course.id,
-        code: course.course_code || course.code,
-        name: course.course_name || course.name,
-        course_name: course.course_name || course.name,
-        course_code: course.course_code || course.code,
-        credits: course.credits || course.credit_hours || 3,
-        credit_hours: course.credits || course.credit_hours || 3,
-        semester: course.semester || course.term || 'Current',
-        term: course.semester || course.term || 'Current',
-        instructor: course.instructor || course.instructor_name || 'N/A',
-        instructor_name: course.instructor || course.instructor_name || 'N/A',
-        // إضافة البيانات الأصلية
-        ...course
+        code: extractValue(course.course_code || course.code),
+        name: extractValue(course.course_name || course.name),
+        course_name: extractValue(course.course_name || course.name),
+        course_code: extractValue(course.course_code || course.code),
+        credits: typeof course.credits === 'object' ? course.credits?.value || 3 : course.credits || course.credit_hours || 3,
+        credit_hours: typeof course.credit_hours === 'object' ? course.credit_hours?.value || 3 : course.credits || course.credit_hours || 3,
+        semester: extractValue(course.semester || course.term, 'Current'),
+        term: extractValue(course.semester || course.term, 'Current'),
+        instructor: extractValue(course.instructor || course.instructor_name),
+        instructor_name: extractValue(course.instructor || course.instructor_name),
+        status: extractValue(course.status, 'active'),
+        description: extractValue(course.description, ''),
+        // إضافة البيانات الأصلية (لكن بعد التنظيف)
+        department: extractValue(course.department),
+        level: extractValue(course.level),
+        grade: extractValue(course.grade)
       }));
     }
     
@@ -275,22 +287,29 @@ const useStudentProfile = () => {
   const getCompletedCourses = useCallback(() => {
     // استخدام البيانات من الـ API الجديد إذا كانت متوفرة
     if (registeredCourses && registeredCourses.data) {
+      // Helper function to safely extract string from object or return string
+      const extractValue = (value, fallback = 'N/A') => {
+        if (typeof value === 'object' && value !== null) {
+          return value.name || value.title || value.value || fallback;
+        }
+        return value || fallback;
+      };
+      
       // تحويل البيانات لتطابق الشكل المطلوب في الواجهة
       return registeredCourses.data.map(course => ({
         id: course.id,
-        code: course.course_code || course.code,
-        name: course.course_name || course.name,
-        course_name: course.course_name || course.name,
-        course_code: course.course_code || course.code,
-        credits: course.credits || course.credit_hours || 3,
-        credit_hours: course.credits || course.credit_hours || 3,
-        grade: course.grade || 'N/A',
-        semester: course.semester || course.term || 'Current',
-        term: course.semester || course.term || 'Current',
-        instructor: course.instructor || course.instructor_name || 'N/A',
-        instructor_name: course.instructor || course.instructor_name || 'N/A',
-        // إضافة البيانات الأصلية
-        ...course
+        code: extractValue(course.course_code || course.code),
+        name: extractValue(course.course_name || course.name),
+        course_name: extractValue(course.course_name || course.name),
+        course_code: extractValue(course.course_code || course.code),
+        credits: typeof course.credits === 'object' ? course.credits?.value || 3 : course.credits || course.credit_hours || 3,
+        credit_hours: typeof course.credit_hours === 'object' ? course.credit_hours?.value || 3 : course.credits || course.credit_hours || 3,
+        grade: extractValue(course.grade),
+        semester: extractValue(course.semester || course.term, 'Current'),
+        term: extractValue(course.semester || course.term, 'Current'),
+        instructor: extractValue(course.instructor || course.instructor_name),
+        instructor_name: extractValue(course.instructor || course.instructor_name),
+        status: extractValue(course.status, 'completed')
       }));
     }
     
