@@ -64,8 +64,7 @@ const HierarchicalFilter = ({ onFilterChange, currentFilters, isLoading = false 
   // معالجة اختيار مستوى معين
   const handleLevelSelect = (level, category) => {
     console.log('🎯 Filter selection:', {
-      level_id: level.level_id,
-      category_id: category.category_id,
+      educational_level_id: level.level_id, // الـ ID الرئيسي للـ API
       levelName: getText(level.name.ar, level.name.en),
       categoryName: getText(category.name.ar, category.name.en)
     });
@@ -73,26 +72,8 @@ const HierarchicalFilter = ({ onFilterChange, currentFilters, isLoading = false 
     // إرسال البيانات للمكون الأب
     onFilterChange({
       type: 'hierarchical',
-      level_id: level.level_id,
-      category_id: category.category_id,
+      educational_level_id: level.level_id, // الـ ID الرئيسي للـ API
       levelName: getText(level.name.ar, level.name.en),
-      categoryName: getText(category.name.ar, category.name.en)
-    });
-  };
-
-  // معالجة اختيار مرحلة كاملة (بدون مستوى محدد)
-  const handleCategorySelect = (category) => {
-    console.log('🎯 Category selection:', {
-      category_id: category.category_id,
-      categoryName: getText(category.name.ar, category.name.en)
-    });
-
-    // إرسال البيانات للمكون الأب
-    onFilterChange({
-      type: 'hierarchical',
-      level_id: null, // لا نحدد مستوى معين
-      category_id: category.category_id,
-      levelName: '',
       categoryName: getText(category.name.ar, category.name.en)
     });
   };
@@ -122,7 +103,7 @@ const HierarchicalFilter = ({ onFilterChange, currentFilters, isLoading = false 
         <input
           type={'radio'}
           name={'education-level'}
-          checked={!currentFilters.level_id}
+          checked={!currentFilters.educational_level_id}
           onChange={handleReset}
           className={`mr-3 rtl:ml-3 rtl:mr-0 ${
             isDarkMode ? 'text-blue-400' : 'text-blue-600'
@@ -138,31 +119,18 @@ const HierarchicalFilter = ({ onFilterChange, currentFilters, isLoading = false 
       {/* المراحل التعليمية */}
       {educationStructure.map((category) => (
         <div key={category.id} className={'border-l-2 border-gray-200 dark:border-gray-700 pl-4 rtl:pr-4 rtl:pl-0 rtl:border-l-0 rtl:border-r-2'}>
-          {/* عنوان الفئة */}
+          {/* عنوان الفئة فقط (بدون radio button) */}
           <div>
-            {/* اختيار المرحلة بالكامل */}
-            <label className={'flex items-center cursor-pointer py-2'}>
-              <input
-                type={'radio'}
-                name={'education-level'}
-                checked={currentFilters.category_id === category.category_id && !currentFilters.level_id}
-                onChange={() => handleCategorySelect(category)}
-                className={`mr-3 rtl:ml-3 rtl:mr-0 ${
-                  isDarkMode ? 'text-blue-400' : 'text-blue-600'
-                }`}
-              />
+            {/* عنوان المرحلة */}
+            <div className={'flex items-center py-2'}>
               <span
                 className={'w-4 h-4 rounded-full mr-3 rtl:ml-3 rtl:mr-0'}
                 style={{ backgroundColor: category.color }}
               ></span>
-              <span className={`font-medium ${
-                isDarkMode ? 'text-gray-200' : 'text-gray-800'
-              } ${
-                currentFilters.category_id === category.category_id && !currentFilters.level_id ? 'text-blue-600 dark:text-blue-400' : ''
-              }`}>
-                {getText(category.name.ar, category.name.en)} (جميع الصفوف)
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                {getText(category.name.ar, category.name.en)}
               </span>
-            </label>
+            </div>
             
             {/* زر توسيع الصفوف */}
             <div
@@ -192,7 +160,7 @@ const HierarchicalFilter = ({ onFilterChange, currentFilters, isLoading = false 
                   <input
                     type={'radio'}
                     name={'education-level'}
-                    checked={currentFilters.level_id === level.level_id}
+                    checked={currentFilters.educational_level_id === level.level_id}
                     onChange={() => handleLevelSelect(level, category)}
                     className={`mr-3 rtl:ml-3 rtl:mr-0 ${
                       isDarkMode ? 'text-blue-400' : 'text-blue-600'
@@ -200,7 +168,7 @@ const HierarchicalFilter = ({ onFilterChange, currentFilters, isLoading = false 
                   />
                   <span className={`text-sm ${
                     isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                  } ${currentFilters.level_id === level.level_id ? 'font-medium' : ''}`}>
+                  } ${currentFilters.educational_level_id === level.level_id ? 'font-medium' : ''}`}>
                     {getText(level.name.ar, level.name.en)}
                   </span>
                 </label>
@@ -211,7 +179,7 @@ const HierarchicalFilter = ({ onFilterChange, currentFilters, isLoading = false 
       ))}
 
       {/* زر إعادة تعيين */}
-      {currentFilters.level_id && (
+      {currentFilters.educational_level_id && (
         <button
           onClick={handleReset}
           className={`w-full mt-4 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
@@ -225,7 +193,7 @@ const HierarchicalFilter = ({ onFilterChange, currentFilters, isLoading = false 
       )}
 
       {/* عرض الفلتر المحدد */}
-      {currentFilters.level_id && (
+      {currentFilters.educational_level_id && (
         <div className={`mt-4 p-3 rounded-md ${
           isDarkMode ? 'bg-blue-900/30 border border-blue-700' : 'bg-blue-50 border border-blue-200'
         }`}>
@@ -237,7 +205,7 @@ const HierarchicalFilter = ({ onFilterChange, currentFilters, isLoading = false 
           <p className={`text-sm ${
             isDarkMode ? 'text-blue-200' : 'text-blue-700'
           }`}>
-            {currentFilters.categoryName} - {currentFilters.levelName}
+            {currentFilters.levelName}
           </p>
         </div>
       )}

@@ -42,12 +42,14 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
 
   // Get status icon based on lesson status
   const getStatusIcon = (lesson) => {
+    // عدم عرض أيقونة lock - جميع المواد مفتوحة
     switch (lesson.status) {
       case "completed":
         return <CheckCircle size={18} className="text-[#81C784] ml-2 rtl:mr-2" />;
-      case "locked":
-        return <Lock size={18} className="text-[#B0BEC5] ml-2 rtl:mr-2" />;
+      case "current":
+        return <Play size={18} className="text-[#4285F4] ml-2 rtl:mr-2" />;
       default:
+        // لا نعرض أيقونة lock
         return null;
     }
   };
@@ -117,15 +119,13 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
                     currentLesson && currentLesson.id === lesson.id 
                       ? "bg-[#ECEFF1] dark:bg-[#1A237E]/20" 
                       : "hover:bg-[#F5F7F9] dark:hover:bg-[#3949AB]/20"
-                  } transition-colors ${lesson.status === "locked" ? "opacity-70" : ""}`}
-                  onClick={() => lesson.status !== "locked" && selectLesson(lesson)}
+                  } transition-colors`} // إزالة الـ opacity للمواد الـ locked
+                  onClick={() => selectLesson(lesson)} // إزالة شرط الـ lock
                 >
                   <div className="flex items-center">
                     {getLessonIcon(lesson)}
                     <div>
-                      <h4 className={`text-sm font-medium ${
-                        lesson.status === "locked" ? "text-[#37474F] dark:text-[#F0F4F8]" : "text-[#37474F] dark:text-[#F0F4F8]"
-                      }`}>
+                      <h4 className="text-sm font-medium text-[#37474F] dark:text-[#F0F4F8]">
                         {getText(lesson.title)}
                       </h4>
                       {lesson.duration && (

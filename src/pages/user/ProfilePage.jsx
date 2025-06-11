@@ -21,11 +21,13 @@ import {
   Edit,
   Bell,
   Loader,
+  UserPlus,
 } from "lucide-react";
 import Navbar from "../../components/navigation/Navbar";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import useStudentProfile from "../../hooks/useStudentProfile";
+import CourseRegistration from "../../components/students/CourseRegistration";
 
 const StudentProfile = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -97,6 +99,10 @@ const StudentProfile = () => {
       en: "Assignments",
       ar: "الواجبات",
     },
+    courseRegistration: {
+      en: "Course Registration",
+      ar: "تسجيل الكورسات",
+    },
     announcements: {
       en: "Announcements",
       ar: "الإعلانات",
@@ -152,7 +158,7 @@ const StudentProfile = () => {
     );
   }
 
-  // Error state
+  // Error state مع إعادة توجيه للـ login
   if (error) {
     return (
       <div className={`w-full bg-[#F0F4F8] dark:bg-[#121212] min-h-screen ${
@@ -163,12 +169,31 @@ const StudentProfile = () => {
           <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded">
             <h3 className="font-bold">{getText(translations.errorLoading)}</h3>
             <p className="mt-1">{error}</p>
-            <button 
-              onClick={refreshProfile}
-              className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-            >
-              {getText(translations.retry)}
-            </button>
+            
+            {/* إذا كان الخطأ unauthorized، أعرض زر تسجيل دخول */}
+            {error.includes('Unauthorized') || error.includes('unauthorized') || error.includes('Unauthenticated') ? (
+              <div className="mt-4 space-y-2">
+                <button 
+                  onClick={() => window.location.href = '/login'}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded mr-2"
+                >
+                  {getText({ ar: 'تسجيل الدخول', en: 'Login' })}
+                </button>
+                <button 
+                  onClick={refreshProfile}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
+                >
+                  {getText(translations.retry)}
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={refreshProfile}
+                className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+              >
+                {getText(translations.retry)}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -357,6 +382,13 @@ const StudentProfile = () => {
             >
               <FileText size={16} className={`${isRTL ? 'ml-2' : 'mr-2'}`} />
               {getText(translations.assignments)}
+            </TabsTrigger>
+            <TabsTrigger
+              value="courseRegistration"
+              className={`flex-1 py-2 data-[state=active]:bg-[#3949AB] data-[state=active]:text-white ${isRTL ? 'flex-row-reverse' : ''}`}
+            >
+              <UserPlus size={16} className={`${isRTL ? 'ml-2' : 'mr-2'}`} />
+              {getText(translations.courseRegistration)}
             </TabsTrigger>
             <TabsTrigger
               value="announcements"
@@ -714,6 +746,14 @@ const StudentProfile = () => {
                       </div>
                     )}
                 </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="courseRegistration" className="mt-0">
+            <div className="bg-white dark:bg-[#1E1E1E] rounded-xl shadow-md overflow-hidden">
+              <div className="p-6">
+                <CourseRegistration />
               </div>
             </div>
           </TabsContent>

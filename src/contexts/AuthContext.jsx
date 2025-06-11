@@ -50,12 +50,15 @@ export const AuthProvider = ({ children }) => {
       try {
         const token = getToken();
         if (token) {
+          console.log('🔑 Token found, verifying with server...');
+          
           // Try to restore user from local storage first
           const storedUserJson = localStorage.getItem('userData');
           if (storedUserJson && isMounted) {
             const storedUser = JSON.parse(storedUserJson);
             setUser(storedUser);
             setIsAuthenticated(true);
+            console.log('✅ User restored from localStorage');
           }
 
           // Then update data from server (in background)
@@ -66,14 +69,18 @@ export const AuthProvider = ({ children }) => {
               setIsAuthenticated(true);
               // Update stored user data
               localStorage.setItem('userData', JSON.stringify(userData));
+              console.log('✅ User data updated from server');
             }
           } catch (error) {
             // If fetching from server fails, log out
             console.error('Failed to verify current user:', error);
             if (isMounted) {
+              console.log('🚑 Clearing invalid session...');
               handleLogout(false); // Don't navigate during cleanup
             }
           }
+        } else {
+          console.log('🚫 No token found');
         }
       } catch (error) {
         console.error('Error during auth initialization:', error);

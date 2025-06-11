@@ -434,11 +434,11 @@ const RegisterForm = ({ returnTo = '/' }) => {
         
         {/* Password Field */}
         <div>
-          <label htmlFor="password" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-1`}>
+          <label htmlFor="register-password" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-1`}>
             {labels.password} <span className="text-red-500">*</span>
           </label>
           <input
-            id="password"
+            id="register-password"
             name="password"
             type="password"
             required
@@ -464,11 +464,11 @@ const RegisterForm = ({ returnTo = '/' }) => {
         
         {/* Password Confirmation Field */}
         <div>
-          <label htmlFor="password_confirmation" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-1`}>
+          <label htmlFor="register-password-confirmation" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-1`}>
             {labels.confirmPassword} <span className="text-red-500">*</span>
           </label>
           <input
-            id="password_confirmation"
+            id="register-password-confirmation"
             name="password_confirmation"
             type="password"
             required
