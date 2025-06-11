@@ -49,7 +49,8 @@ apiClient.interceptors.request.use(
     config.headers['Accept-Language'] = getUserLanguage();
     
     // Add tenant host info (for multi-tenancy)
-    config.headers['X-Tenant-Host'] = getTenantHost();
+    // TODO: Temporarily commented out due to CORS policy
+    // config.headers['X-Tenant-Host'] = getTenantHost();
     
     return config;
   },

@@ -270,23 +270,6 @@ class ExamsService {
   }
 
   /**
-   * Get featured exams (legacy support)
-   * @param {number} limit - Number of exams to fetch
-   * @returns {Promise<Array>} Featured exams
-   */
-  async getFeaturedExams(limit = 6) {
-    try {
-      const response = await api.get('/exams/featured', { 
-        params: { limit } 
-      });
-      return response.data;
-    } catch (error) {
-      console.error('❌ [ExamsService] Failed to get featured exams:', error);
-      return { exams: [] };
-    }
-  }
-
-  /**
    * Get specific exam details by ID (legacy support)
    * @param {number|string} examId - Exam ID
    * @returns {Promise<Object>} Exam details

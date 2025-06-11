@@ -2,7 +2,7 @@
 import React from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { ExamStatusBadge } from "./ExamStatusBadge";
+import ExamStatusBadge from "./ExamStatusBadge";
 import { 
   getExamStatusLabel, 
   isExamActionEnabled, 

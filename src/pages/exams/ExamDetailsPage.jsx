@@ -5,7 +5,7 @@ import { ClockCircleOutlined, FileTextOutlined, CheckCircleOutlined, TrophyOutli
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useExams } from '../../hooks/api/useExams';
-import { ExamStatusBadge } from '../../components/exams/ExamStatusBadge';
+import ExamStatusBadge from '../../components/exams/ExamStatusBadge';
 import { 
   formatExamDuration, 
   isExamActionEnabled,

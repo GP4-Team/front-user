@@ -299,25 +299,6 @@ export const useExams = () => {
     }
   }, []);
   
-  /**
-   * جلب الامتحانات الموصى بها
-   * @returns {Promise} - Promise مع الامتحانات الموصى بها
-   */
-  const fetchRecommendedExams = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const data = await ExamsService.getRecommendedExams();
-      return data;
-    } catch (err) {
-      setError(err.message || 'فشل جلب الامتحانات الموصى بها');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-  
   // إعادة الدوال والحالات
   return {
     // Online Exams (New)
@@ -346,7 +327,6 @@ export const useExams = () => {
     submitExam,
     fetchExamResults,
     fetchUserExams,
-    fetchRecommendedExams,
     
     // Utilities
     clearError: () => setError(null)

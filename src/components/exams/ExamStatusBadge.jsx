@@ -4,7 +4,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { getExamStatusLabel, getExamStatusColors, EXAM_STATUS } from "../../services/examProgressService";
 
-export const ExamStatusBadge = ({ status, className = "" }) => {
+const ExamStatusBadge = ({ status, className = "" }) => {
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
 
@@ -51,7 +51,7 @@ export const ExamStatusBadge = ({ status, className = "" }) => {
 };
 
 // Legacy component for backward compatibility
-export const LegacyExamStatusBadge = ({ status }) => {
+const LegacyExamStatusBadge = ({ status }) => {
   const { isDarkMode } = useTheme();
 
   let badgeColor = "";
@@ -101,4 +101,8 @@ export const LegacyExamStatusBadge = ({ status }) => {
   );
 };
 
+// Export the main component as default
 export default ExamStatusBadge;
+
+// Export LegacyExamStatusBadge as named export for backward compatibility
+export { LegacyExamStatusBadge };

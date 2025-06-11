@@ -1,9 +1,10 @@
-// pages/exams/MyExamsPage.jsx
+// pages/exams/MyExamsPage.jsx - Updated for Real APIs
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { useExams } from "../../hooks/api/useExams";
+import { useAuth } from "../../contexts/AuthContext";
+import { useRealExamination } from "../../hooks/api/useRealExamination";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import translations from "../../utils/translations";
@@ -30,15 +31,37 @@ const DEBUG = true;
 const MyExamsPage = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const { language, isRTL, toggleLanguage } = useLanguage();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
-  // Use the new online exams hook
+  // Use the new real examination hook
   const { 
-    onlineExams, 
-    loading, 
-    error, 
-    fetchOnlineExams 
-  } = useExams();
+    // Main state
+    loading,
+    error,
+    
+    // Statistics
+    statistics,
+    statisticsLoading,
+    statisticsError,
+    
+    // Available exams
+    availableExams,
+    availableExamsLoading,
+    availableExamsError,
+    
+    // Completed exams
+    completedExams,
+    completedExamsLoading,
+    completedExamsError,
+    pagination,
+    summary,
+    
+    // Actions
+    fetchAllExamData,
+    refreshData,
+    clearErrors
+  } = useRealExamination();
 
   // Refs for animations
   const pageRef = useRef(null);
@@ -49,7 +72,7 @@ const MyExamsPage = () => {
 
   // State for UI controls
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all"); // all, available, in-progress, finished
+  const [filterStatus, setFilterStatus] = useState("all"); // all, available, completed
   const [sortBy, setSortBy] = useState("date"); // date, title, score
   const [sortDirection, setSortDirection] = useState("desc"); // asc, desc
   const [viewMode, setViewMode] = useState("grid"); // grid, list
@@ -57,56 +80,40 @@ const MyExamsPage = () => {
   const [favoriteExams, setFavoriteExams] = useState([]);
   const [statsVisible, setStatsVisible] = useState(true);
 
-  // Stats calculation from real data
-  const [examStats, setExamStats] = useState({
-    totalExams: 0,
-    completedExams: 0,
-    averageScore: 0,
-    highestScore: 0,
-    pendingExams: 0,
-  });
+  // State for motivational messages
+  const [showMotivationalMessage, setShowMotivationalMessage] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState("");
+  const motivationalMessageRef = useRef(null);
 
-  // Load exams data from API
+  // Motivational messages in both Arabic and English
+  const motivationalMessages = {
+    ar: [
+      "النجاح رحلة وليس وجهة!",
+      "التعلم هو الكنز الذي يتبعك أينما ذهبت!",
+      "الاختبارات فرصة لإظهار ما تعلمته!",
+      "مع كل تحدي تصبح أقوى!",
+      "جهد اليوم هو نجاح الغد!",
+      "أنت على بعد خطوة من تحقيق أهدافك!",
+    ],
+    en: [
+      "Success is a journey, not a destination!",
+      "Learning is the treasure that will follow you everywhere!",
+      "Tests are opportunities to show what you've learned!",
+      "With every challenge, you become stronger!",
+      "Today's effort is tomorrow's success!",
+      "You're just one step away from achieving your goals!",
+    ],
+  };
+
+  // Load exam data when component mounts or user changes
   useEffect(() => {
-    const loadExams = async () => {
-      try {
-        await fetchOnlineExams();
-      } catch (err) {
-        console.error('Error loading exams:', err);
-      }
-    };
-
-    loadExams();
-  }, [fetchOnlineExams]);
-
-  // Calculate stats from real exam data
-  useEffect(() => {
-    if (onlineExams && onlineExams.length > 0) {
-      const completed = onlineExams.filter(exam => 
-        exam.status === 'revision' || exam.lastAttempt
-      );
-      
-      const scores = completed
-        .map(exam => exam.bestScore || exam.lastAttempt?.score || 0)
-        .filter(score => score > 0);
-      
-      const avgScore = scores.length > 0
-        ? scores.reduce((sum, score) => sum + score, 0) / scores.length
-        : 0;
-      
-      const highest = scores.length > 0 ? Math.max(...scores) : 0;
-      
-      setExamStats({
-        totalExams: onlineExams.length,
-        completedExams: completed.length,
-        averageScore: Math.round(avgScore),
-        highestScore: highest,
-        pendingExams: onlineExams.filter(exam => 
-          exam.status === 'start' || exam.status === 'continue' || exam.status === 'retry'
-        ).length,
-      });
+    if (isAuthenticated && user) {
+      console.log('🎯 Loading exam data for authenticated user:', user.id);
+      fetchAllExamData();
+    } else {
+      console.log('⚠️ User not authenticated, skipping exam data load');
     }
-  }, [onlineExams]);
+  }, [isAuthenticated, user, fetchAllExamData]);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -119,6 +126,37 @@ const MyExamsPage = () => {
       console.error("Error loading favorites:", error);
     }
   }, []);
+
+  // Save favorites when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem("favoriteExams", JSON.stringify(favoriteExams));
+    } catch (error) {
+      console.error("Error saving favorites:", error);
+    }
+  }, [favoriteExams]);
+
+  // Display a motivational message after a delay
+  useEffect(() => {
+    // Show motivational message after 3 seconds
+    const messageTimeout = setTimeout(() => {
+      const randomMessage =
+        motivationalMessages[language][
+          Math.floor(Math.random() * motivationalMessages[language].length)
+        ];
+      setCurrentMessage(randomMessage);
+      setShowMotivationalMessage(true);
+
+      // Hide message after 5 seconds
+      const hideTimeout = setTimeout(() => {
+        setShowMotivationalMessage(false);
+      }, 5000);
+
+      return () => clearTimeout(hideTimeout);
+    }, 3000);
+
+    return () => clearTimeout(messageTimeout);
+  }, [language]);
 
   // GSAP animations
   useEffect(() => {
@@ -232,62 +270,6 @@ const MyExamsPage = () => {
     };
   }, [isDarkMode, isRTL]);
 
-  // Save favorites when they change
-  useEffect(() => {
-    try {
-      localStorage.setItem("favoriteExams", JSON.stringify(favoriteExams));
-    } catch (error) {
-      console.error("Error saving favorites:", error);
-    }
-  }, [favoriteExams]);
-
-  // Create a state for motivational messages
-  const [showMotivationalMessage, setShowMotivationalMessage] = useState(false);
-  const [currentMessage, setCurrentMessage] = useState("");
-  const motivationalMessageRef = useRef(null);
-
-  // Motivational messages in both Arabic and English
-  const motivationalMessages = {
-    ar: [
-      "النجاح رحلة وليس وجهة!",
-      "التعلم هو الكنز الذي يتبعك أينما ذهبت!",
-      "الاختبارات فرصة لإظهار ما تعلمته!",
-      "مع كل تحدي تصبح أقوى!",
-      "جهد اليوم هو نجاح الغد!",
-      "أنت على بعد خطوة من تحقيق أهدافك!",
-    ],
-    en: [
-      "Success is a journey, not a destination!",
-      "Learning is the treasure that will follow you everywhere!",
-      "Tests are opportunities to show what you've learned!",
-      "With every challenge, you become stronger!",
-      "Today's effort is tomorrow's success!",
-      "You're just one step away from achieving your goals!",
-    ],
-  };
-
-  // Display a motivational message after a delay
-  useEffect(() => {
-    // Show motivational message after 3 seconds
-    const messageTimeout = setTimeout(() => {
-      const randomMessage =
-        motivationalMessages[language][
-          Math.floor(Math.random() * motivationalMessages[language].length)
-        ];
-      setCurrentMessage(randomMessage);
-      setShowMotivationalMessage(true);
-
-      // Hide message after 5 seconds
-      const hideTimeout = setTimeout(() => {
-        setShowMotivationalMessage(false);
-      }, 5000);
-
-      return () => clearTimeout(hideTimeout);
-    }, 3000);
-
-    return () => clearTimeout(messageTimeout);
-  }, [language]);
-
   // Animation for motivational message
   useEffect(() => {
     if (showMotivationalMessage && motivationalMessageRef.current) {
@@ -318,7 +300,7 @@ const MyExamsPage = () => {
   };
 
   const handleSelectExam = (exam) => {
-    if (exam.status === "revision") {
+    if (exam.status === "completed" || exam.status === "revision") {
       navigate(`/exams/${exam.id}/review`);
     } else if (exam.status === "unavailable" || exam.status === "none") {
       // Do nothing for unavailable exams
@@ -328,17 +310,40 @@ const MyExamsPage = () => {
     }
   };
 
+  const handleRetry = () => {
+    clearErrors();
+    fetchAllExamData();
+  };
+
   // Access translations based on current language
   const t = translations[language];
 
-  // Filter exams for different sections from real data
-  const availableExams = onlineExams ? onlineExams.filter(exam => 
-    exam.status === 'start' || exam.status === 'continue' || exam.status === 'retry'
-  ) : [];
-  
-  const completedExams = onlineExams ? onlineExams.filter(exam => 
-    exam.status === 'revision' || exam.lastAttempt
-  ) : [];
+  // If not authenticated, show auth required state
+  if (!isAuthenticated) {
+    return (
+      <div className={`min-h-screen ${isDarkMode ? 'bg-background-dark' : 'bg-[#F0F4F8]'}`}>
+        <Navbar />
+        <div className="pt-20"></div>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center max-w-md mx-auto p-6">
+            <div className="text-blue-500 text-6xl mb-4">🔐</div>
+            <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+              {language === 'ar' ? 'تسجيل الدخول مطلوب' : 'Login Required'}
+            </h2>
+            <p className={`text-lg mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              {language === 'ar' ? 'يجب تسجيل الدخول لعرض الامتحانات الخاصة بك' : 'Please login to view your exams'}
+            </p>
+            <button 
+              onClick={() => navigate('/auth?mode=login')}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              {language === 'ar' ? 'تسجيل الدخول' : 'Login'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Show loading state
   if (loading) {
@@ -358,27 +363,40 @@ const MyExamsPage = () => {
     );
   }
 
-  // Show error state
-  if (error) {
+  // Show error state (only for critical failures)
+  if (error && !statistics && !availableExams.length && !completedExams.length) {
     return (
       <div className={`min-h-screen ${isDarkMode ? 'bg-background-dark' : 'bg-[#F0F4F8]'}`}>
         <Navbar />
         <div className="pt-20"></div>
         <div className="flex items-center justify-center h-96">
-          <div className="text-center">
+          <div className="text-center max-w-2xl mx-auto p-6">
             <div className="text-red-500 text-6xl mb-4">⚠️</div>
             <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-              {language === 'ar' ? 'خطأ في تحميل الامتحانات' : 'Error Loading Exams'}
+              {language === 'ar' ? 'خطأ في الاتصال بالخادم' : 'Server Connection Error'}
             </h2>
             <p className={`text-lg mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              {error}
+              {language === 'ar' ? 'لا يمكن الوصول إلى بيانات الامتحانات حالياً. يرجى المحاولة مرة أخرى أو الاتصال بالدعم الفني.' : 'Unable to load exam data from server. Please try again or contact technical support.'}
             </p>
-            <button 
-              onClick={() => fetchOnlineExams()}
-              className="bg-primary-base hover:bg-primary-dark text-white px-6 py-2 rounded-lg"
-            >
-              {language === 'ar' ? 'إعادة المحاولة' : 'Try Again'}
-            </button>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+              <p className="text-sm text-red-700 dark:text-red-300 font-mono">
+                {error}
+              </p>
+            </div>
+            <div className="space-x-4">
+              <button 
+                onClick={handleRetry}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
+              >
+                {language === 'ar' ? 'إعادة المحاولة' : 'Try Again'}
+              </button>
+              <button 
+                onClick={() => window.open('/exams-api-test', '_blank')}
+                className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
+              >
+                {language === 'ar' ? 'اختبار الاتصال' : 'Test Connection'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -426,12 +444,47 @@ const MyExamsPage = () => {
           {/* Performance summary section */}
           <div ref={statsSectionRef}>
             <PerformanceSummary 
-              examStats={examStats}
+              examStats={statistics}
               statsVisible={statsVisible}
               setStatsVisible={setStatsVisible}
+              statsLoading={statisticsLoading}
+              statsError={statisticsError}
               translations={t}
             />
           </div>
+
+          {/* Error notifications for individual APIs */}
+          {(statisticsError || availableExamsError || completedExamsError) && (
+            <div className="mb-6 space-y-2">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                <div className="flex items-center mb-2">
+                  <div className="text-yellow-600 dark:text-yellow-400 mr-3">⚠️</div>
+                  <h3 className="font-medium text-yellow-800 dark:text-yellow-200">
+                    {language === 'ar' ? 'مشاكل في تحميل بعض البيانات' : 'Some Data Loading Issues'}
+                  </h3>
+                </div>
+                <div className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+                  {statisticsError && (
+                    <p>• {language === 'ar' ? 'الإحصائيات:' : 'Statistics:'} {statisticsError}</p>
+                  )}
+                  {availableExamsError && (
+                    <p>• {language === 'ar' ? 'الامتحانات المتاحة:' : 'Available Exams:'} {availableExamsError}</p>
+                  )}
+                  {completedExamsError && (
+                    <p>• {language === 'ar' ? 'الامتحانات المكتملة:' : 'Completed Exams:'} {completedExamsError}</p>
+                  )}
+                </div>
+                <div className="mt-3 pt-3 border-t border-yellow-200 dark:border-yellow-700">
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                    {language === 'ar' 
+                      ? 'هذه مشاكل في الخادم يجب حلها من فريق التطوير. يرجى الانتظار أو الاتصال بالدعم الفني.' 
+                      : 'These are server-side issues that need to be fixed by the development team. Please wait or contact technical support.'
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Search and filters */}
           <SearchBar 
@@ -446,7 +499,7 @@ const MyExamsPage = () => {
           {/* Available exams section */}
           <div ref={availableExamsRef}>
             <ExamList 
-              title={t.availableExams}
+              title={t.availableExams || (language === 'ar' ? 'الامتحانات المتاحة' : 'Available Exams')}
               exams={availableExams}
               viewMode={viewMode}
               toggleFavorite={toggleFavorite}
@@ -454,14 +507,16 @@ const MyExamsPage = () => {
               favoriteExams={favoriteExams}
               translations={t}
               cardRefs={examCardRefs}
-              isOnlineExam={true}
+              loading={availableExamsLoading}
+              error={availableExamsError}
+              isRealExam={true}
             />
           </div>
 
           {/* Completed exams section */}
           <div ref={completedExamsRef}>
             <ExamList 
-              title={t.completedExamsTitle}
+              title={t.completedExamsTitle || (language === 'ar' ? 'الامتحانات المكتملة' : 'Completed Exams')}
               exams={completedExams}
               viewMode={viewMode}
               toggleFavorite={toggleFavorite}
@@ -469,9 +524,43 @@ const MyExamsPage = () => {
               favoriteExams={favoriteExams}
               translations={t}
               cardRefs={examCardRefs}
-              isOnlineExam={true}
+              loading={completedExamsLoading}
+              error={completedExamsError}
+              pagination={pagination}
+              summary={summary}
+              isRealExam={true}
             />
           </div>
+
+          {/* Debug information in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-8 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <h3 className="font-bold mb-2">Debug Information:</h3>
+              <div className="text-sm space-y-1">
+                <div>Statistics loaded: {statistics ? 'Yes' : 'No'}</div>
+                <div>Available exams: {availableExams.length}</div>
+                <div>Completed exams: {completedExams.length}</div>
+                <div>Loading states: {JSON.stringify({loading, statisticsLoading, availableExamsLoading, completedExamsLoading})}</div>
+                <div>Errors: {JSON.stringify({error, statisticsError, availableExamsError, completedExamsError})}</div>
+                <div>User authenticated: {isAuthenticated ? 'Yes' : 'No'}</div>
+                <div>User ID: {user?.id || 'N/A'}</div>
+                <div>Auth token present: {localStorage.getItem('accessToken') ? 'Yes' : 'No'}</div>
+                <div>Token length: {localStorage.getItem('accessToken')?.length || 0} chars</div>
+                <div>User data in localStorage: {localStorage.getItem('userData') ? 'Yes' : 'No'}</div>
+                <div>API Base URL: {process.env.REACT_APP_API_BASE_URL || 'https://academy1.gp-app.tafra-tech.com/api'}</div>
+                
+                {/* Quick test button */}
+                <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
+                  <button 
+                    onClick={() => window.open('/exams-api-test', '_blank')}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm"
+                  >
+                    🧪 Open API Test Console
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -19,7 +19,7 @@ const ChevronDownIcon = () => (
   </svg>
 );
 
-const PerformanceSummary = ({ examStats, statsVisible, setStatsVisible, translations }) => {
+const PerformanceSummary = ({ examStats, statsVisible, setStatsVisible, statsLoading, statsError, translations }) => {
   const { isDarkMode } = useTheme();
   const { isRTL } = useLanguage();
   
@@ -83,7 +83,41 @@ const PerformanceSummary = ({ examStats, statsVisible, setStatsVisible, translat
         }`}
       >
         <div className="p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 text-center">
+          {/* Loading State */}
+          {statsLoading && (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-base mr-3"></div>
+              <span className={isDarkMode ? "text-neutral-300" : "text-neutral-600"}>
+                {t.loadingStats || "Loading statistics..."}
+              </span>
+            </div>
+          )}
+
+          {/* Error State */}
+          {statsError && !statsLoading && (
+            <div className={`p-4 rounded-lg border ${
+              isDarkMode ? "bg-red-900/20 border-red-800 text-red-300" : "bg-red-50 border-red-200 text-red-700"
+            }`}>
+              <div className="flex items-center mb-2">
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <span className="font-medium">
+                  {t.statsError || "Error loading statistics"}
+                </span>
+              </div>
+              <p className="text-sm opacity-75">
+                {statsError.includes('student_course_enrollments') 
+                  ? (t.fallbackMessage || "Using fallback calculation from available exam data")
+                  : statsError
+                }
+              </p>
+            </div>
+          )}
+
+          {/* Stats Grid - Show when not loading */}
+          {!statsLoading && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 text-center">
             {/* Total Exams */}
             <div className="p-4 transform transition-all duration-500 hover:scale-105">
               <div
@@ -171,7 +205,8 @@ const PerformanceSummary = ({ examStats, statsVisible, setStatsVisible, translat
                 {t.highestScore}
               </div>
             </div>
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

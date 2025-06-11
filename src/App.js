@@ -31,6 +31,8 @@ import ExamQuestionsPage from "./pages/exams/ExamQuestionsPage.jsx";
 import ExamResultsPage from "./pages/exams/ExamResultsPage.jsx";
 import ApiTestPage from "./pages/testing/ApiTestPage.jsx";
 import ExamsApiTestPage from "./pages/testing/ExamsApiTestPage.jsx";
+import AIPortalTestPage from "./pages/testing/AIPortalTestPage.jsx";
+import AIWeaknessPortal from "./pages/student/AIWeaknessPortal.jsx";
 import PrivateRoute from "./middleware/PrivateRoute.jsx";
 import "./App.css";
 import "./styles/ExamStyles.css";
@@ -110,6 +112,10 @@ const router = createBrowserRouter([
         path: "/exams-api-test",
         element: <GuestLayout><ExamsApiTestPage /></GuestLayout>
       },
+      {
+        path: "/ai-portal-test",
+        element: <GuestLayout><AIPortalTestPage /></GuestLayout>
+      },
       
       // Protected Routes
       {
@@ -147,6 +153,10 @@ const router = createBrowserRouter([
       {
         path: "/exams/:examId/results",
         element: <PrivateRoute><MainLayout><div className="exam-page-background"><ExamResultsPage /></div></MainLayout></PrivateRoute>
+      },
+      {
+        path: "/student/ai-portal",
+        element: <PrivateRoute><MainLayout><AIWeaknessPortal /></MainLayout></PrivateRoute>
       },
       
       // Error Routes

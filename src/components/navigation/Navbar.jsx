@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   User, Menu, X, Sun, Moon, Search, Globe, ChevronDown, 
-  Home, BookOpen, GraduationCap, FileText
+  Home, BookOpen, GraduationCap, FileText, Brain
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -368,6 +368,14 @@ const Navbar = () => {
                     >
                       {translations.myCourses}
                     </Link>
+                    <Link 
+                      to="/student/ai-portal" 
+                      className={`block px-4 py-2 text-sm ${
+                        isDarkMode ? 'hover:bg-neutral-800' : 'hover:bg-neutral-100'
+                      }`}
+                    >
+                      {isArabic ? 'بوابة التحسين الذكي' : 'AI Improvement Portal'}
+                    </Link>
                     <button 
                       onClick={logout}
                       className={`block w-full text-left px-4 py-2 text-sm text-state-error ${
@@ -474,6 +482,19 @@ const Navbar = () => {
               <GraduationCap size={18} />
               {translations.subjects}
             </Link>
+            {isAuthenticated && (
+              <Link 
+                to="/student/ai-portal" 
+                className={`mobile-menu-item px-4 py-2 rounded-md ${
+                  isDarkMode 
+                    ? 'hover:bg-neutral-800' 
+                    : 'hover:bg-primary-base hover:text-text-light'
+                } transition-colors flex items-center gap-2`}
+              >
+                <Brain size={18} />
+                {isArabic ? 'بوابة التحسين الذكي' : 'AI Improvement Portal'}
+              </Link>
+            )}
 
             {/* Mobile Search Box */}
             <div className={`px-4 py-2`}>
