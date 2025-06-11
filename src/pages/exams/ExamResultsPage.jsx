@@ -1,316 +1,419 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { Card, Button, Typography, Divider, List, Tabs } from 'antd';
-import { ClockCircleOutlined, TrophyOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Button, Card, Row, Col, Progress, Statistic, Divider, Tag, List, Typography, Spin, message } from 'antd';
+import { 
+  TrophyOutlined, 
+  ClockCircleOutlined, 
+  CheckCircleOutlined, 
+  CloseCircleOutlined,
+  ReloadOutlined,
+  EyeOutlined,
+  HomeOutlined 
+} from '@ant-design/icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import QuestionCard from '../../components/exams/QuestionCard';
+import { useAuth } from '../../contexts/AuthContext';
+import useOnlineExamQuestions from '../../hooks/api/useOnlineExamQuestions';
 
-const { Title, Text } = Typography;
-const { TabPane } = Tabs;
+const { Title, Text, Paragraph } = Typography;
 
 const ExamResultsPage = () => {
   const { examId } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isDarkMode } = useTheme();
   const { language } = useLanguage();
+  const { isAuthenticated, user } = useAuth();
   
-  const [examData, setExamData] = useState(null);
-  const [userAnswers, setUserAnswers] = useState({});
-  const [timeSpent, setTimeSpent] = useState(0);
-  const [score, setScore] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('summary');
+  // Use the online exam questions hook
+  const {
+    loading,
+    error,
+    examResults,
+    resultsLoading,
+    getResults,
+    clearError
+  } = useOnlineExamQuestions();
+  
+  // State from navigation (if available)
+  const [navigationState, setNavigationState] = useState(location.state || null);
+  const [retryLoading, setRetryLoading] = useState(false);
 
-  // Color scheme from the provided images
+  // Color scheme
   const colors = {
     primaryDark: '#1A237F',
-    primaryBase: '#3949AB', 
+    primaryBase: '#3949AB',
     primaryLight: '#7986CB',
-    purple: '#6B3DD2',   // Purple color from screenshots
+    purple: '#6B3DD2',
     accent: '#FFC107',
     textDark: '#37474F',
     bgLight: '#ECEFF1',
     white: '#FFFFFF',
+    success: '#52C41A',
+    error: '#FF4D4F',
+    warning: '#FAAD14'
   };
 
-  // Get data from location state or fetch from API
+  // Load exam results on component mount
   useEffect(() => {
-    const fetchResultData = async () => {
+    if (!isAuthenticated || !user) {
+      message.error(language === 'ar' ? 'يجب تسجيل الدخول أولاً' : 'Please login first');
+      navigate('/auth?mode=login');
+      return;
+    }
+
+    if (!examId) {
+      message.error(language === 'ar' ? 'معرف الامتحان مطلوب' : 'Exam ID is required');
+      navigate('/exams');
+      return;
+    }
+
+    const loadResults = async () => {
       try {
-        if (location.state?.examData && location.state?.userAnswers) {
-          setExamData(location.state.examData);
-          setUserAnswers(location.state.userAnswers);
-          setTimeSpent(location.state.timeSpent || 0);
-          
-          // Calculate score
-          let correctCount = 0;
-          const answeredQuestions = Object.keys(location.state.userAnswers).filter(
-            id => location.state.userAnswers[id] !== null && location.state.userAnswers[id] !== undefined
-          ).length;
-          
-          location.state.examData.questions.forEach(question => {
-            if (question.type !== 'essay' && 
-                location.state.userAnswers[question.id] === question.correctAnswer) {
-              correctCount++;
-            }
-          });
-          
-          // Prevent division by zero
-          const calculatedScore = answeredQuestions > 0
-            ? Math.round((correctCount / location.state.examData.questions.length) * 100)
-            : 0;
-          
-          setScore(calculatedScore);
-          
-          setIsLoading(false);
-        } else {
-          // Fetch from API if not available in location state
-          // const response = await examService.getExamResults(examId);
-          // setExamData(response.data.examData);
-          // setUserAnswers(response.data.userAnswers);
-          // setTimeSpent(response.data.timeSpent);
-          // setScore(response.data.score);
-          
-          // For demo purposes, navigate back to exams
-          navigate('/exams');
+        clearError();
+        const result = await getResults(examId);
+        
+        if (!result.success) {
+          message.error(result.error || (language === 'ar' ? 'خطأ في تحميل النتائج' : 'Error loading results'));
         }
       } catch (error) {
-        console.error('Error fetching exam results:', error);
-        setIsLoading(false);
+        console.error('Error loading results:', error);
+        message.error(language === 'ar' ? 'خطأ في الاتصال بالخادم' : 'Server connection error');
       }
     };
 
-    fetchResultData();
-  }, [examId, location.state, navigate]);
+    loadResults();
+  }, [examId, isAuthenticated, user, language, navigate, getResults, clearError]);
 
-  const formatTime = (totalSeconds) => {
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  // Determine pass/fail status dynamically based on score comparison
-  const isPassed = score >= (examData?.passingScore || 0);
-
-  const backToExams = () => {
-    navigate('/exams');
-  };
-
-  const retakeExam = () => {
+  const handleRetryExam = () => {
+    setRetryLoading(true);
+    // Navigate back to exam details to start a new attempt
     navigate(`/exams/${examId}`);
   };
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto p-6 text-center">
-        <div className="spinner"></div>
-        <p className="mt-4">{language === 'ar' ? 'جاري تحميل النتائج...' : 'Loading results...'}</p>
-      </div>
-    );
-  }
-
-  if (!examData) {
-    return (
-      <div className="container mx-auto p-6 text-center">
-        <Title level={3}>{language === 'ar' ? 'لم يتم العثور على النتائج' : 'Results not found'}</Title>
-        <Button type="primary" onClick={backToExams}>
-          {language === 'ar' ? 'العودة إلى الامتحانات' : 'Back to Exams'}
-        </Button>
-      </div>
-    );
-  }
-
-  // Calculate correct answers
-  const correctAnswers = examData.questions.filter(
-    q => q.type !== 'essay' && userAnswers[q.id] === q.correctAnswer
-  ).length;
-  
-  const totalQuestions = examData.questions.filter(q => q.type !== 'essay').length;
-  
-  // Ensure score percentage is calculated correctly
-  const scorePercentage = Math.min(Math.round((correctAnswers / totalQuestions) * 100), 100);
-
-  // Button styles matching the screenshots
-  const primaryButtonStyle = {
-    backgroundColor: colors.purple,
-    borderColor: colors.purple,
-    borderRadius: '8px',
-    color: 'white',
-    height: '40px',
-    fontWeight: 'medium',
-    paddingLeft: '16px',
-    paddingRight: '16px',
+  const handleReviewExam = () => {
+    // Navigate to review mode
+    navigate(`/exams/${examId}/questions/review`);
   };
 
-  const secondaryButtonStyle = {
-    backgroundColor: 'white',
-    borderColor: '#E0E0E0',
-    borderRadius: '8px',
-    color: '#333333',
-    height: '40px',
-    fontWeight: 'medium',
-    paddingLeft: '16px',
-    paddingRight: '16px',
+  const handleBackToExams = () => {
+    navigate('/exams');
+  };
+
+  // Handle loading state
+  if (loading || resultsLoading) {
+    return (
+      <div className={`flex items-center justify-center h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
+        <div className="text-center">
+          <Spin size="large" />
+          <p className="mt-4 text-lg">
+            {language === 'ar' ? 'جاري تحميل النتائج...' : 'Loading results...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <div className={`flex items-center justify-center h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
+        <div className="text-center max-w-md">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold mb-4">
+            {language === 'ar' ? 'خطأ في تحميل النتائج' : 'Error Loading Results'}
+          </h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <div className="space-x-4">
+            <Button type="primary" onClick={() => navigate(`/exams/${examId}`)}>
+              {language === 'ar' ? 'العودة للامتحان' : 'Back to Exam'}
+            </Button>
+            <Button onClick={handleBackToExams}>
+              {language === 'ar' ? 'العودة للامتحانات' : 'Back to Exams'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Use results from API or navigation state as fallback
+  const results = examResults || navigationState;
+  
+  if (!results) {
+    return (
+      <div className={`flex items-center justify-center h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
+        <div className="text-center">
+          <div className="text-gray-400 text-6xl mb-4">📊</div>
+          <h2 className="text-xl font-bold mb-2">
+            {language === 'ar' ? 'لا توجد نتائج متاحة' : 'No Results Available'}
+          </h2>
+          <p className="text-gray-600 mb-4">
+            {language === 'ar' ? 'لم نتمكن من العثور على نتائج هذا الامتحان' : 'We could not find results for this exam'}
+          </p>
+          <Button type="primary" onClick={handleBackToExams}>
+            {language === 'ar' ? 'العودة للامتحانات' : 'Back to Exams'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Extract data from results
+  const score = results.score || results.percentage || 0;
+  const totalQuestions = results.totalQuestions || results.total_questions || 0;
+  const correctAnswers = results.correctAnswers || results.correct_answers || 0;
+  const incorrectAnswers = results.incorrectAnswers || results.incorrect_answers || 0;
+  const timeSpent = results.timeSpent || results.time_spent || 0;
+  const passingScore = results.passingScore || results.passing_score || 50;
+  const passed = score >= passingScore;
+  const examTitle = results.examData?.title || results.exam_title || results.examData?.name || 'الامتحان';
+
+  // Format time spent
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   return (
-    <div className={`container mx-auto p-4 mt-20 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-      {/* Results Summary Card */}
-      <Card 
-        className={`shadow-md mb-6 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}
-        bordered={!isDarkMode}
-      >
-        <div className="text-center mb-6">
-          <Title level={2} className={isDarkMode ? 'text-white' : ''}>
-            {language === 'ar' ? 'نتائج الامتحان' : 'Exam Results'}
-          </Title>
-          <Text className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
-            {examData.title}
-          </Text>
-        </div>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-800'}`}>
+      <div className="container mx-auto px-4 py-8 pt-24">
+        <div className="max-w-4xl mx-auto">
+          
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 ${
+              passed 
+                ? 'bg-green-100 text-green-600' 
+                : 'bg-red-100 text-red-600'
+            }`}>
+              {passed ? <TrophyOutlined className="text-3xl" /> : <CloseCircleOutlined className="text-3xl" />}
+            </div>
+            
+            <Title level={2} className={`mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+              {passed 
+                ? (language === 'ar' ? 'تهانينا! لقد نجحت' : 'Congratulations! You Passed') 
+                : (language === 'ar' ? 'للأسف، لم تنجح هذه المرة' : 'Sorry, You Did Not Pass This Time')
+              }
+            </Title>
+            
+            <Text className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              {examTitle}
+            </Text>
+          </div>
 
-        {/* Result circle with pass/fail status */}
-        <div className="flex justify-center mb-8">
-          <div className="relative">
-            <div className="w-32 h-32 rounded-full border-4 border-gray-200 flex items-center justify-center">
-              <div 
-                className="absolute top-0 left-0 w-32 h-32 rounded-full border-4 border-transparent"
-                style={{
-                  borderTopColor: isPassed ? '#52c41a' : '#f5222d',
-                  transform: `rotate(${Math.min(scorePercentage, 100) * 3.6}deg)`,
-                  transition: 'transform 1s ease-in-out',
-                  borderRadius: '50%',
-                }}
-              ></div>
+          {/* Score Overview */}
+          <Card 
+            className={`mb-6 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}
+            bordered={!isDarkMode}
+          >
+            <Row gutter={[24, 24]} align="middle">
+              <Col xs={24} sm={12} md={8} className="text-center">
+                <Progress
+                  type="circle"
+                  percent={score}
+                  size={120}
+                  strokeColor={passed ? colors.success : colors.error}
+                  format={(percent) => (
+                    <div>
+                      <div className="text-2xl font-bold">{percent}%</div>
+                      <div className="text-xs text-gray-500">
+                        {language === 'ar' ? 'النتيجة' : 'Score'}
+                      </div>
+                    </div>
+                  )}
+                />
+              </Col>
               
-              <div className="text-center">
-                {isPassed ? (
-                  <CheckOutlined className="text-2xl text-green-500" />
-                ) : (
-                  <CloseOutlined className="text-2xl text-red-500" />
-                )}
-              </div>
-            </div>
-            
-            <div className="absolute -right-2 -top-2 bg-red-500 text-white px-2 py-1 rounded-lg text-sm">
-              {isPassed ? 
-                (language === 'ar' ? 'ناجح' : 'PASS') : 
-                (language === 'ar' ? 'راسب' : 'FAIL')}
-            </div>
-          </div>
-        </div>
+              <Col xs={24} sm={12} md={16}>
+                <Row gutter={[16, 16]}>
+                  <Col xs={12} sm={6}>
+                    <Statistic
+                      title={language === 'ar' ? 'الإجابات الصحيحة' : 'Correct Answers'}
+                      value={correctAnswers}
+                      suffix={`/ ${totalQuestions}`}
+                      valueStyle={{ color: colors.success }}
+                      prefix={<CheckCircleOutlined />}
+                    />
+                  </Col>
+                  
+                  <Col xs={12} sm={6}>
+                    <Statistic
+                      title={language === 'ar' ? 'الإجابات الخاطئة' : 'Incorrect Answers'}
+                      value={incorrectAnswers}
+                      suffix={`/ ${totalQuestions}`}
+                      valueStyle={{ color: colors.error }}
+                      prefix={<CloseCircleOutlined />}
+                    />
+                  </Col>
+                  
+                  <Col xs={12} sm={6}>
+                    <Statistic
+                      title={language === 'ar' ? 'الوقت المستغرق' : 'Time Spent'}
+                      value={formatTime(timeSpent)}
+                      prefix={<ClockCircleOutlined />}
+                    />
+                  </Col>
+                  
+                  <Col xs={12} sm={6}>
+                    <Statistic
+                      title={language === 'ar' ? 'النسبة المطلوبة' : 'Passing Score'}
+                      value={passingScore}
+                      suffix="%"
+                      valueStyle={{ color: colors.warning }}
+                    />
+                  </Col>
+                </Row>
+              </Col>
+            </Row>
+          </Card>
 
-        <div className="text-center mb-4">
-          <Text className="text-lg">{language === 'ar' ? 'درجتك' : 'Your Score'}</Text>
-        </div>
-
-        {/* Result statistics */}
-        <div className="grid grid-cols-3 gap-2 mb-8">
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center justify-center mb-2">
-              <ClockCircleOutlined className="text-blue-500 mr-2" />
-              <Text className="text-sm">{language === 'ar' ? 'الوقت المستغرق' : 'Time Spent'}</Text>
-            </div>
-            <Text className="text-lg font-bold">{formatTime(timeSpent)}</Text>
-          </div>
-          
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center justify-center mb-2">
-              <CheckOutlined className="text-green-500 mr-2" />
-              <Text className="text-sm">{language === 'ar' ? 'الإجابات الصحيحة' : 'Correct Answers'}</Text>
-            </div>
-            <Text className="text-lg font-bold">{correctAnswers} / {totalQuestions}</Text>
-          </div>
-          
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center justify-center mb-2">
-              <TrophyOutlined className="text-yellow-500 mr-2" />
-              <Text className="text-sm">{language === 'ar' ? 'النسبة المطلوبة' : 'Passing Score'}</Text>
-            </div>
-            <Text className="text-lg font-bold">{examData.passingScore}%</Text>
-          </div>
-        </div>
-
-        <div className="flex justify-center gap-4">
-          <Button 
-            className="rounded-lg"
-            style={secondaryButtonStyle}
-            onClick={retakeExam}
-          >
-            {language === 'ar' ? 'إعادة الامتحان' : 'Retake Exam'}
-          </Button>
-          <Button 
-            type="primary" 
-            className="rounded-lg"
-            style={primaryButtonStyle}
-            onClick={backToExams}
-          >
-            {language === 'ar' ? 'العودة إلى الامتحانات' : 'Back to Exams'}
-          </Button>
-        </div>
-      </Card>
-
-      {/* Detailed Results */}
-      <Card 
-        className={`shadow-md ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}
-        bordered={!isDarkMode}
-      >
-        <Title level={3} className={`mb-4 text-right ${isDarkMode ? 'text-white' : ''}`}>
-          {language === 'ar' ? 'مراجعة الإجابات' : 'Review Answers'}
-        </Title>
-
-        <List
-          itemLayout="vertical"
-          dataSource={examData.questions}
-          renderItem={(question, index) => {
-            const userAnswer = userAnswers[question.id];
-            const isCorrect = question.type !== 'essay' && userAnswer === question.correctAnswer;
-            const isAnswered = userAnswer !== null && userAnswer !== undefined;
-            
-            let statusIcon;
-            let statusClass;
-            
-            if (question.type === 'essay') {
-              statusIcon = <span className="w-5 h-5 rounded-full inline-block border-2 border-gray-400"></span>;
-              statusClass = "text-gray-500";
-            } else if (!isAnswered) {
-              statusIcon = <CloseOutlined className="w-5 h-5" />;
-              statusClass = "text-gray-500";
-            } else if (isCorrect) {
-              statusIcon = <CheckOutlined className="w-5 h-5" />;
-              statusClass = "text-green-500";
-            } else {
-              statusIcon = <CloseOutlined className="w-5 h-5" />;
-              statusClass = "text-red-500";
+          {/* Performance Analysis */}
+          <Card 
+            title={
+              <span className={isDarkMode ? 'text-white' : 'text-gray-800'}>
+                {language === 'ar' ? 'تحليل الأداء' : 'Performance Analysis'}
+              </span>
             }
-            
-            return (
-              <List.Item
-                key={question.id}
-                className={`p-4 rounded-lg mb-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}
-              >
-                <div className="flex items-start">
-                  <div className={`mr-4 mt-1 ${statusClass}`}>{statusIcon}</div>
-                  <div className="flex-grow">
-                    <QuestionCard
-                      question={question}
-                      userAnswer={userAnswer}
-                      correctAnswer={question.correctAnswer}
-                      onAnswerChange={() => {}} // No changes in review mode
-                      language={language}
-                      isDarkMode={isDarkMode}
-                      isReview={true}
-                      colors={colors}
+            className={`mb-6 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}
+            bordered={!isDarkMode}
+          >
+            <Row gutter={[24, 24]}>
+              <Col xs={24} md={12}>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <Text>{language === 'ar' ? 'معدل الإجابات الصحيحة' : 'Accuracy Rate'}</Text>
+                      <Text strong>{Math.round((correctAnswers / totalQuestions) * 100)}%</Text>
+                    </div>
+                    <Progress 
+                      percent={Math.round((correctAnswers / totalQuestions) * 100)} 
+                      strokeColor={colors.success}
+                      showInfo={false}
+                    />
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <Text>{language === 'ar' ? 'التقدم نحو الهدف' : 'Progress to Target'}</Text>
+                      <Text strong>{Math.min(Math.round((score / passingScore) * 100), 100)}%</Text>
+                    </div>
+                    <Progress 
+                      percent={Math.min(Math.round((score / passingScore) * 100), 100)} 
+                      strokeColor={passed ? colors.success : colors.warning}
+                      showInfo={false}
                     />
                   </div>
                 </div>
-              </List.Item>
-            );
-          }}
-        />
-      </Card>
+              </Col>
+              
+              <Col xs={24} md={12}>
+                <div className="text-center">
+                  <Tag 
+                    color={passed ? 'success' : 'error'} 
+                    className="text-lg py-2 px-4 rounded-lg"
+                  >
+                    {passed 
+                      ? (language === 'ar' ? '✅ نجح' : '✅ Passed')
+                      : (language === 'ar' ? '❌ لم ينجح' : '❌ Failed')
+                    }
+                  </Tag>
+                  
+                  <div className="mt-4">
+                    <Text className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                      {passed 
+                        ? (language === 'ar' 
+                          ? 'أحسنت! لقد تجاوزت النسبة المطلوبة بنجاح'
+                          : 'Well done! You have successfully exceeded the required score')
+                        : (language === 'ar'
+                          ? `تحتاج إلى ${passingScore - score}% إضافية للنجاح`
+                          : `You need ${passingScore - score}% more to pass`)
+                      }
+                    </Text>
+                  </div>
+                </div>
+              </Col>
+            </Row>
+          </Card>
+
+          {/* Actions */}
+          <Card 
+            className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}
+            bordered={!isDarkMode}
+          >
+            <div className="text-center space-y-4">
+              <Title level={4} className={isDarkMode ? 'text-white' : 'text-gray-800'}>
+                {language === 'ar' ? 'ماذا تريد أن تفعل الآن؟' : 'What would you like to do next?'}
+              </Title>
+              
+              <Row gutter={[16, 16]} justify="center">
+                <Col xs={24} sm={8}>
+                  <Button 
+                    type="primary" 
+                    size="large" 
+                    block
+                    icon={<EyeOutlined />}
+                    onClick={handleReviewExam}
+                    style={{
+                      backgroundColor: colors.primaryBase,
+                      borderColor: colors.primaryBase,
+                      height: '48px'
+                    }}
+                  >
+                    {language === 'ar' ? 'مراجعة الإجابات' : 'Review Answers'}
+                  </Button>
+                </Col>
+                
+                <Col xs={24} sm={8}>
+                  <Button 
+                    type="default" 
+                    size="large" 
+                    block
+                    icon={<ReloadOutlined />}
+                    loading={retryLoading}
+                    onClick={handleRetryExam}
+                    style={{
+                      backgroundColor: colors.purple,
+                      borderColor: colors.purple,
+                      color: 'white',
+                      height: '48px'
+                    }}
+                  >
+                    {language === 'ar' ? 'إعادة المحاولة' : 'Try Again'}
+                  </Button>
+                </Col>
+                
+                <Col xs={24} sm={8}>
+                  <Button 
+                    type="default" 
+                    size="large" 
+                    block
+                    icon={<HomeOutlined />}
+                    onClick={handleBackToExams}
+                    style={{ height: '48px' }}
+                  >
+                    {language === 'ar' ? 'العودة للامتحانات' : 'Back to Exams'}
+                  </Button>
+                </Col>
+              </Row>
+            </div>
+          </Card>
+
+          {/* Show navigation state in development */}
+          {process.env.NODE_ENV === 'development' && navigationState && (
+            <Card 
+              title="Debug - Navigation State" 
+              className="mt-6 bg-gray-100"
+              size="small"
+            >
+              <pre className="text-xs overflow-auto">
+                {JSON.stringify(navigationState, null, 2)}
+              </pre>
+            </Card>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

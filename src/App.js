@@ -29,7 +29,6 @@ import MyExamsPage from "./pages/exams/MyExamsPage.jsx";
 import ExamDetailsPage from "./pages/exams/ExamDetailsPage.jsx";
 import ExamQuestionsPage from "./pages/exams/ExamQuestionsPage.jsx";
 import ExamResultsPage from "./pages/exams/ExamResultsPage.jsx";
-import ApiTestPage from "./pages/testing/ApiTestPage.jsx";
 import ExamsApiTestPage from "./pages/testing/ExamsApiTestPage.jsx";
 import AIPortalTestPage from "./pages/testing/AIPortalTestPage.jsx";
 import AIWeaknessPortal from "./pages/student/AIWeaknessPortal.jsx";
@@ -105,10 +104,6 @@ const router = createBrowserRouter([
       },
       
       // Testing Routes (Make it accessible to everyone for testing)
-      {
-        path: "/api-test",
-        element: <GuestLayout><ApiTestPage /></GuestLayout>
-      },
       {
         path: "/test-apis",
         element: <GuestLayout><TestApiPage /></GuestLayout>

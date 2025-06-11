@@ -85,11 +85,14 @@ const ExamDetailsPage = () => {
     }
   };
 
-  const confirmStartExam = () => {
+  const confirmStartExam = async () => {
     setShowStartModal(false);
+    
     // Handle different actions based on status
     switch (onlineExamDetails?.status) {
       case EXAM_STATUS.START:
+        navigate(`/exams/${examId}/questions`);
+        break;
       case EXAM_STATUS.RETRY:
         navigate(`/exams/${examId}/questions`);
         break;
@@ -97,7 +100,7 @@ const ExamDetailsPage = () => {
         navigate(`/exams/${examId}/questions?continue=true`);
         break;
       case EXAM_STATUS.REVISION:
-        navigate(`/exams/${examId}/review`);
+        navigate(`/exams/${examId}/questions/review`);
         break;
       default:
         break;

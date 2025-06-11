@@ -364,7 +364,7 @@ const MyExamsPage = () => {
   }
 
   // Show error state (only for critical failures)
-  if (error && !statistics && !availableExams.length && !completedExams.length) {
+  if (error && !statistics && (!Array.isArray(availableExams) || availableExams.length === 0) && (!Array.isArray(completedExams) || completedExams.length === 0)) {
     return (
       <div className={`min-h-screen ${isDarkMode ? 'bg-background-dark' : 'bg-[#F0F4F8]'}`}>
         <Navbar />
@@ -500,7 +500,7 @@ const MyExamsPage = () => {
           <div ref={availableExamsRef}>
             <ExamList 
               title={t.availableExams || (language === 'ar' ? 'الامتحانات المتاحة' : 'Available Exams')}
-              exams={availableExams}
+              exams={Array.isArray(availableExams) ? availableExams : []}
               viewMode={viewMode}
               toggleFavorite={toggleFavorite}
               handleSelectExam={handleSelectExam}
@@ -517,7 +517,7 @@ const MyExamsPage = () => {
           <div ref={completedExamsRef}>
             <ExamList 
               title={t.completedExamsTitle || (language === 'ar' ? 'الامتحانات المكتملة' : 'Completed Exams')}
-              exams={completedExams}
+              exams={Array.isArray(completedExams) ? completedExams : []}
               viewMode={viewMode}
               toggleFavorite={toggleFavorite}
               handleSelectExam={handleSelectExam}
@@ -538,8 +538,8 @@ const MyExamsPage = () => {
               <h3 className="font-bold mb-2">Debug Information:</h3>
               <div className="text-sm space-y-1">
                 <div>Statistics loaded: {statistics ? 'Yes' : 'No'}</div>
-                <div>Available exams: {availableExams.length}</div>
-                <div>Completed exams: {completedExams.length}</div>
+                <div>Available exams: {Array.isArray(availableExams) ? availableExams.length : 'Not an array'}</div>
+                <div>Completed exams: {Array.isArray(completedExams) ? completedExams.length : 'Not an array'}</div>
                 <div>Loading states: {JSON.stringify({loading, statisticsLoading, availableExamsLoading, completedExamsLoading})}</div>
                 <div>Errors: {JSON.stringify({error, statisticsError, availableExamsError, completedExamsError})}</div>
                 <div>User authenticated: {isAuthenticated ? 'Yes' : 'No'}</div>
