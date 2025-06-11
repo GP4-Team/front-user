@@ -191,24 +191,6 @@ const HierarchicalFilter = ({ onFilterChange, currentFilters, isLoading = false 
           {getText('اعادة تعيين الفلتر', 'Reset Filter')}
         </button>
       )}
-
-      {/* عرض الفلتر المحدد */}
-      {currentFilters.educational_level_id && (
-        <div className={`mt-4 p-3 rounded-md ${
-          isDarkMode ? 'bg-blue-900/30 border border-blue-700' : 'bg-blue-50 border border-blue-200'
-        }`}>
-          <p className={`text-xs font-medium ${
-            isDarkMode ? 'text-blue-300' : 'text-blue-800'
-          }`}>
-            {getText('الفلتر المحدد:', 'Selected Filter:')}
-          </p>
-          <p className={`text-sm ${
-            isDarkMode ? 'text-blue-200' : 'text-blue-700'
-          }`}>
-            {currentFilters.levelName}
-          </p>
-        </div>
-      )}
     </div>
   );
 };

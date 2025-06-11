@@ -40,6 +40,21 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
     }
   };
 
+  // Get lesson type name in Arabic/English
+  const getLessonTypeName = (lesson) => {
+    const typeName = {
+      video: { ar: 'فيديو', en: 'Video' },
+      audio: { ar: 'صوتي', en: 'Audio' },
+      image: { ar: 'صورة', en: 'Image' },
+      pdf: { ar: 'ملف PDF', en: 'PDF' },
+      document: { ar: 'مستند', en: 'Document' },
+      exam: { ar: 'امتحان', en: 'Exam' }
+    };
+    
+    const type = lesson.type || lesson.originalType || 'document';
+    return typeName[type] ? typeName[type][language] : type;
+  };
+
   // Get status icon based on lesson status
   const getStatusIcon = (lesson) => {
     // عدم عرض أيقونة lock - جميع المواد مفتوحة
@@ -55,7 +70,7 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
   };
 
   return (
-    <div className="sticky top-32 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden max-h-[calc(100vh-150px)] overflow-y-auto">
+    <div className="sticky top-32 bg-white dark:bg-[#1E1E1E] rounded-lg shadow-md overflow-hidden max-h-[calc(100vh-150px)] overflow-y-auto">
       {/* Header with course info */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
@@ -66,7 +81,7 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
               </span>
             </div>
             <div>
-              <h3 className="text-sm font-medium">
+              <h3 className="text-sm font-medium text-[#37474F] dark:text-white">
                 {language === "ar" ? `${course.sections.length} قسم | ` : `${course.sections.length} Sections | `}
                 {language === "ar" 
                   ? `${course.sections.reduce((acc, section) => acc + (section.lessons ? section.lessons.length : 0), 0)} درس` 
@@ -83,8 +98,8 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
         <div key={section.id} className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
           {/* Section header */}
           <div 
-            className={`p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-between ${
-              expandedSections[section.id] ? "bg-gray-50 dark:bg-gray-700" : ""
+            className={`p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2D2D2D] transition-colors flex items-center justify-between ${
+              expandedSections[section.id] ? "bg-gray-50 dark:bg-[#2D2D2D]" : ""
             }`}
             onClick={() => toggleSection(section.id)}
           >
@@ -95,16 +110,16 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
                 </span>
               </div>
               <div>
-                <h3 className="font-medium text-[#37474F]">
-                  {section.lessons && section.lessons.length > 0 ? getText(section.lessons[0].title) : getText(section.title)}
+                <h3 className="font-medium text-[#37474F] dark:text-white">
+                  {getText(section.title)}
                 </h3>
               </div>
             </div>
             <div>
               {expandedSections[section.id] ? (
-                <ChevronUp size={20} className="text-gray-500" />
+                <ChevronUp size={20} className="text-gray-500 dark:text-gray-400" />
               ) : (
-                <ChevronDown size={20} className="text-gray-500" />
+                <ChevronDown size={20} className="text-gray-500 dark:text-gray-400" />
               )}
             </div>
           </div>
@@ -125,12 +140,12 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
                   <div className="flex items-center">
                     {getLessonIcon(lesson)}
                     <div>
-                      <h4 className="text-sm font-medium text-[#37474F] dark:text-[#F0F4F8]">
+                      <h4 className="text-sm font-medium text-[#37474F] dark:text-white">
                         {getText(lesson.title)}
                       </h4>
                       {lesson.duration && (
                         <p className="text-xs text-[#37474F] dark:text-[#B0BEC5]">
-                          {language === "ar" ? `(قدره ${getText(lesson.duration)})` : `(${getText(lesson.duration)})`}
+                          {language === "ar" ? `(${getText(lesson.duration)})` : `(${getText(lesson.duration)})`}
                         </p>
                       )}
                     </div>

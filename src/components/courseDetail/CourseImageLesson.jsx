@@ -177,7 +177,7 @@ const CourseImageLesson = ({ lesson, materialDetails }) => {
               <div className="text-center">
                 <ImageIcon size={64} className="text-gray-400 dark:text-gray-500 mx-auto mb-4" />
                 <p className="text-gray-600 dark:text-gray-300 font-medium">
-                  {language === 'ar' ? 'لا توجد مادة متاحة' : 'No content available'}
+                  {language === 'ar' ? 'لا يوجد محتوى متاح' : 'No content available'}
                 </p>
                 <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
                   {materialInfo.name}

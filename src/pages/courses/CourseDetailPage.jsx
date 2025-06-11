@@ -58,13 +58,45 @@ const transformMaterialsToLessons = (materials) => {
   console.log('🔄 Transforming materials to lessons:', materials);
   
   return materials.map((material, index) => {
+    // Create proper bilingual title
+    const createBilingualTitle = (material) => {
+      // Define material type translations
+      const typeTranslations = {
+        'YoutubeVideo': { ar: 'شرح فيديو', en: 'Video Lesson' },
+        'Audio': { ar: 'تسجيل صوتي', en: 'Audio Recording' },
+        'Pdf': { ar: 'ملف المحاضرة', en: 'Lecture File' },
+        'Image': { ar: 'صورة تعليمية', en: 'Educational Image' },
+        'Document': { ar: 'مستند', en: 'Document' }
+      };
+      
+      // Get the material type or default
+      const materialType = material.type || 'Document';
+      const typeText = typeTranslations[materialType] || { ar: 'مادة تعليمية', en: 'Learning Material' };
+      
+      // Use original name if available, otherwise use type-based name
+      if (material.name && material.name.trim() !== '') {
+        // If the name contains specific keywords, provide better translation
+        const name = material.name;
+        if (name.includes('فيديو') || name.includes('شرح')) {
+          return { ar: name, en: 'Video Lesson' };
+        } else if (name.includes('صوتي') || name.includes('تسجيل')) {
+          return { ar: name, en: 'Audio Recording' };
+        } else if (name.includes('ملف') || name.includes('محاضرة')) {
+          return { ar: name, en: 'Lecture File' };
+        } else if (name.includes('مراجع') || name.includes('مصادر')) {
+          return { ar: name, en: 'References & Sources' };
+        } else {
+          return { ar: name, en: name };
+        }
+      } else {
+        return typeText;
+      }
+    };
+    
     const lesson = {
       id: `material-${material.id}`,
       type: convertMaterialType(material.type),
-      title: {
-        ar: material.name || `مادة ${index + 1}`,
-        en: material.name || `Material ${index + 1}`
-      },
+      title: createBilingualTitle(material),
       status: index === 0 ? 'current' : 'unlocked', // الدرس الأول current والباقي unlocked
       duration: {
         ar: formatDuration(material.duration_in_seconds, 'ar'),
@@ -212,55 +244,20 @@ const CourseDetailPage = () => {
           
           console.log('📚 All transformed lessons:', lessons);
           
-          // Group materials by type for better organization
-          const groupedMaterials = lessons.reduce((groups, lesson) => {
-            const type = lesson.type;
-            if (!groups[type]) {
-              groups[type] = [];
+          // Create single section with all materials (no grouping)
+          const sections = [
+            {
+              id: 'all-materials',
+              title: {
+                ar: 'محتوى الكورس',
+                en: 'Course Content'
+              },
+              lessons: lessons.length,
+              completed: 0,
+              expanded: true,
+              lessons: lessons
             }
-            groups[type].push(lesson);
-            return groups;
-          }, {});
-          
-          console.log('🗂️ Grouped materials by type:', groupedMaterials);
-          
-          // Create sections for each material type
-          const sections = [];
-          
-          // Main section with all materials
-          sections.push({
-            id: 'all-materials',
-            title: {
-              ar: 'جميع المواد التعليمية',
-              en: 'All Course Materials'
-            },
-            lessons: lessons.length,
-            completed: 0,
-            expanded: true,
-            lessons: lessons
-          });
-          
-          // Add type-specific sections if there are multiple types
-          if (Object.keys(groupedMaterials).length > 1) {
-            Object.entries(groupedMaterials).forEach(([type, typeLessons]) => {
-              const typeNames = {
-                video: { ar: 'الفيديوهات', en: 'Videos' },
-                audio: { ar: 'الملفات الصوتية', en: 'Audio Files' },
-                image: { ar: 'الصور', en: 'Images' },
-                pdf: { ar: 'ملفات PDF', en: 'PDF Files' },
-                document: { ar: 'المستندات', en: 'Documents' }
-              };
-              
-              sections.push({
-                id: `${type}-section`,
-                title: typeNames[type] || { ar: type, en: type },
-                lessons: typeLessons.length,
-                completed: 0,
-                expanded: false,
-                lessons: typeLessons
-              });
-            });
-          }
+          ];
           
           // Create course data structure
           const courseData = {
@@ -377,7 +374,7 @@ const CourseDetailPage = () => {
   // If course data is not loaded yet or there's an error
   if (loading) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+      <div className={`min-h-screen bg-[#F0F4F8] dark:bg-[#121212] text-gray-900 dark:text-white`}>
         <Navbar />
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
@@ -393,7 +390,7 @@ const CourseDetailPage = () => {
 
   if (error) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+      <div className={`min-h-screen bg-[#F0F4F8] dark:bg-[#121212] text-gray-900 dark:text-white`}>
         <Navbar />
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
@@ -416,7 +413,7 @@ const CourseDetailPage = () => {
 
   if (!course) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+      <div className={`min-h-screen bg-[#F0F4F8] dark:bg-[#121212] text-gray-900 dark:text-white`}>
         <Navbar />
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
@@ -440,52 +437,25 @@ const CourseDetailPage = () => {
         {/* Progress bar */}
         <div className="relative h-1 bg-gray-200 dark:bg-gray-700">
           <div 
-            className="absolute left-0 h-1 bg-blue-500" 
+            className="absolute left-0 h-1 bg-[#3949AB]" 
             style={{ width: `${course.progress}%` }}
           ></div>
         </div>
         
         {/* Page header */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4 sticky top-16 z-10">
-          <div className="container mx-auto">
-            <div className="flex justify-between items-center">
-              {/* Course title and breadcrumb */}
-              <div>
-                {/* Breadcrumb */}
-                <CourseBreadcrumb 
-                  course={course}
-                  currentLesson={currentLesson}
-                />
-                
-                {/* Course title */}
-                <h1 className="text-xl font-bold mt-1">{getText(course.title)}</h1>
-              </div>
+        <header className="bg-white dark:bg-[#1E1E1E] border-b border-gray-200 dark:border-gray-700 sticky top-16 z-10">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              {/* Breadcrumb */}
+              <CourseBreadcrumb 
+                course={course}
+                currentLesson={currentLesson}
+              />
               
-              {/* Language & Detail toggle */}
-              <div className="flex items-center">
-                <div className="flex space-x-2 rtl:space-x-reverse border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
-                  <Link 
-                    to="/courses" 
-                    className="px-3 py-1 text-sm flex items-center hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    {isRTL ? 
-                      <ChevronDown size={14} className="ml-1" /> : 
-                      <ChevronDown size={14} className="mr-1" />
-                    }
-                    {language === "ar" ? "التفاصيل" : "Details"}
-                  </Link>
-                  <Link 
-                    to="#" 
-                    className="px-3 py-1 text-sm flex items-center bg-gray-100 dark:bg-gray-700"
-                  >
-                    {isRTL ? 
-                      <ChevronDown size={14} className="ml-1" /> : 
-                      <ChevronDown size={14} className="mr-1" />
-                    }
-                    {language === "ar" ? "محاضرات" : "Lectures"}
-                  </Link>
-                </div>
-              </div>
+              {/* Course title */}
+              <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
+                {getText(course.title)}
+              </h1>
             </div>
           </div>
         </header>
@@ -505,13 +475,13 @@ const CourseDetailPage = () => {
             </div>
             
             {/* Main content */}
-            <div className="lg:w-3/4 xl:w-4/5 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+            <div className="lg:w-3/4 xl:w-4/5 bg-white dark:bg-[#1E1E1E] rounded-lg shadow-md overflow-hidden">
               {materialLoading ? (
                 // Material loading state
                 <div className="p-8 text-center">
                   <div className="flex flex-col items-center justify-center py-16">
-                    <Loader className="animate-spin h-12 w-12 text-blue-500 mx-auto mb-4" />
-                    <p className="text-lg">
+                    <Loader className="animate-spin h-12 w-12 text-[#3949AB] mx-auto mb-4" />
+                    <p className="text-lg text-[#37474F] dark:text-white">
                       {language === 'ar' ? 'جاري تحميل المادة...' : 'Loading material...'}
                     </p>
                   </div>
@@ -521,13 +491,13 @@ const CourseDetailPage = () => {
                 <div className="p-8 text-center">
                   <div className="flex flex-col items-center justify-center py-16">
                     <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                    <h2 className="text-xl font-medium text-red-600 mb-2">
+                    <h2 className="text-xl font-medium text-red-600 dark:text-red-400 mb-2">
                       {language === 'ar' ? 'خطأ في تحميل المادة' : 'Error Loading Material'}
                     </h2>
-                    <p className="text-gray-500 mb-4">{materialError}</p>
+                    <p className="text-[#37474F] dark:text-gray-300 mb-4">{materialError}</p>
                     <button
                       onClick={() => currentLesson && selectLesson(currentLesson)}
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors"
+                      className="bg-[#3949AB] hover:bg-[#1A237E] text-white px-4 py-2 rounded-md transition-colors"
                     >
                       {language === 'ar' ? 'إعادة المحاولة' : 'Try Again'}
                     </button>
@@ -583,10 +553,10 @@ const CourseDetailPage = () => {
                 <div className="p-8 text-center">
                   <div className="flex flex-col items-center justify-center py-16">
                     <AlertCircle size={48} className="text-gray-400 dark:text-gray-600 mb-4" />
-                    <h2 className="text-xl font-medium text-gray-600 dark:text-gray-400">
+                    <h2 className="text-xl font-medium text-[#37474F] dark:text-gray-300">
                       {language === "ar" ? "لم يتم اختيار أي درس" : "No lesson selected"}
                     </h2>
-                    <p className="text-gray-500 dark:text-gray-500 mt-2 max-w-md">
+                    <p className="text-[#37474F] dark:text-gray-400 mt-2 max-w-md">
                       {language === "ar" 
                         ? "الرجاء اختيار درس من القائمة الجانبية للبدء في التعلم."
                         : "Please select a lesson from the sidebar to start learning."

@@ -10,29 +10,32 @@ class CourseRegistrationService {
     try {
       console.log('📚 Fetching available courses for registration...');
       
-      // Add required parameters to avoid 422 validation error
-      const params = {
-        semester_id: 5, // Default current semester
-        page: 1,
-        per_page: 50
-      };
-      
-      const response = await api.get('/student/available-courses', { params });
+      const response = await api.get('/student/available-courses');
       
       console.log('✅ Available courses API response:', response.data);
       
+      // Handle different response structures
+      let courses = [];
+      if (response.data.courses) {
+        courses = response.data.courses;
+      } else if (response.data.data) {
+        courses = response.data.data;
+      } else if (Array.isArray(response.data)) {
+        courses = response.data;
+      }
+      
       return {
         success: true,
-        data: response.data.courses || response.data.data || response.data,
-        pagination: response.data.pagination || null,
-        total: response.data.total || 0
+        data: courses,
+        semester: response.data.semester || null,
+        total: courses.length || 0
       };
     } catch (error) {
       console.error('❌ Error fetching available courses:', error);
       
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Failed to fetch available courses',
+        error: error.response?.data?.message || error.message || 'فشل في تحميل المواد المتاحة',
         status: error.response?.status
       };
     }
@@ -48,6 +51,11 @@ class CourseRegistrationService {
     try {
       console.log('📝 Registering courses:', { course_ids: courseIds, semester_id: semesterId });
       
+      // Validate input
+      if (!Array.isArray(courseIds) || courseIds.length === 0) {
+        throw new Error('يجب اختيار مادة واحدة على الأقل');
+      }
+      
       const requestData = {
         course_ids: courseIds,
         semester_id: semesterId
@@ -57,20 +65,47 @@ class CourseRegistrationService {
       
       console.log('✅ Course registration API response:', response.data);
       
+      // Handle different success response structures
+      const message = response.data.message || 
+                     response.data.msg || 
+                     `تم تسجيل ${courseIds.length} مادة بنجاح`;
+      
       return {
         success: true,
         data: response.data,
-        message: response.data.message || 'Courses registered successfully',
-        enrollments: response.data.data?.enrollments || response.data.enrollments || []
+        message: message,
+        enrollments: response.data.data?.enrollments || 
+                    response.data.enrollments || 
+                    response.data.data || 
+                    [],
+        registered_count: courseIds.length
       };
     } catch (error) {
       console.error('❌ Error registering courses:', error);
       
+      // Handle different error response structures
+      let errorMessage = 'فشل في تسجيل المواد';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors) {
+        // Handle validation errors
+        const errors = error.response.data.errors;
+        if (typeof errors === 'object') {
+          errorMessage = Object.values(errors).flat().join(', ');
+        } else {
+          errorMessage = errors;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Failed to register courses',
+        error: errorMessage,
         status: error.response?.status,
-        details: error.response?.data
+        details: error.response?.data,
+        validation_errors: error.response?.data?.errors || null
       };
     }
   }
@@ -156,9 +191,9 @@ class CourseRegistrationService {
       return {
         success: true,
         data: [
-          { id: 5, name: 'Current Semester', is_current: true }
+          { id: 5, name: 'الفصل الدراسي الحالي', is_current: true }
         ],
-        current: { id: 5, name: 'Current Semester' }
+        current: { id: 5, name: 'الفصل الدراسي الحالي' }
       };
     }
   }

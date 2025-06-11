@@ -139,6 +139,14 @@ const CourseRegistrationContent = () => {
       ar: 'حدث خطأ أثناء التسجيل',
       en: 'Error occurred during registration'
     },
+    semesterInfo: {
+      ar: 'الفصل الدراسي الحالي',
+      en: 'Current Semester'
+    },
+    confirmRegistration: {
+      ar: 'هل أنت متأكد من تسجيل هذه المواد؟',
+      en: 'Are you sure you want to register for these courses?'
+    },
     noCourses: {
       ar: 'لا توجد كورسات متاحة للتسجيل',
       en: 'No courses available for registration'
@@ -201,18 +209,23 @@ const CourseRegistrationContent = () => {
 
     try {
       const courseIds = selectedCourses.map(course => course.id);
+      console.log('🎯 Registering courses:', { course_ids: courseIds, semester_id: currentSemester.id });
+      
       const response = await courseRegistrationService.registerCourses(courseIds, currentSemester.id);
 
       if (response.success) {
-        setSuccess(response.message || getText('registrationSuccess'));
+        const successMessage = response.message || getText('registrationSuccess');
+        setSuccess(`${successMessage} - ${selectedCourses.length} ${language === 'ar' ? 'مادة مسجلة' : 'courses registered'}`);
         setSelectedCourses([]);
-        // Refresh available courses
-        fetchAvailableCourses();
+        // Refresh available courses after successful registration
+        setTimeout(() => {
+          fetchAvailableCourses();
+        }, 1000);
       } else {
         setError(response.error || getText('registrationError'));
       }
     } catch (err) {
-      setError('Registration failed. Please try again.');
+      setError(language === 'ar' ? 'فشل التسجيل. حاول مرة أخرى.' : 'Registration failed. Please try again.');
       console.error('Registration error:', err);
     } finally {
       setRegistering(false);
@@ -269,6 +282,12 @@ const CourseRegistrationContent = () => {
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             {getText('subtitle')}
           </p>
+          <div className="flex items-center gap-2 mt-2">
+            <Calendar className="h-4 w-4 text-blue-600" />
+            <span className="text-sm text-blue-600 dark:text-blue-400">
+              {getText('semesterInfo')} - {currentSemester.name}
+            </span>
+          </div>
         </div>
         <button
           onClick={fetchAvailableCourses}
@@ -298,19 +317,30 @@ const CourseRegistrationContent = () => {
       {/* Selected Courses Summary */}
       {selectedCourses.length > 0 && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <h3 className="font-semibold text-blue-900 dark:text-blue-400 mb-2">
-            {getText('selected')} ({selectedCourses.length})
-          </h3>
+          <div className="flex justify-between items-start mb-3">
+            <h3 className="font-semibold text-blue-900 dark:text-blue-400">
+              {getText('selected')} ({selectedCourses.length})
+            </h3>
+            <div className="text-sm text-blue-700 dark:text-blue-300">
+              {language === 'ar' ? 'إجمالي الساعات:' : 'Total Credits:'} {' '}
+              <span className="font-bold">
+                {selectedCourses.reduce((total, course) => 
+                  total + (course.credits || course.credit_hours || 3), 0
+                )}
+              </span>
+            </div>
+          </div>
           <div className="flex flex-wrap gap-2 mb-4">
             {selectedCourses.map(course => (
               <span
                 key={course.id}
-                className="inline-flex items-center gap-1 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-sm"
+                className="inline-flex items-center gap-1 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm"
               >
-                {course.code || course.course_code}
+                <span className="font-medium">{course.code || course.course_code}</span>
+                <span className="text-xs opacity-75">({course.credits || course.credit_hours || 3}h)</span>
                 <button
                   onClick={() => toggleCourseSelection(course)}
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 ml-1"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -318,113 +348,152 @@ const CourseRegistrationContent = () => {
             ))}
           </div>
           <button
-            onClick={handleRegisterCourses}
-            disabled={registering}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            onClick={() => {
+              if (window.confirm(getText('confirmRegistration'))) {
+                handleRegisterCourses();
+              }
+            }}
+            disabled={registering || selectedCourses.length === 0}
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
           >
             {registering ? (
-              <Loader className="h-4 w-4 animate-spin" />
+              <>
+                <Loader className="h-5 w-5 animate-spin" />
+                <span>{getText('registering')}</span>
+              </>
             ) : (
-              <CheckCircle className="h-4 w-4" />
+              <>
+                <CheckCircle className="h-5 w-5" />
+                <span>{getText('registerSelected')}</span>
+                <span className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs ml-2">
+                  {selectedCourses.length}
+                </span>
+              </>
             )}
-            {registering ? getText('registering') : getText('registerSelected')}
           </button>
         </div>
       )}
 
-      {/* Available Courses */}
+      {/* Available Courses Table */}
       {availableCourses.length > 0 ? (
-        <div className="grid gap-4">
-          {availableCourses.map((course) => {
-            const isSelected = selectedCourses.find(c => c.id === course.id);
-            const courseAvailable = isCourseAvailable(course);
-            const status = getCourseStatus(course);
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedCourses(availableCourses.filter(isCourseAvailable));
+                        } else {
+                          setSelectedCourses([]);
+                        }
+                      }}
+                      checked={selectedCourses.length === availableCourses.filter(isCourseAvailable).length && availableCourses.filter(isCourseAvailable).length > 0}
+                    />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    {getText('courseCode')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    {getText('courseName')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    {getText('instructor')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    {getText('credits')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    {getText('schedule')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    {getText('capacity')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {availableCourses.map((course) => {
+                  const isSelected = selectedCourses.find(c => c.id === course.id);
+                  const courseAvailable = isCourseAvailable(course);
+                  const status = getCourseStatus(course);
 
-            return (
-              <div
-                key={course.id}
-                className={`border rounded-lg p-4 transition-all duration-200 ${
-                  isSelected
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                } ${!courseAvailable ? 'opacity-60' : ''}`}
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
-                          {course.name || course.course_name || course.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {course.code || course.course_code} • {course.credits || course.credit_hours || 3} {getText('credits')}
-                        </p>
-                      </div>
-                      <span className={`text-xs px-2 py-1 rounded-full ${status.className}`}>
-                        {status.text}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                      {course.instructor && (
+                  return (
+                    <tr 
+                      key={course.id}
+                      className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                        isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                      } ${!courseAvailable ? 'opacity-60' : ''}`}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          checked={!!isSelected}
+                          disabled={!courseAvailable}
+                          onChange={() => toggleCourseSelection(course)}
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                        {course.code || course.course_code || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {course.name || course.course_name || course.title || 'N/A'}
+                          </div>
+                          {course.description && (
+                            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                              {course.description.length > 80 
+                                ? `${course.description.substring(0, 80)}...` 
+                                : course.description}
+                            </div>
+                          )}
+                          {/* Additional course info */}
+                          {(course.department || course.category) && (
+                            <div className="text-xs text-blue-600 dark:text-blue-400 mt-1 flex items-center gap-2">
+                              <span className="bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded">
+                                {course.department || course.category}
+                              </span>
+                              {course.level && (
+                                <span className="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
+                                  {course.level}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {course.instructor || course.instructor_name || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {course.credits || course.credit_hours || 3}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {course.schedule || course.time || 
+                          (course.days && course.time_slot ? `${course.days} ${course.time_slot}` : 'TBD')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-gray-500" />
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {course.instructor}
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                            {course.enrolled_students || course.current_enrollment || 0}/
+                            {course.max_students || course.capacity || '∞'}
+                          </span>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${status.className}`}>
+                            {status.text}
                           </span>
                         </div>
-                      )}
-
-                      {(course.schedule || course.time) && (
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-gray-500" />
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {course.schedule || course.time}
-                          </span>
-                        </div>
-                      )}
-
-                      {course.max_students && (
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-gray-500" />
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {course.enrolled_students || 0}/{course.max_students}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {course.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        {course.description}
-                      </p>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => toggleCourseSelection(course)}
-                    disabled={!courseAvailable}
-                    className={`ml-4 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isSelected
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : courseAvailable
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    {isSelected ? (
-                      <div className="flex items-center gap-1">
-                        <Check className="h-4 w-4" />
-                        {getText('selected')}
-                      </div>
-                    ) : (
-                      getText('selectCourse')
-                    )}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         <div className="text-center py-12">

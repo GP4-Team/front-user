@@ -9,7 +9,6 @@ import CoursesService from "../../services/api/courses.service";
 import CourseInfoCard from "../../components/courseInfo/CourseInfoCard";
 import CourseInfoTabs from "../../components/courseInfo/CourseInfoTabs";
 import CourseInfoHeader from "../../components/courseInfo/CourseInfoHeader";
-import CourseSections from "../../components/courseInfo/CourseSections";
 import InstructorInfo from "../../components/courseInfo/InstructorInfo";
 
 const CourseInfoPage = () => {
@@ -23,7 +22,7 @@ const CourseInfoPage = () => {
   const [course, setCourse] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("lessons");
+  const [activeTab, setActiveTab] = useState("description");
   
   // Helper function to get text based on language
   const getText = (obj) => {
@@ -128,72 +127,8 @@ const CourseInfoPage = () => {
         if (courseResponse.success && courseResponse.data) {
           const courseData = courseResponse.data;
           
-          // محاولة جلب محتوى الكورس (materials) - اختياري
-          let courseSections = [];
-          try {
-            const contentResponse = await CoursesService.getCourseContent(courseId);
-            console.log('✅ Course content received:', contentResponse);
-            
-            if (contentResponse.success && contentResponse.data && Array.isArray(contentResponse.data)) {
-              const materials = contentResponse.data;
-              
-              // تحويل المواد إلى sections
-              const groupedMaterials = materials.reduce((acc, material, index) => {
-                // تجميع المواد بناءً على section_id إذا كان متوفر، أو تجميع كل 5 مواد في قسم واحد
-                const sectionIndex = material.section_id ? 
-                  material.section_id : 
-                  Math.floor(index / 5) + 1;
-                const sectionKey = `section-${sectionIndex}`;
-                
-                if (!acc[sectionKey]) {
-                  acc[sectionKey] = {
-                    id: sectionKey,
-                    title: {
-                      ar: material.section_name || `القسم ${sectionIndex}`,
-                      en: material.section_name || `Section ${sectionIndex}`
-                    },
-                    lessonsCount: 0,
-                    exercisesCount: 0,
-                    expanded: sectionIndex === 1, // القسم الأول مفتوح
-                    lessons: []
-                  };
-                }
-                
-                acc[sectionKey].lessons.push({
-                  id: `material-${material.id || index}`,
-                  title: {
-                    ar: material.title || material.name || `مادة ${index + 1}`,
-                    en: material.title || material.name || `Material ${index + 1}`
-                  },
-                  type: material.type || "video",
-                  icon: getMaterialIcon(material.type),
-                  materialData: material
-                });
-                
-                acc[sectionKey].lessonsCount = acc[sectionKey].lessons.length;
-                
-                return acc;
-              }, {});
-              
-              courseSections = Object.values(groupedMaterials);
-            }
-          } catch (contentError) {
-            console.warn('⚠️ Could not fetch course content:', contentError);
-            // إنشاء قسم افتراضي في حالة عدم توفر المحتوى
-            courseSections = [
-              {
-                id: "section-1",
-                title: {
-                  ar: "محتوى الكورس",
-                  en: "Course Content"
-                },
-                lessonsCount: 0,
-                exercisesCount: 0,
-                expanded: true,
-                lessons: []
-              }
-            ];
-          }
+          // محاولة جلب محتوى الكورس (materials) - تم حذف هذا القسم لأننا لا نعرض الدروس
+          // في صفحة معلومات الكورس
           
           // تحويل بيانات الـ API إلى التنسيق المطلوب للمكونات
           const transformedCourse = {
@@ -270,7 +205,6 @@ const CourseInfoPage = () => {
                 icon: "Clock",
               },
             ],
-            sections: courseSections,
             reviews: [
               {
                 id: 1,
@@ -401,26 +335,17 @@ const CourseInfoPage = () => {
                 language={language} 
               />
               
-              {activeTab === "lessons" && (
-                <CourseSections 
-                  sections={course.sections} 
-                  getText={getText} 
-                  language={language}
-                />
-              )}
-              
-              {activeTab === "description" && (
-                <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm p-6`}>
-                  <h3 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {language === "ar" ? "وصف الكورس" : "Course Description"}
-                  </h3>
-                  <div className={`prose max-w-none ${isDarkMode ? 'prose-invert' : ''}`}>
-                    <p className={`text-lg leading-relaxed ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {getText(course.description)}
-                    </p>
-                  </div>
+              {/* Show only description tab content */}
+              <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm p-6`}>
+                <h3 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {language === "ar" ? "وصف الكورس" : "Course Description"}
+                </h3>
+                <div className={`prose max-w-none ${isDarkMode ? 'prose-invert' : ''}`}>
+                  <p className={`text-lg leading-relaxed ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {getText(course.description)}
+                  </p>
                 </div>
-              )}
+              </div>
               
               {/* Instructor Info */}
               <InstructorInfo 
