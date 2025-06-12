@@ -45,9 +45,7 @@ const StudentProfile = () => {
     examHistory,
     hasData,
     refreshProfile,
-    upcomingAssignments,
     completedCourses,
-    announcements,
     // إضافة متغيرات الكورسات المسجلة
     registeredCourses,
     coursesLoading,
@@ -101,27 +99,18 @@ const StudentProfile = () => {
       en: "Courses",
       ar: "المقررات",
     },
-    assignments: {
-      en: "Assignments",
-      ar: "الواجبات",
-    },
+
     courseRegistration: {
       en: "Course Registration",
       ar: "تسجيل الكورسات",
     },
-    announcements: {
-      en: "Announcements",
-      ar: "الإعلانات",
-    },
+
     // Other common labels
     currentCourses: {
       en: "Current Courses",
       ar: "المقررات الحالية",
     },
-    upcomingAssignments: {
-      en: "Upcoming Assignments",
-      ar: "الواجبات القادمة",
-    },
+
     loading: {
       en: "Loading profile data...",
       ar: "جاري تحميل بيانات البروفايل...",
@@ -382,13 +371,7 @@ const StudentProfile = () => {
               <BookOpen size={16} className={`${isRTL ? 'ml-2' : 'mr-2'}`} />
               {getText(translations.courses)}
             </TabsTrigger>
-            <TabsTrigger
-              value="assignments"
-              className={`flex-1 py-2 data-[state=active]:bg-[#3949AB] data-[state=active]:text-white ${isRTL ? 'flex-row-reverse' : ''}`}
-            >
-              <FileText size={16} className={`${isRTL ? 'ml-2' : 'mr-2'}`} />
-              {getText(translations.assignments)}
-            </TabsTrigger>
+
             <TabsTrigger
               value="courseRegistration"
               className={`flex-1 py-2 data-[state=active]:bg-[#3949AB] data-[state=active]:text-white ${isRTL ? 'flex-row-reverse' : ''}`}
@@ -396,13 +379,7 @@ const StudentProfile = () => {
               <UserPlus size={16} className={`${isRTL ? 'ml-2' : 'mr-2'}`} />
               {getText(translations.courseRegistration)}
             </TabsTrigger>
-            <TabsTrigger
-              value="announcements"
-              className={`flex-1 py-2 data-[state=active]:bg-[#3949AB] data-[state=active]:text-white ${isRTL ? 'flex-row-reverse' : ''}`}
-            >
-              <Bell size={16} className={`${isRTL ? 'ml-2' : 'mr-2'}`} />
-              {getText(translations.announcements)}
-            </TabsTrigger>
+
           </TabsList>
 
           <TabsContent value="overview" className="mt-0">
@@ -459,54 +436,43 @@ const StudentProfile = () => {
                 </div>
               </div>
 
-              {/* Upcoming Assignments Card */}
+              {/* Academic Summary Quick Card */}
               <div className="bg-white dark:bg-[#1E1E1E] rounded-xl shadow-md overflow-hidden">
                 <div className="p-6">
                   <h3 className="text-lg font-semibold text-[#37474F] dark:text-white mb-4">
-                    {getText(translations.upcomingAssignments)}
+                    {language === 'ar' ? 'ملخص أكاديمي سريع' : 'Academic Summary'}
                   </h3>
                   <div className="space-y-4">
-                    {upcomingAssignments && upcomingAssignments.length > 0 ? (
-                      upcomingAssignments.slice(0, 3).map((assignment, index) => (
-                        <div
-                          key={assignment.id || index}
-                          className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-3 rounded-lg"
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <p className="font-medium text-[#37474F] dark:text-white">
-                              {assignment.title || assignment.name || 'Assignment'}
-                            </p>
-                            <span className="text-xs bg-[#FFC107] text-[#37474F] py-0.5 px-2 rounded-full">
-                              {assignment.course || assignment.course_code || 'Course'}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <Clock
-                                size={14}
-                                className="text-[#3949AB] dark:text-[#7986CB] mr-1"
-                              />
-                              <span className="text-xs text-[#3949AB] dark:text-[#7986CB]">
-                                Due: {assignment.due_date || assignment.dueDate || 'TBD'}
-                              </span>
-                            </div>
-                            <span className="text-xs text-[#3949AB] dark:text-[#7986CB]">
-                              {assignment.status || 'Pending'}
-                            </span>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-6 rounded-lg text-center">
-                        <div className="text-4xl mb-4">📝</div>
-                        <h4 className="text-md font-medium text-[#37474F] dark:text-white mb-2">
-                          {language === 'ar' ? 'لا توجد واجبات قادمة' : 'No Assignments'}
-                        </h4>
-                        <p className="text-xs text-[#3949AB] dark:text-[#7986CB]">
-                          {language === 'ar' ? 'سيتم عرض واجباتك هنا' : 'Assignments will appear here'}
-                        </p>
+                    <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-3 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-[#3949AB] dark:text-[#7986CB]">
+                          {language === 'ar' ? 'المعدل التراكمي' : 'Current GPA'}
+                        </span>
+                        <span className="text-lg font-bold text-[#37474F] dark:text-white">
+                          {basicInfo.gpa || 'N/A'}
+                        </span>
                       </div>
-                    )}
+                    </div>
+                    <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-3 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-[#3949AB] dark:text-[#7986CB]">
+                          {language === 'ar' ? 'المقررات المسجلة' : 'Enrolled Courses'}
+                        </span>
+                        <span className="text-lg font-bold text-[#37474F] dark:text-white">
+                          {currentCourses?.length || 0}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-3 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-[#3949AB] dark:text-[#7986CB]">
+                          {language === 'ar' ? 'إجمالي الساعات' : 'Total Credits'}
+                        </span>
+                        <span className="text-lg font-bold text-[#37474F] dark:text-white">
+                          {currentCourses?.reduce((total, course) => total + (course.credits || course.credit_hours || 3), 0) || 0}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -814,101 +780,7 @@ const StudentProfile = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="assignments" className="mt-0">
-            <div className="bg-white dark:bg-[#1E1E1E] rounded-xl shadow-md overflow-hidden">
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-[#37474F] dark:text-white mb-6">
-                  All Assignments
-                </h3>
 
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex space-x-2">
-                    <button className="bg-[#3949AB] text-white px-3 py-1 rounded-md text-sm">
-                      All
-                    </button>
-                    <button className="bg-[#F0F4F8] dark:bg-[#2D2D2D] text-[#3949AB] dark:text-[#7986CB] px-3 py-1 rounded-md text-sm">
-                      Pending
-                    </button>
-                    <button className="bg-[#F0F4F8] dark:bg-[#2D2D2D] text-[#3949AB] dark:text-[#7986CB] px-3 py-1 rounded-md text-sm">
-                      Completed
-                    </button>
-                  </div>
-
-                  <div className="flex items-center">
-                    <select className="bg-[#F0F4F8] dark:bg-[#2D2D2D] text-[#37474F] dark:text-white text-sm rounded-md px-3 py-1.5 border-0">
-                      <option>All Courses</option>
-                      {currentCourses.map((course, idx) => (
-                        <option key={idx}>{course.code}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-4 mt-6">
-                  {upcomingAssignments && upcomingAssignments.length > 0 ? (
-                    [
-                      ...upcomingAssignments,
-                      // يمكن إضافة assignments مكتملة من API لو متوفرة
-                    ].map((assignment, index) => (
-                      <div
-                        key={assignment.id || index}
-                        className={`bg-[#F0F4F8] dark:bg-[#2D2D2D] p-4 rounded-lg flex justify-between items-center ${
-                          assignment.status === "Completed" || assignment.status === "مكتمل"
-                            ? "border-l-4 border-[#FFC107]"
-                            : "border-l-4 border-[#7986CB]"
-                        }`}
-                      >
-                        <div>
-                          <div className="flex items-center mb-1">
-                            <span className="text-xs bg-[#3949AB] text-white py-0.5 px-2 rounded-full mr-2">
-                              {assignment.course || assignment.course_code || 'Course'}
-                            </span>
-                            <p className="font-medium text-[#37474F] dark:text-white">
-                              {assignment.title || assignment.name || 'Assignment'}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <Clock
-                              size={14}
-                              className="text-[#3949AB] dark:text-[#7986CB] mr-1"
-                            />
-                            <span className="text-xs text-[#3949AB] dark:text-[#7986CB]">
-                              {assignment.due_date || assignment.dueDate || 'TBD'}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center">
-                          <span
-                            className={`text-xs py-1 px-3 rounded-full ${
-                              assignment.status === "Completed" || assignment.status === "مكتمل"
-                                ? "bg-[#FFC107]/20 text-[#FFC107]"
-                                : "bg-[#7986CB]/20 text-[#7986CB]"
-                            }`}
-                          >
-                            {assignment.status || 'Pending'}
-                          </span>
-                          <button className="ml-4 text-[#3949AB] dark:text-[#7986CB]">
-                            <ChevronRight size={18} />
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                  <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-8 rounded-lg text-center">
-                  <div className="text-6xl mb-4">📝</div>
-                    <h4 className="text-lg font-medium text-[#37474F] dark:text-white mb-2">
-                        {language === 'ar' ? 'لا توجد واجبات' : 'No Assignments'}
-                        </h4>
-                        <p className="text-sm text-[#3949AB] dark:text-[#7986CB]">
-                          {language === 'ar' ? 'سيتم عرض جميع واجباتك هنا' : 'All your assignments will appear here'}
-                        </p>
-                      </div>
-                    )}
-                </div>
-              </div>
-            </div>
-          </TabsContent>
 
           <TabsContent value="courseRegistration" className="mt-0">
             <div className="bg-white dark:bg-[#1E1E1E] rounded-xl shadow-md overflow-hidden">
@@ -918,65 +790,7 @@ const StudentProfile = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="announcements" className="mt-0">
-            <div className="bg-white dark:bg-[#1E1E1E] rounded-xl shadow-md overflow-hidden">
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-[#37474F] dark:text-white mb-6">
-                  Announcements & Notifications
-                </h3>
 
-                <div className="space-y-4">
-                  {announcements && announcements.length > 0 ? (
-                    announcements.map((announcement, index) => (
-                      <div
-                        key={announcement.id || index}
-                        className={`p-4 border-l-4 rounded-r-lg ${
-                          announcement.read || announcement.is_read
-                            ? "border-[#7986CB] bg-[#F0F4F8]/50 dark:bg-[#2D2D2D]/50"
-                            : "border-[#FFC107] bg-[#F0F4F8] dark:bg-[#2D2D2D]"
-                        }`}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4
-                              className={`font-medium ${
-                                announcement.read || announcement.is_read
-                                  ? "text-[#3949AB] dark:text-[#7986CB]"
-                                  : "text-[#37474F] dark:text-white"
-                              }`}
-                            >
-                              {announcement.title || announcement.subject || 'Announcement'}
-                              {!(announcement.read || announcement.is_read) && (
-                                <span className="ml-2 bg-[#FFC107] text-[#37474F] text-xs px-2 py-0.5 rounded-full">
-                                  {language === 'ar' ? 'جديد' : 'New'}
-                                </span>
-                              )}
-                            </h4>
-                            <p className="text-xs text-[#3949AB] dark:text-[#7986CB] mt-1">
-                              {announcement.date || announcement.created_at || 'N/A'}
-                            </p>
-                          </div>
-                          <button className="text-[#3949AB] dark:text-[#7986CB]">
-                            <ChevronRight size={18} />
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                  <div className="bg-[#F0F4F8] dark:bg-[#2D2D2D] p-8 rounded-lg text-center">
-                  <div className="text-6xl mb-4">📢</div>
-                    <h4 className="text-lg font-medium text-[#37474F] dark:text-white mb-2">
-                        {language === 'ar' ? 'لا توجد إعلانات' : 'No Announcements'}
-                        </h4>
-                        <p className="text-sm text-[#3949AB] dark:text-[#7986CB]">
-                          {language === 'ar' ? 'سيتم عرض الإعلانات والإشعارات هنا' : 'Announcements and notifications will appear here'}
-                        </p>
-                      </div>
-                    )}
-                </div>
-              </div>
-            </div>
-          </TabsContent>
         </Tabs>
       </div>
     </div>

@@ -216,34 +216,54 @@ const useStudentProfile = () => {
   const getCurrentCourses = useCallback(() => {
     // استخدام البيانات من الـ API الجديد إذا كانت متوفرة
     if (registeredCourses && registeredCourses.data) {
-      // Helper function to safely extract string from object or return string
-      const extractValue = (value, fallback = 'N/A') => {
-        if (typeof value === 'object' && value !== null) {
-          return value.name || value.title || value.value || fallback;
-        }
-        return value || fallback;
-      };
+      console.log('📚 Processing registered courses data:', registeredCourses.data);
       
       // تحويل البيانات لتطابق الشكل المطلوب في الواجهة
-      return registeredCourses.data.map(course => ({
-        id: course.id,
-        code: extractValue(course.course_code || course.code),
-        name: extractValue(course.course_name || course.name),
-        course_name: extractValue(course.course_name || course.name),
-        course_code: extractValue(course.course_code || course.code),
-        credits: typeof course.credits === 'object' ? course.credits?.value || 3 : course.credits || course.credit_hours || 3,
-        credit_hours: typeof course.credit_hours === 'object' ? course.credit_hours?.value || 3 : course.credits || course.credit_hours || 3,
-        semester: extractValue(course.semester || course.term, 'Current'),
-        term: extractValue(course.semester || course.term, 'Current'),
-        instructor: extractValue(course.instructor || course.instructor_name),
-        instructor_name: extractValue(course.instructor || course.instructor_name),
-        status: extractValue(course.status, 'active'),
-        description: extractValue(course.description, ''),
-        // إضافة البيانات الأصلية (لكن بعد التنظيف)
-        department: extractValue(course.department),
-        level: extractValue(course.level),
-        grade: extractValue(course.grade)
-      }));
+      return registeredCourses.data.map(courseRegistration => {
+        // استخراج بيانات الكورس من courseRegistration.course
+        const course = courseRegistration.course;
+        const semester = courseRegistration.semester;
+        
+        console.log('📖 Processing course:', { course, semester, status: courseRegistration.status });
+        
+        return {
+          id: courseRegistration.id,
+          registration_id: courseRegistration.id,
+          
+          // بيانات الكورس
+          course_id: course.id,
+          code: course.code,
+          name: course.name,
+          course_name: course.name,
+          course_code: course.code,
+          color: course.color,
+          
+          // بيانات الفصل الدراسي
+          semester_id: semester.id,
+          semester: semester.name,
+          semester_name: semester.name,
+          term: semester.name,
+          
+          // بيانات التسجيل
+          status: courseRegistration.status || 'registered',
+          passed: courseRegistration.passed,
+          registered_at: courseRegistration.registered_at,
+          
+          // افتراضات للبيانات المفقودة
+          credits: 3, // قيمة افتراضية
+          credit_hours: 3,
+          instructor: 'N/A',
+          instructor_name: 'N/A',
+          description: `${course.name} - ${course.code}`,
+          
+          // البيانات الأصلية للمرجع
+          originalData: {
+            courseRegistration,
+            course,
+            semester
+          }
+        };
+      });
     }
     
     // fallback للبيانات القديمة
@@ -287,30 +307,42 @@ const useStudentProfile = () => {
   const getCompletedCourses = useCallback(() => {
     // استخدام البيانات من الـ API الجديد إذا كانت متوفرة
     if (registeredCourses && registeredCourses.data) {
-      // Helper function to safely extract string from object or return string
-      const extractValue = (value, fallback = 'N/A') => {
-        if (typeof value === 'object' && value !== null) {
-          return value.name || value.title || value.value || fallback;
-        }
-        return value || fallback;
-      };
-      
       // تحويل البيانات لتطابق الشكل المطلوب في الواجهة
-      return registeredCourses.data.map(course => ({
-        id: course.id,
-        code: extractValue(course.course_code || course.code),
-        name: extractValue(course.course_name || course.name),
-        course_name: extractValue(course.course_name || course.name),
-        course_code: extractValue(course.course_code || course.code),
-        credits: typeof course.credits === 'object' ? course.credits?.value || 3 : course.credits || course.credit_hours || 3,
-        credit_hours: typeof course.credit_hours === 'object' ? course.credit_hours?.value || 3 : course.credits || course.credit_hours || 3,
-        grade: extractValue(course.grade),
-        semester: extractValue(course.semester || course.term, 'Current'),
-        term: extractValue(course.semester || course.term, 'Current'),
-        instructor: extractValue(course.instructor || course.instructor_name),
-        instructor_name: extractValue(course.instructor || course.instructor_name),
-        status: extractValue(course.status, 'completed')
-      }));
+      return registeredCourses.data.map(courseRegistration => {
+        const course = courseRegistration.course;
+        const semester = courseRegistration.semester;
+        
+        return {
+          id: courseRegistration.id,
+          registration_id: courseRegistration.id,
+          
+          // بيانات الكورس
+          course_id: course.id,
+          code: course.code,
+          name: course.name,
+          course_name: course.name,
+          course_code: course.code,
+          color: course.color,
+          
+          // بيانات الفصل الدراسي
+          semester_id: semester.id,
+          semester: semester.name,
+          semester_name: semester.name,
+          term: semester.name,
+          
+          // بيانات التسجيل
+          status: courseRegistration.status || 'registered',
+          passed: courseRegistration.passed,
+          registered_at: courseRegistration.registered_at,
+          
+          // افتراضات للبيانات المفقودة
+          credits: 3, // قيمة افتراضية
+          credit_hours: 3,
+          instructor: 'N/A',
+          instructor_name: 'N/A',
+          grade: courseRegistration.passed ? 'A' : 'In Progress'
+        };
+      });
     }
     
     // fallback للبيانات القديمة

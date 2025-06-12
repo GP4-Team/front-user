@@ -1,4 +1,4 @@
-// src/pages/courses/AllCoursesPage.jsx
+// src/pages/courses/EnrolledCoursesPage.jsx
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -15,8 +15,8 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import Navbar from "../../components/navigation/Navbar";
 
-// Mock data for courses
-const ALL_COURSES = [
+// Mock data for enrolled courses
+const ENROLLED_COURSES = [
   {
     id: "physics-mechanics",
     title: {
@@ -43,14 +43,11 @@ const ALL_COURSES = [
       en: "Dr. Ahmed Shawky",
       ar: "د. أحمد شوقي"
     },
-    price: {
-      amount: 0,
-      currency: "EGP"
-    },
+    progress: 75,
     rating: 4.9,
     studentsCount: 3580,
     image: "/api/placeholder/400/225",
-    isFeatured: true
+    status: "in_progress"
   },
   {
     id: "chemistry-organic",
@@ -78,14 +75,11 @@ const ALL_COURSES = [
       en: "Dr. Laila Mahmoud",
       ar: "د. ليلى محمود"
     },
-    price: {
-      amount: 240,
-      currency: "EGP"
-    },
+    progress: 45,
     rating: 4.8,
     studentsCount: 2400,
     image: "/api/placeholder/400/225",
-    isFeatured: false
+    status: "in_progress"
   },
   {
     id: "math-calculus",
@@ -113,186 +107,91 @@ const ALL_COURSES = [
       en: "Dr. Kareem Hassan",
       ar: "د. كريم حسن"
     },
-    price: {
-      amount: 350,
-      currency: "EGP"
-    },
+    progress: 100,
     rating: 5.0,
     studentsCount: 1580,
     image: "/api/placeholder/400/225",
-    isFeatured: true
-  },
-  {
-    id: "physics-electricity",
-    title: {
-      en: "Physics - Electricity and Magnetism",
-      ar: "الفيزياء - الكهرباء والمغناطيسية"
-    },
-    description: {
-      en: "Study electric and magnetic phenomena, circuits, and electromagnetic waves.",
-      ar: "دراسة الظواهر الكهربائية والمغناطيسية والدوائر والموجات الكهرومغناطيسية."
-    },
-    category: {
-      en: "Physics",
-      ar: "الفيزياء"
-    },
-    level: {
-      en: "Secondary 3rd Year",
-      ar: "الصف الثالث الثانوي"
-    },
-    duration: {
-      en: "15 hours",
-      ar: "١٥ ساعة"
-    },
-    instructor: {
-      en: "Dr. Mohamed Nour",
-      ar: "د. محمد نور"
-    },
-    price: {
-      amount: 280,
-      currency: "EGP"
-    },
-    rating: 4.7,
-    studentsCount: 2100,
-    image: "/api/placeholder/400/225",
-    isFeatured: false
-  },
-  {
-    id: "biology-cells",
-    title: {
-      en: "Biology - Cell Biology",
-      ar: "الأحياء - بيولوجيا الخلية"
-    },
-    description: {
-      en: "Understand the fundamental unit of life - the cell, its structure, and functions.",
-      ar: "فهم الوحدة الأساسية للحياة - الخلية، بنيتها، ووظائفها."
-    },
-    category: {
-      en: "Biology",
-      ar: "الأحياء"
-    },
-    level: {
-      en: "Secondary 2nd Year",
-      ar: "الصف الثاني الثانوي"
-    },
-    duration: {
-      en: "12 hours",
-      ar: "١٢ ساعة"
-    },
-    instructor: {
-      en: "Dr. Sara Ahmed",
-      ar: "د. سارة أحمد"
-    },
-    price: {
-      amount: 240,
-      currency: "EGP"
-    },
-    rating: 4.6,
-    studentsCount: 1750,
-    image: "/api/placeholder/400/225",
-    isFeatured: false
+    status: "completed"
   }
 ];
 
 // UI Text translations
 const UI_TEXT = {
-  allCourses: {
-    en: "All Courses",
-    ar: "جميع المواد"
+  enrolledCourses: {
+    en: "My Enrolled Courses",
+    ar: "المواد المسجلة"
+  },
+  progress: {
+    en: "Progress",
+    ar: "التقدم"
+  },
+  completed: {
+    en: "Completed",
+    ar: "مكتمل"
+  },
+  inProgress: {
+    en: "In Progress",
+    ar: "قيد التقدم"
+  },
+  continueLearning: {
+    en: "Continue Learning",
+    ar: "متابعة التعلم"
+  },
+  viewCertificate: {
+    en: "View Certificate",
+    ar: "عرض الشهادة"
+  },
+  search: {
+    en: "Search courses...",
+    ar: "البحث في المواد..."
   },
   filterBy: {
     en: "Filter By",
     ar: "تصفية حسب"
   },
-  subject: {
-    en: "Subject",
-    ar: "المادة"
+  all: {
+    en: "All",
+    ar: "الكل"
   },
-  level: {
-    en: "Level",
-    ar: "المستوى"
-  },
-  price: {
-    en: "Price",
-    ar: "السعر"
-  },
-  rating: {
-    en: "Rating",
-    ar: "التقييم"
-  },
-  free: {
-    en: "Free",
-    ar: "مجاني"
-  },
-  paid: {
-    en: "Paid",
-    ar: "مدفوع"
-  },
-  search: {
-    en: "Search for courses...",
-    ar: "البحث عن مواد..."
-  },
-  studentsEnrolled: {
-    en: "students enrolled",
-    ar: "طالب مسجل"
-  },
-  viewCourse: {
-    en: "View Course",
-    ar: "عرض المادة"
-  },
-  noCoursesFound: {
-    en: "No courses found",
-    ar: "لم يتم العثور على مواد"
+  noCourses: {
+    en: "No enrolled courses found",
+    ar: "لا توجد مواد مسجلة"
   },
   noCoursesDescription: {
-    en: "Try adjusting your filters or search term",
-    ar: "حاول ضبط المرشحات أو مصطلح البحث"
+    en: "You haven't enrolled in any courses yet. Browse our catalog to get started.",
+    ar: "لم تسجل في أي مواد بعد. تصفح الكتالوج الخاص بنا للبدء."
   }
 };
 
-// Get icon for subject (simplified version to avoid errors)
-const getSubjectIcon = (category) => {
-  return <BookOpen />;
-};
-
-const AllCoursesPage = () => {
+const EnrolledCoursesPage = () => {
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({
-    subject: "all",
-    level: "all",
-    price: "all",
-    rating: "all"
-  });
+  const [statusFilter, setStatusFilter] = useState("all");
   
   const { language, isRTL } = useLanguage();
   const { isDarkMode } = useTheme();
   
-  // SAFE getText function to avoid undefined errors
+  // Helper function to get text based on language
   const getText = (textObj) => {
-    // Check if textObj is undefined or not an object
     if (!textObj || typeof textObj !== 'object') {
       return textObj || '';
     }
-    
-    // Return the appropriate language version or fallback
     return textObj[language] || textObj.en || '';
   };
   
   // Load courses on component mount
   useEffect(() => {
-    // Simulate API call
     setIsLoading(true);
     setTimeout(() => {
-      setCourses(ALL_COURSES);
-      setFilteredCourses(ALL_COURSES);
+      setCourses(ENROLLED_COURSES);
+      setFilteredCourses(ENROLLED_COURSES);
       setIsLoading(false);
     }, 1000);
   }, []);
   
-  // Filter courses when filters or search term changes
+  // Filter courses when search term or status filter changes
   useEffect(() => {
     if (courses.length === 0) return;
     
@@ -308,57 +207,30 @@ const AllCoursesPage = () => {
       );
     }
     
-    // Apply subject filter
-    if (filters.subject !== "all") {
-      result = result.filter(course => 
-        getText(course.category).toLowerCase() === filters.subject.toLowerCase()
-      );
-    }
-    
-    // Apply level filter
-    if (filters.level !== "all") {
-      result = result.filter(course => 
-        getText(course.level).toLowerCase().includes(filters.level.toLowerCase())
-      );
-    }
-    
-    // Apply price filter
-    if (filters.price !== "all") {
-      if (filters.price === "free") {
-        result = result.filter(course => course.price.amount === 0);
-      } else {
-        result = result.filter(course => course.price.amount > 0);
-      }
-    }
-    
-    // Apply rating filter
-    if (filters.rating !== "all") {
-      const minRating = parseInt(filters.rating);
-      result = result.filter(course => course.rating >= minRating);
+    // Apply status filter
+    if (statusFilter !== "all") {
+      result = result.filter(course => course.status === statusFilter);
     }
     
     setFilteredCourses(result);
-  }, [courses, searchTerm, filters, language]);
-  
-  // Handle filter changes
-  const handleFilterChange = (filterType, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterType]: value
-    }));
-  };
+  }, [courses, searchTerm, statusFilter, language]);
   
   // Handle search input
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
+  };
+  
+  // Handle status filter
+  const handleStatusFilter = (status) => {
+    setStatusFilter(status);
   };
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-[#121212] text-white' : 'bg-[#f5f7fa] text-[#37474F]'} ${isRTL ? 'font-tajawal' : ''}`}>
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">{getText(UI_TEXT.allCourses)}</h1>
+      <div className="max-w-7xl mx-auto px-4 py-8 pt-20">
+        <h1 className="text-3xl font-bold mb-8">{getText(UI_TEXT.enrolledCourses)}</h1>
         
         {/* Filters and Search */}
         <div className="flex flex-col lg:flex-row gap-4 mb-8">
@@ -375,48 +247,24 @@ const AllCoursesPage = () => {
             />
           </div>
           
-          <div className="flex flex-wrap gap-3">
-            {/* Subject Filter */}
-            <div className={`relative ${isDarkMode ? 'bg-[#1E1E1E] border-gray-700' : 'bg-white border-gray-200'} border rounded-lg`}>
-              <div className="flex items-center px-4 py-2 cursor-pointer">
-                <span className="text-sm">{getText(UI_TEXT.subject)}</span>
-                <ChevronDown size={16} className="ml-2" />
-              </div>
-              {/* Dropdown would go here */}
-            </div>
-            
-            {/* Level Filter */}
-            <div className={`relative ${isDarkMode ? 'bg-[#1E1E1E] border-gray-700' : 'bg-white border-gray-200'} border rounded-lg`}>
-              <div className="flex items-center px-4 py-2 cursor-pointer">
-                <span className="text-sm">{getText(UI_TEXT.level)}</span>
-                <ChevronDown size={16} className="ml-2" />
-              </div>
-              {/* Dropdown would go here */}
-            </div>
-            
-            {/* Price Filter */}
-            <div className={`relative ${isDarkMode ? 'bg-[#1E1E1E] border-gray-700' : 'bg-white border-gray-200'} border rounded-lg`}>
-              <div className="flex items-center px-4 py-2 cursor-pointer">
-                <span className="text-sm">{getText(UI_TEXT.price)}</span>
-                <ChevronDown size={16} className="ml-2" />
-              </div>
-              {/* Dropdown would go here */}
-            </div>
-            
-            {/* Rating Filter */}
-            <div className={`relative ${isDarkMode ? 'bg-[#1E1E1E] border-gray-700' : 'bg-white border-gray-200'} border rounded-lg`}>
-              <div className="flex items-center px-4 py-2 cursor-pointer">
-                <span className="text-sm">{getText(UI_TEXT.rating)}</span>
-                <ChevronDown size={16} className="ml-2" />
-              </div>
-              {/* Dropdown would go here */}
-            </div>
-            
-            {/* Reset Filters Button */}
-            <button className={`px-4 py-2 rounded-lg flex items-center ${isDarkMode ? 'bg-[#3949AB] text-white' : 'bg-[#3949AB] text-white'}`}>
-              <Filter size={16} className="mr-2" />
-              <span className="text-sm">{getText(UI_TEXT.filterBy)}</span>
-            </button>
+          <div className="flex gap-2">
+            {["all", "in_progress", "completed"].map((status) => (
+              <button
+                key={status}
+                onClick={() => handleStatusFilter(status)}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  statusFilter === status
+                    ? 'bg-[#3949AB] text-white'
+                    : isDarkMode 
+                      ? 'bg-[#1E1E1E] text-gray-300 hover:bg-[#2E2E2E]'
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {status === "all" && getText(UI_TEXT.all)}
+                {status === "in_progress" && getText(UI_TEXT.inProgress)}
+                {status === "completed" && getText(UI_TEXT.completed)}
+              </button>
+            ))}
           </div>
         </div>
         
@@ -426,7 +274,7 @@ const AllCoursesPage = () => {
             <div className="w-12 h-12 border-4 rounded-full border-blue-500 border-t-transparent animate-spin"></div>
           </div>
         ) : filteredCourses.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCourses.map((course, index) => (
               <div 
                 key={index} 
@@ -439,17 +287,34 @@ const AllCoursesPage = () => {
                     className="w-full h-48 object-cover"
                   />
                   
-                  {course.price && course.price.amount === 0 && (
-                    <div className="absolute top-3 left-3 px-2 py-1 text-xs font-medium bg-green-500 text-white rounded-full">
-                      {getText(UI_TEXT.free)}
+                  {/* Progress bar overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-2">
+                    <div className="flex items-center justify-between text-white text-sm mb-1">
+                      <span>{getText(UI_TEXT.progress)}</span>
+                      <span>{course.progress}%</span>
                     </div>
-                  )}
+                    <div className="w-full bg-gray-300/30 rounded-full h-2">
+                      <div 
+                        className="bg-[#3949AB] h-2 rounded-full transition-all duration-300" 
+                        style={{ width: `${course.progress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  {/* Status badge */}
+                  <div className={`absolute top-3 right-3 px-2 py-1 text-xs font-medium rounded-full ${
+                    course.status === 'completed' 
+                      ? 'bg-green-500 text-white'
+                      : 'bg-blue-500 text-white'
+                  }`}>
+                    {course.status === 'completed' ? getText(UI_TEXT.completed) : getText(UI_TEXT.inProgress)}
+                  </div>
                 </div>
                 
                 <div className="p-4">
                   <div className="flex items-center mb-2">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-[#3949AB]/20' : 'bg-blue-100'} mr-2`}>
-                      {getSubjectIcon(getText(course.category))}
+                      <BookOpen size={16} className="text-[#3949AB]" />
                     </div>
                     <span className="text-sm text-[#3949AB]">{getText(course.category)}</span>
                   </div>
@@ -473,32 +338,27 @@ const AllCoursesPage = () => {
                     </div>
                     
                     <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                      <User size={14} className="mr-1" />
-                      <span>{course.studentsCount}</span>
+                      <Clock size={14} className="mr-1" />
+                      <span>{getText(course.duration)}</span>
                     </div>
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Clock size={14} className="text-gray-400 mr-1" />
-                      <span className="text-sm text-gray-500 dark:text-gray-400">{getText(course.duration)}</span>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {getText(course.instructor)}
                     </div>
-                    
-                    {course.price && (
-                      <div className="text-lg font-bold">
-                        {course.price.amount === 0 
-                          ? getText(UI_TEXT.free)
-                          : `${course.price.amount} ${course.price.currency}`
-                        }
-                      </div>
-                    )}
                   </div>
                   
                   <Link 
-                    to={`/courses/${course.id}`}
-                    className="mt-4 w-full py-2 flex items-center justify-center bg-[#3949AB] text-white rounded-lg font-medium text-sm hover:bg-[#303F9F] transition-colors"
+                    to={`/courses/${course.id}/content`}
+                    className={`mt-4 w-full py-2 flex items-center justify-center rounded-lg font-medium text-sm transition-colors ${
+                      course.status === 'completed'
+                        ? 'bg-green-500 hover:bg-green-600 text-white'
+                        : 'bg-[#3949AB] hover:bg-[#303F9F] text-white'
+                    }`}
                   >
-                    {getText(UI_TEXT.viewCourse)}
+                    {course.status === 'completed' ? getText(UI_TEXT.viewCertificate) : getText(UI_TEXT.continueLearning)}
+                    <ArrowRight size={16} className="ml-2" />
                   </Link>
                 </div>
               </div>
@@ -507,8 +367,14 @@ const AllCoursesPage = () => {
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[400px]">
             <BookOpen size={48} className="text-gray-400 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">{getText(UI_TEXT.noCoursesFound)}</h2>
-            <p className="text-gray-500 dark:text-gray-400">{getText(UI_TEXT.noCoursesDescription)}</p>
+            <h2 className="text-xl font-semibold mb-2">{getText(UI_TEXT.noCourses)}</h2>
+            <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">{getText(UI_TEXT.noCoursesDescription)}</p>
+            <Link 
+              to="/courses"
+              className="mt-4 bg-[#3949AB] hover:bg-[#303F9F] text-white px-6 py-2 rounded-lg font-medium transition-colors"
+            >
+              {language === 'ar' ? 'تصفح المواد' : 'Browse Courses'}
+            </Link>
           </div>
         )}
       </div>
@@ -516,4 +382,4 @@ const AllCoursesPage = () => {
   );
 };
 
-export default AllCoursesPage;
+export default EnrolledCoursesPage;
