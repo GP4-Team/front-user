@@ -42,7 +42,9 @@ const StartExamModal = ({
       bodyStyle={{ 
         padding: '30px 20px',
         textAlign: 'center',
-        borderRadius: '12px'
+        borderRadius: '12px',
+        maxHeight: '80vh',
+        overflowY: 'auto'
       }}
       style={{
         borderRadius: '12px',
@@ -75,11 +77,11 @@ const StartExamModal = ({
           type="primary"
           onClick={onConfirm}
           style={{
-            backgroundColor: colors.purple, // Changed to purple
-            borderColor: colors.purple,     // Changed to purple
+            backgroundColor: colors.purple,
+            borderColor: colors.purple,
             borderRadius: '8px',
             height: '40px',
-            width: '120px',
+            width: '140px',
           }}
         >
           {confirmText}

@@ -1,0 +1,7 @@
+Hello World!
+This is a sample file created using write_file function.
+
+You can write multiple lines
+and any text content here.
+
+Date created: June 11, 2025

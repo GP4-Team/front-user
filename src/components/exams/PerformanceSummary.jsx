@@ -118,91 +118,93 @@ const PerformanceSummary = ({ examStats, statsVisible, setStatsVisible, statsLoa
           {/* Stats Grid - Show when not loading */}
           {!statsLoading && (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 text-center">
-            {/* Total Exams */}
+            {/* Total Available Exams */}
             <div className="p-4 transform transition-all duration-500 hover:scale-105">
               <div
                 className={`text-4xl font-bold ${
                   isDarkMode ? "text-text-light" : "text-[#37474F]"
                 }`}
               >
-                {examStats.totalExams}
+                {examStats?.total_available_exams || 0}
               </div>
               <div
                 className={`text-sm ${
                   isDarkMode ? "text-primary-light" : "text-[#3949AB]"
                 } ${isRTL ? "text-right" : "text-left"}`}
               >
-                {t.totalExams}
+                {t.totalExams || "Total Exams"}
               </div>
             </div>
 
-            {/* Completed Exams */}
+            {/* Active Exams */}
             <div className="p-4 transform transition-all duration-500 hover:scale-105">
               <div
                 className={`text-4xl font-bold ${
                   isDarkMode ? "text-text-light" : "text-[#37474F]"
                 }`}
               >
-                {examStats.completedExams}
+                {examStats?.active_exams || 0}
               </div>
               <div
                 className={`text-sm ${
                   isDarkMode ? "text-primary-light" : "text-[#3949AB]"
                 } ${isRTL ? "text-right" : "text-left"}`}
               >
-                {t.completedExams}
+                {t.activeExams || "Active Exams"}
               </div>
             </div>
 
-            {/* Pending Exams */}
+            {/* Upcoming Exams */}
             <div className="p-4 transform transition-all duration-500 hover:scale-105">
               <div
                 className={`text-4xl font-bold ${
                   isDarkMode ? "text-text-light" : "text-[#37474F]"
                 }`}
               >
-                {examStats.pendingExams}
+                {examStats?.upcoming_exams || 0}
               </div>
               <div
                 className={`text-sm ${
                   isDarkMode ? "text-primary-light" : "text-[#3949AB]"
                 } ${isRTL ? "text-right" : "text-left"}`}
               >
-                {t.pendingExams}
+                {t.upcomingExams || "Upcoming Exams"}
               </div>
             </div>
 
-            {/* Average Score */}
+            {/* Ended Exams */}
             <div className="p-4 transform transition-all duration-500 hover:scale-105">
               <div
-                className={`text-4xl font-bold ${getScoreColor(examStats.averageScore)}`}
+                className={`text-4xl font-bold ${
+                  isDarkMode ? "text-text-light" : "text-[#37474F]"
+                }`}
               >
-                {examStats.averageScore}%
+                {examStats?.ended_exams || 0}
               </div>
               <div
                 className={`text-sm ${
                   isDarkMode ? "text-primary-light" : "text-[#3949AB]"
                 } ${isRTL ? "text-right" : "text-left"}`}
               >
-                {t.averageResults}
+                {t.endedExams || "Ended Exams"}
               </div>
             </div>
 
-            {/* Highest Score */}
+            {/* Registered Courses */}
             <div className="p-4 transform transition-all duration-500 hover:scale-105">
               <div
                 className={`text-4xl font-bold ${
                   isDarkMode ? "text-green-400" : "text-green-500"
                 }`}
               >
-                {examStats.highestScore}%
+                {examStats?.registered_courses || 0}
               </div>
               <div
                 className={`text-sm ${
                   isDarkMode ? "text-primary-light" : "text-[#3949AB]"
                 } ${isRTL ? "text-right" : "text-left"}`}
               >
-                {t.highestScore}
+                {t.registeredCourses || "Registered Courses"}
               </div>
             </div>
             </div>

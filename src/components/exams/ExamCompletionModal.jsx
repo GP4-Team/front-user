@@ -23,17 +23,19 @@ const ExamCompletionModal = ({
   
   const modalTitle = isTimeOut 
     ? (language === 'ar' ? 'انتهى وقت الامتحان' : 'Exam Time Ended')
-    : (language === 'ar' ? 'هل انت متأكد انك تريد انهاء الامتحان؟' : 'Are you sure you want to end the exam?');
+    : (language === 'ar' ? 'هل أنت متأكد من إرسال الامتحان؟' : 'Are you sure you want to submit the exam?');
     
   const modalContent = isTimeOut
     ? (language === 'ar' 
         ? 'انتهى وقت الامتحان، تم تسجيل الإجابات لن يتم استلام أي إجابات أخرى'
         : 'Exam time has ended. Your answers will be submitted automatically.')
-    : null; // No additional content for confirmation dialog as per screenshots
+    : (language === 'ar'
+        ? 'بمجرد الإرسال، لن يمكنك تغيير الإجابات'
+        : 'Once submitted, you cannot change your answers');
   
   const confirmText = isTimeOut 
     ? (language === 'ar' ? 'حسناً' : 'OK')
-    : (language === 'ar' ? 'إنهاء' : 'End');
+    : (language === 'ar' ? 'سبميت' : 'Submit');
   const cancelText = language === 'ar' ? 'إلغاء' : 'Cancel';
 
   const renderModalIcon = () => {

@@ -1,4 +1,3 @@
-// src/pages/courses/CourseDetailPage.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -242,7 +241,7 @@ const CourseDetailPage = () => {
               ar: "جميع المواد التعليمية",
               en: "All Course Materials",
             },
-            lessons: lessons.length,
+            lessonsCount: lessons.length,
             completed: 0,
             expanded: true,
             lessons: lessons,
@@ -262,7 +261,7 @@ const CourseDetailPage = () => {
               sections.push({
                 id: `${type}-section`,
                 title: typeNames[type] || { ar: type, en: type },
-                lessons: typeLessons.length,
+                lessonsCount: typeLessons.length,
                 completed: 0,
                 expanded: false,
                 lessons: typeLessons,

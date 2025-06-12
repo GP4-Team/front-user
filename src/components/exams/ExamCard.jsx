@@ -10,6 +10,10 @@ import {
   formatExamDuration,
   EXAM_STATUS 
 } from "../../services/examProgressService";
+import { 
+  getCardExamTitle, 
+  getExamSubtitle 
+} from "../../utils/examTitleFormatter";
 
 // Icon components
 const CalendarIcon = () => (
@@ -138,41 +142,53 @@ const ExamCard = ({ exam, index, toggleFavorite, handleSelectExam, favoriteExams
   const { isRTL, language } = useLanguage();
   
   const isFavorite = favoriteExams?.includes(exam.id) || false;
-  const examData = isOnlineExam ? {
-    id: exam.id,
-    title: exam.name || exam.title,
-    subject: exam.courseName || exam.subject,
-    status: exam.status,
-    duration: exam.duration,
-    numberOfQuestions: exam.numberOfQuestions,
-    category: exam.examCategory,
-    description: exam.description,
-    minPercentage: exam.minPercentage,
-    allowedChances: exam.allowedChances,
-    educationLevel: exam.educationLevel
-  } : exam;
   
-  // Determine header color based on subject
-  const headerColor = examData.subject === (isRTL ? "قواعد البيانات" : "Database")
+  // استخدام البيانات مباشرة من API الجديد
+  const examData = {
+    id: exam.id,
+    title: exam.name,
+    subject: exam.course?.name,
+    status: exam.status, // pending, active, ended
+    availabilityStatus: exam.availability_status, // متاح، منتهي، etc
+    actionButton: exam.action_button, // عرض النتائج، بدء الامتحان، etc
+    canTakeExam: exam.can_take_exam,
+    duration: exam.duration_formatted,
+    numberOfQuestions: exam.question_number,
+    category: exam.exam_category?.name,
+    description: exam.description,
+    minPercentage: exam.min_percentage,
+    allowedChances: exam.allowed_chances,
+    educationLevel: exam.education_level?.name,
+    timeRemaining: exam.time_remaining,
+    startAt: exam.start_at,
+    endAt: exam.end_at,
+    courseCode: exam.course?.code
+  };
+  
+  // استخدام المُنسق الجديد للأسماء
+  const formattedTitle = getCardExamTitle(examData.title, language);
+  const examSubtitle = getExamSubtitle(examData.title, language);
+  
+  // تحديد لون الهيدر بناءً على المادة
+  const headerColor = examData.subject === "الجبر الأساسي"
     ? isDarkMode ? "bg-blue-700" : "bg-[#3949AB]"
-    : examData.subject === (isRTL ? "أساسيات و مفاهيم في التيار الكهربي" : "Basics & Concepts in Electric Current")
-    ? isDarkMode ? "bg-yellow-700" : "bg-[#FFC107]"
+    : examData.subject === "الأدب العربي"
+    ? isDarkMode ? "bg-green-700" : "bg-[#4CAF50]"
+    : examData.subject === "أساسيات التشريح"
+    ? isDarkMode ? "bg-purple-700" : "bg-[#9C27B0]"
     : isDarkMode ? "bg-indigo-700" : "bg-[#7986CB]";
 
-  // Get action button text and state
-  const actionText = isOnlineExam 
-    ? getExamStatusLabel(examData.status, language)
-    : examData.status === "finished" 
-      ? translations?.viewDetails || (language === 'ar' ? 'عرض التفاصيل' : 'View Details')
-      : translations?.openExam || (language === 'ar' ? 'فتح الامتحان' : 'Open Exam');
-
-  const isActionEnabled = isOnlineExam ? isExamActionEnabled(examData.status) : true;
-  const actionType = isOnlineExam ? getExamActionType(examData.status) : 'primary';
+  // استخدام بيانات الحالة من API مباشرة
+  const actionText = examData.actionButton || (
+    examData.canTakeExam 
+      ? (language === 'ar' ? 'بدء الامتحان' : 'Start Exam')
+      : (language === 'ar' ? 'غير متاح' : 'Not Available')
+  );
   
-  // Format duration
-  const formattedDuration = isOnlineExam 
-    ? formatExamDuration(examData.duration, language)
-    : `${examData.duration} ${translations?.minutes || (language === 'ar' ? 'دقيقة' : 'minutes')}`;
+  const isActionEnabled = examData.canTakeExam;
+  
+  // استخدام المدة مباشرة من API
+  const formattedDuration = examData.duration;
 
   return (
     <div
@@ -224,26 +240,36 @@ const ExamCard = ({ exam, index, toggleFavorite, handleSelectExam, favoriteExams
 
         {/* Exam title */}
         <h3
-          className={`mt-8 mb-3 text-xl font-bold ${
+          className={`mt-8 mb-2 text-xl font-bold ${
             isDarkMode ? "text-text-light" : "text-[#37474F]"
           } ${isRTL ? "text-right" : "text-left"}`}
         >
-          {examData.title}
+          {formattedTitle || examData.title || exam.name || 'اسم الامتحان غير متوفر'}
         </h3>
-
-        {/* Status badge - Use new component for online exams */}
-        {isOnlineExam ? (
-          <ExamStatusBadge status={examData.status} className="mb-3" />
-        ) : (
-          <div className="inline-block px-2 py-1 rounded-full text-xs mb-3 transition-all duration-300 hover:scale-105 bg-blue-100 text-blue-800">
-            {examData.status === "finished" 
-              ? (translations?.statusCompleted || (language === 'ar' ? 'مكتمل' : 'Completed'))
-              : examData.status === "in-progress"
-              ? (translations?.statusInProgress || (language === 'ar' ? 'جاري' : 'In Progress')) 
-              : (translations?.statusAvailable || (language === 'ar' ? 'متاح' : 'Available'))
-            }
-          </div>
+        
+        {/* Exam subtitle - نوع الامتحان */}
+        {examSubtitle && (
+          <p className={`text-sm mb-3 ${
+            isDarkMode ? "text-gray-400" : "text-gray-600"
+          } ${isRTL ? "text-right" : "text-left"}`}>
+            {examSubtitle}
+          </p>
         )}
+        
+        {/* Status badge - استخدام حالة الامتحان من API */}
+        <div className="inline-block px-3 py-1 rounded-full text-sm mb-3 transition-all duration-300 hover:scale-105">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            examData.status === 'ended' 
+              ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+              : examData.status === 'active'
+              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+              : examData.status === 'pending'
+              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+          }`}>
+            {examData.availabilityStatus}
+          </span>
+        </div>
 
         {/* Exam details - duration and questions */}
         <div className="grid grid-cols-2 gap-4 mb-4">
@@ -261,7 +287,7 @@ const ExamCard = ({ exam, index, toggleFavorite, handleSelectExam, favoriteExams
               <p className={`text-sm ${isRTL ? "text-right" : "text-left"}`}>
                 {formattedDuration}
               </p>
-              {isOnlineExam && examData.minPercentage && (
+              {examData.minPercentage && (
                 <p className={`text-xs ${isRTL ? "text-right" : "text-left"}`}>
                   {language === 'ar' ? 'نسبة النجاح:' : 'Pass:'} {examData.minPercentage}%
                 </p>
@@ -283,7 +309,7 @@ const ExamCard = ({ exam, index, toggleFavorite, handleSelectExam, favoriteExams
               <p className={`text-xs ${isRTL ? "text-right" : "text-left"}`}>
                 {examData.numberOfQuestions || 0} {translations?.questions || (language === 'ar' ? 'أسئلة' : 'questions')}
               </p>
-              {isOnlineExam && examData.allowedChances && (
+              {examData.allowedChances && (
                 <p className={`text-xs ${isRTL ? "text-right" : "text-left"}`}>
                   {language === 'ar' ? 'المحاولات:' : 'Attempts:'} {examData.allowedChances}
                 </p>
@@ -291,6 +317,19 @@ const ExamCard = ({ exam, index, toggleFavorite, handleSelectExam, favoriteExams
             </div>
           </div>
         </div>
+        
+        {/* معلومات إضافية من API */}
+        {examData.timeRemaining && examData.timeRemaining !== 'Exam ended' && (
+          <div className={`text-center mb-3 p-2 rounded ${
+            isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50'
+          }`}>
+            <p className={`text-sm font-medium ${
+              isDarkMode ? 'text-blue-400' : 'text-blue-600'
+            }`}>
+              {language === 'ar' ? 'الوقت المتبقي:' : 'Time Remaining:'} {examData.timeRemaining}
+            </p>
+          </div>
+        )}
 
         {/* Action button */}
         <div className="text-center mt-4">

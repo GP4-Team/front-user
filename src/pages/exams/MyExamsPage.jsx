@@ -1,4 +1,4 @@
-// pages/exams/MyExamsPage.jsx - Updated for Real APIs
+// pages/exams/MyExamsPage.jsx - Updated for Real APIs with Clean Design
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -15,77 +15,54 @@ import Navbar from "../../components/navigation/Navbar";
 // Import custom components
 import ExamsHeader from "../../components/exams/ExamsHeader";
 import PerformanceSummary from "../../components/exams/PerformanceSummary";
-import SearchBar from "../../components/exams/SearchBar";
 import ExamList from "../../components/exams/ExamList";
 import MotivationalMessage from "../../components/exams/MotivationalMessage";
-import PurpleBackground from "../../components/exams/PurpleBackground";
-import EducationalBackground from "../../components/exams/EducationalBackground";
-import EducationalAnimations from "../../components/exams/EducationalAnimations";
+import ExamTitlePreview from "../../components/admin/ExamTitlePreview";
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
 
-// Debug flag for logging
-const DEBUG = true;
-
 const MyExamsPage = () => {
-  const { isDarkMode, toggleTheme } = useTheme();
-  const { language, isRTL, toggleLanguage } = useLanguage();
+  const { isDarkMode } = useTheme();
+  const { language, isRTL } = useLanguage();
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
   // Use the new real examination hook
   const { 
-    // Main state
     loading,
     error,
-    
-    // Statistics
     statistics,
     statisticsLoading,
     statisticsError,
-    
-    // Available exams
     availableExams,
     availableExamsLoading,
     availableExamsError,
-    
-    // Completed exams
     completedExams,
     completedExamsLoading,
     completedExamsError,
     pagination,
     summary,
-    
-    // Actions
     fetchAllExamData,
     refreshData,
     clearErrors
   } = useRealExamination();
 
+  // State for UI controls
+  const [favoriteExams, setFavoriteExams] = useState([]);
+  const [statsVisible, setStatsVisible] = useState(true);
+  const [showMotivationalMessage, setShowMotivationalMessage] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState("");
+  
   // Refs for animations
   const pageRef = useRef(null);
   const statsSectionRef = useRef(null);
   const availableExamsRef = useRef(null);
   const completedExamsRef = useRef(null);
   const examCardRefs = useRef([]);
-
-  // State for UI controls
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all"); // all, available, completed
-  const [sortBy, setSortBy] = useState("date"); // date, title, score
-  const [sortDirection, setSortDirection] = useState("desc"); // asc, desc
-  const [viewMode, setViewMode] = useState("grid"); // grid, list
-  const [showFilters, setShowFilters] = useState(false);
-  const [favoriteExams, setFavoriteExams] = useState([]);
-  const [statsVisible, setStatsVisible] = useState(true);
-
-  // State for motivational messages
-  const [showMotivationalMessage, setShowMotivationalMessage] = useState(false);
-  const [currentMessage, setCurrentMessage] = useState("");
   const motivationalMessageRef = useRef(null);
 
-  // Motivational messages in both Arabic and English
+  // Motivational messages
   const motivationalMessages = {
     ar: [
       "النجاح رحلة وليس وجهة!",
@@ -105,15 +82,36 @@ const MyExamsPage = () => {
     ],
   };
 
-  // Load exam data when component mounts or user changes
+  // Load exam data when component mounts
   useEffect(() => {
     if (isAuthenticated && user) {
-      console.log('🎯 Loading exam data for authenticated user:', user.id);
+      console.log('🎯 Loading exam data for user:', user.id);
+      
+      // تهيئة ترجمات أسماء الامتحانات
+      import('../../utils/examTitleSetup').then(({ initializeExamTitleTranslations }) => {
+        initializeExamTitleTranslations();
+      });
+      
       fetchAllExamData();
-    } else {
-      console.log('⚠️ User not authenticated, skipping exam data load');
     }
   }, [isAuthenticated, user, fetchAllExamData]);
+
+  // تحديث الترجمات عند تحميل البيانات الجديدة
+  useEffect(() => {
+    if (Array.isArray(availableExams) && availableExams.length > 0) {
+      import('../../utils/examTitleSetup').then(({ addCustomSubjectsFromData }) => {
+        addCustomSubjectsFromData(availableExams);
+      });
+    }
+  }, [availableExams]);
+
+  useEffect(() => {
+    if (Array.isArray(completedExams) && completedExams.length > 0) {
+      import('../../utils/examTitleSetup').then(({ addCustomSubjectsFromData }) => {
+        addCustomSubjectsFromData(completedExams);
+      });
+    }
+  }, [completedExams]);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -136,18 +134,15 @@ const MyExamsPage = () => {
     }
   }, [favoriteExams]);
 
-  // Display a motivational message after a delay
+  // Show motivational message
   useEffect(() => {
-    // Show motivational message after 3 seconds
     const messageTimeout = setTimeout(() => {
-      const randomMessage =
-        motivationalMessages[language][
-          Math.floor(Math.random() * motivationalMessages[language].length)
-        ];
+      const randomMessage = motivationalMessages[language][
+        Math.floor(Math.random() * motivationalMessages[language].length)
+      ];
       setCurrentMessage(randomMessage);
       setShowMotivationalMessage(true);
 
-      // Hide message after 5 seconds
       const hideTimeout = setTimeout(() => {
         setShowMotivationalMessage(false);
       }, 5000);
@@ -162,77 +157,28 @@ const MyExamsPage = () => {
   useEffect(() => {
     let isMounted = true;
 
-    // Helper to check if component is still mounted
-    const checkMounted = () => isMounted && pageRef.current;
-
-    if (DEBUG) {
-      console.log("MyExamsPage mounted, setting up animations");
-      console.log("Dark mode:", isDarkMode);
-    }
-
-    // Only setup animations if component is mounted
-    if (checkMounted()) {
+    if (isMounted && pageRef.current) {
       try {
-        // Page fade in
         gsap.fromTo(
           pageRef.current,
           { opacity: 0 },
           { opacity: 1, duration: 0.5, ease: "power2.out" }
         );
 
-        // Stats section animation
         if (statsSectionRef.current) {
           gsap.fromTo(
             statsSectionRef.current,
             { y: 20, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.6,
-              delay: 0.2,
-              ease: "power3.out",
-            }
+            { y: 0, opacity: 1, duration: 0.6, delay: 0.2, ease: "power3.out" }
           );
         }
 
-        // Section headers animations
-        const sectionHeadersAnimation = gsap.timeline({ delay: 0.3 });
-        [availableExamsRef.current, completedExamsRef.current].forEach(
-          (section, index) => {
-            if (section) {
-              sectionHeadersAnimation.fromTo(
-                section,
-                { x: isRTL ? 30 : -30, opacity: 0 },
-                {
-                  x: 0,
-                  opacity: 1,
-                  duration: 0.5,
-                  ease: "power2.out",
-                },
-                index * 0.1
-              );
-            }
-          }
-        );
-
-        // Exam cards staggered animation
-        examCardRefs.current.forEach((card, index) => {
-          if (card) {
+        [availableExamsRef.current, completedExamsRef.current].forEach((section, index) => {
+          if (section) {
             gsap.fromTo(
-              card,
-              {
-                y: 20,
-                opacity: 0,
-                scale: 0.95,
-              },
-              {
-                y: 0,
-                opacity: 1,
-                scale: 1,
-                duration: 0.5,
-                delay: 0.5 + index * 0.1,
-                ease: "back.out(1.2)",
-              }
+              section,
+              { x: isRTL ? 30 : -30, opacity: 0 },
+              { x: 0, opacity: 1, duration: 0.5, delay: 0.3 + index * 0.1, ease: "power2.out" }
             );
           }
         });
@@ -243,70 +189,27 @@ const MyExamsPage = () => {
 
     return () => {
       isMounted = false;
-
-      // Cleanup animations
-      if (pageRef.current) {
-        gsap.killTweensOf(pageRef.current);
-      }
-      if (statsSectionRef.current) {
-        gsap.killTweensOf(statsSectionRef.current);
-      }
-      if (availableExamsRef.current) {
-        gsap.killTweensOf(availableExamsRef.current);
-      }
-      if (completedExamsRef.current) {
-        gsap.killTweensOf(completedExamsRef.current);
-      }
-      examCardRefs.current.forEach((card) => {
-        if (card) {
-          gsap.killTweensOf(card);
-        }
-      });
-
-      // Clean up ScrollTrigger instances
-      ScrollTrigger.getAll().forEach((trigger) => {
-        trigger.kill();
-      });
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
     };
   }, [isDarkMode, isRTL]);
 
-  // Animation for motivational message
-  useEffect(() => {
-    if (showMotivationalMessage && motivationalMessageRef.current) {
-      gsap.fromTo(
-        motivationalMessageRef.current,
-        {
-          y: 50,
-          opacity: 0,
-          scale: 0.8,
-        },
-        {
-          y: 0,
-          opacity: 1,
-          scale: 1,
-          duration: 0.8,
-          ease: "elastic.out(1, 0.5)",
-        }
-      );
-    }
-  }, [showMotivationalMessage]);
-
+  // Helper functions
   const toggleFavorite = (examId) => {
-    setFavoriteExams((prev) =>
+    setFavoriteExams(prev =>
       prev.includes(examId)
-        ? prev.filter((id) => id !== examId)
+        ? prev.filter(id => id !== examId)
         : [...prev, examId]
     );
   };
 
   const handleSelectExam = (exam) => {
-    if (exam.status === "completed" || exam.status === "revision") {
+    if (exam.status === "completed" || exam.status === "revision" || exam.status === "ended") {
       navigate(`/exams/${exam.id}/review`);
-    } else if (exam.status === "unavailable" || exam.status === "none") {
-      // Do nothing for unavailable exams
+    } else if (exam.status === "unavailable" || exam.status === "none" || !exam.canTakeExam) {
       return;
     } else {
-      navigate(`/exams/${exam.id}`);
+      // توجيه لصفحة الامتحان الجديدة
+      navigate(`/exams/${exam.id}/take`);
     }
   };
 
@@ -315,13 +218,13 @@ const MyExamsPage = () => {
     fetchAllExamData();
   };
 
-  // Access translations based on current language
+  // Access translations
   const t = translations[language];
 
-  // If not authenticated, show auth required state
+  // Auth required state
   if (!isAuthenticated) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-background-dark' : 'bg-[#F0F4F8]'}`}>
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <Navbar />
         <div className="pt-20"></div>
         <div className="flex items-center justify-center h-96">
@@ -345,15 +248,15 @@ const MyExamsPage = () => {
     );
   }
 
-  // Show loading state
+  // Loading state
   if (loading) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-background-dark' : 'bg-[#F0F4F8]'}`}>
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <Navbar />
         <div className="pt-20"></div>
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-base mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className={`text-lg ${isDarkMode ? 'text-white' : 'text-gray-600'}`}>
               {language === 'ar' ? 'جاري تحميل الامتحانات...' : 'Loading exams...'}
             </p>
@@ -363,10 +266,10 @@ const MyExamsPage = () => {
     );
   }
 
-  // Show error state (only for critical failures)
+  // Critical error state
   if (error && !statistics && (!Array.isArray(availableExams) || availableExams.length === 0) && (!Array.isArray(completedExams) || completedExams.length === 0)) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-background-dark' : 'bg-[#F0F4F8]'}`}>
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <Navbar />
         <div className="pt-20"></div>
         <div className="flex items-center justify-center h-96">
@@ -407,27 +310,13 @@ const MyExamsPage = () => {
     <div
       ref={pageRef}
       className={`min-h-screen relative ${isRTL ? "rtl" : "ltr"} ${
-        isDarkMode
-          ? "bg-background-dark text-text-light dark-mode"
-          : "bg-[#F0F4F8] text-[#37474F]"
+        isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"
       }`}
     >
-      {/* الهيدر الأساسي */}
       <Navbar />
-      
-      {/* Add space to prevent content from being hidden under the navbar */}
       <div className="pt-20"></div>
 
-      {/* Purple background at the top */}
-      <PurpleBackground />
-      
-      {/* Educational pattern background */}
-      <EducationalBackground />
-      
-      {/* Educational animations */}
-      <EducationalAnimations />
-
-      {/* Motivational message notification */}
+      {/* Motivational message */}
       <MotivationalMessage 
         showMotivationalMessage={showMotivationalMessage}
         setShowMotivationalMessage={setShowMotivationalMessage}
@@ -439,9 +328,21 @@ const MyExamsPage = () => {
       <div className="relative z-10">
         <div className="max-w-6xl mx-auto px-4 py-8">
           {/* Page header */}
-          <ExamsHeader title={t.pageTitle} />
+          <ExamsHeader title={t.pageTitle || (language === 'ar' ? 'الامتحانات' : 'Exams')} />
 
-          {/* Performance summary section */}
+          {/* Title Preview - for development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mb-6">
+              <ExamTitlePreview 
+                examNames={[
+                  ...Array.isArray(availableExams) ? availableExams.map(exam => exam.name).filter(Boolean) : [],
+                  ...Array.isArray(completedExams) ? completedExams.map(exam => exam.name).filter(Boolean) : []
+                ]}
+              />
+            </div>
+          )}
+
+          {/* Performance summary */}
           <div ref={statsSectionRef}>
             <PerformanceSummary 
               examStats={statistics}
@@ -453,9 +354,9 @@ const MyExamsPage = () => {
             />
           </div>
 
-          {/* Error notifications for individual APIs */}
+          {/* Error notifications */}
           {(statisticsError || availableExamsError || completedExamsError) && (
-            <div className="mb-6 space-y-2">
+            <div className="mb-6">
               <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                 <div className="flex items-center mb-2">
                   <div className="text-yellow-600 dark:text-yellow-400 mr-3">⚠️</div>
@@ -478,30 +379,19 @@ const MyExamsPage = () => {
                   <p className="text-xs text-yellow-600 dark:text-yellow-400">
                     {language === 'ar' 
                       ? 'هذه مشاكل في الخادم يجب حلها من فريق التطوير. يرجى الانتظار أو الاتصال بالدعم الفني.' 
-                      : 'These are server-side issues that need to be fixed by the development team. Please wait or contact technical support.'
-                    }
+                      : 'These are server-side issues that need to be fixed by the development team. Please wait or contact technical support.'}
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Search and filters */}
-          <SearchBar 
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            setShowFilters={setShowFilters}
-            translations={t}
-          />
-
-          {/* Available exams section */}
+          {/* Available exams */}
           <div ref={availableExamsRef}>
             <ExamList 
-              title={t.availableExams || (language === 'ar' ? 'الامتحانات المتاحة' : 'Available Exams')}
+              title={language === 'ar' ? 'الامتحانات المتاحة' : 'Available Exams'}
               exams={Array.isArray(availableExams) ? availableExams : []}
-              viewMode={viewMode}
+              viewMode="grid"
               toggleFavorite={toggleFavorite}
               handleSelectExam={handleSelectExam}
               favoriteExams={favoriteExams}
@@ -509,16 +399,16 @@ const MyExamsPage = () => {
               cardRefs={examCardRefs}
               loading={availableExamsLoading}
               error={availableExamsError}
-              isRealExam={true}
+              isOnlineExam={true}
             />
           </div>
 
-          {/* Completed exams section */}
+          {/* Completed exams */}
           <div ref={completedExamsRef}>
             <ExamList 
-              title={t.completedExamsTitle || (language === 'ar' ? 'الامتحانات المكتملة' : 'Completed Exams')}
+              title={language === 'ar' ? 'الامتحانات المكتملة' : 'Completed Exams'}
               exams={Array.isArray(completedExams) ? completedExams : []}
-              viewMode={viewMode}
+              viewMode="grid"
               toggleFavorite={toggleFavorite}
               handleSelectExam={handleSelectExam}
               favoriteExams={favoriteExams}
@@ -528,39 +418,11 @@ const MyExamsPage = () => {
               error={completedExamsError}
               pagination={pagination}
               summary={summary}
-              isRealExam={true}
+              isOnlineExam={true}
             />
           </div>
 
-          {/* Debug information in development */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-8 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-              <h3 className="font-bold mb-2">Debug Information:</h3>
-              <div className="text-sm space-y-1">
-                <div>Statistics loaded: {statistics ? 'Yes' : 'No'}</div>
-                <div>Available exams: {Array.isArray(availableExams) ? availableExams.length : 'Not an array'}</div>
-                <div>Completed exams: {Array.isArray(completedExams) ? completedExams.length : 'Not an array'}</div>
-                <div>Loading states: {JSON.stringify({loading, statisticsLoading, availableExamsLoading, completedExamsLoading})}</div>
-                <div>Errors: {JSON.stringify({error, statisticsError, availableExamsError, completedExamsError})}</div>
-                <div>User authenticated: {isAuthenticated ? 'Yes' : 'No'}</div>
-                <div>User ID: {user?.id || 'N/A'}</div>
-                <div>Auth token present: {localStorage.getItem('accessToken') ? 'Yes' : 'No'}</div>
-                <div>Token length: {localStorage.getItem('accessToken')?.length || 0} chars</div>
-                <div>User data in localStorage: {localStorage.getItem('userData') ? 'Yes' : 'No'}</div>
-                <div>API Base URL: {process.env.REACT_APP_API_BASE_URL || 'https://academy1.gp-app.tafra-tech.com/api'}</div>
-                
-                {/* Quick test button */}
-                <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
-                  <button 
-                    onClick={() => window.open('/exams-api-test', '_blank')}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm"
-                  >
-                    🧪 Open API Test Console
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Debug info - معلومات التطوير - محذوفة */}
         </div>
       </div>
     </div>

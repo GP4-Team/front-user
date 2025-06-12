@@ -18,7 +18,7 @@ const ExamList = ({
 }) => {
   const { isDarkMode } = useTheme();
   const { isRTL, language } = useLanguage();
-
+  
   // Ensure exams is always an array
   const examsList = Array.isArray(exams) ? exams : [];
 

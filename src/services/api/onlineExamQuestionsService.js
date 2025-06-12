@@ -145,37 +145,70 @@ export const onlineExamQuestionsService = {
   },
 
   /**
-   * Submit exam answers
-   * @param {number|string} examId - The exam ID
-   * @param {Object} answers - The answers object
+   * Submit individual answer for a question
+   * @param {number|string} studentAnswerId - The student answer ID
+   * @param {Object} answerData - The answer data (choice_id or text)
    * @returns {Promise<Object>} Submit response
    */
-  async submitExamAnswers(examId, answers) {
+  async submitAnswer(studentAnswerId, answerData) {
     try {
-      console.log(`📤 Submitting answers for exam ${examId}:`, answers);
+      console.log(`📤 Submitting answer for student answer ID ${studentAnswerId}:`, answerData);
       
-      const response = await apiClient.post(`/examination/online-exams/${examId}/submit`, {
-        answers: answers
-      });
+      const response = await apiClient.post(`/examination/submit-answer/${studentAnswerId}`, answerData);
       
-      console.log('✅ Submit response:', response);
+      console.log('✅ Submit answer response:', response);
       
       return {
         success: true,
         data: response.data || response,
-        message: response.message || 'Answers submitted successfully',
-        examId: examId
+        message: response.message || 'Answer submitted successfully',
+        studentAnswerId: studentAnswerId
       };
     } catch (error) {
-      console.error('❌ Error submitting answers:', error);
+      console.error('❌ Error submitting answer:', error);
       
       const errorResponse = error.response?.data;
       
       return {
         success: false,
-        error: errorResponse?.message || error.message || 'Failed to submit answers',
-        examId: examId,
-        data: errorResponse?.data || null
+        error: errorResponse?.message || error.message || 'Failed to submit answer',
+        studentAnswerId: studentAnswerId,
+        data: errorResponse?.data || null,
+        httpStatus: error.response?.status
+      };
+    }
+  },
+
+  /**
+   * Finish exam session
+   * @param {number|string} passedExamId - The passed exam session ID
+   * @returns {Promise<Object>} Finish response
+   */
+  async finishExam(passedExamId) {
+    try {
+      console.log(`🏁 Finishing exam session ${passedExamId}`);
+      
+      const response = await apiClient.post(`/examination/finish-exam/${passedExamId}`);
+      
+      console.log('✅ Finish exam response:', response);
+      
+      return {
+        success: true,
+        data: response.data || response,
+        message: response.message || 'Exam finished successfully',
+        passedExamId: passedExamId
+      };
+    } catch (error) {
+      console.error('❌ Error finishing exam:', error);
+      
+      const errorResponse = error.response?.data;
+      
+      return {
+        success: false,
+        error: errorResponse?.message || error.message || 'Failed to finish exam',
+        passedExamId: passedExamId,
+        data: errorResponse?.data || null,
+        httpStatus: error.response?.status
       };
     }
   },
@@ -217,20 +250,22 @@ export const onlineExamQuestionsService = {
   /**
    * Get exam results
    * @param {number|string} examId - The exam ID
+   * @param {number|string} attemptId - The attempt ID
    * @returns {Promise<Object>} Exam results
    */
-  async getExamResults(examId) {
+  async getExamResults(examId, attemptId) {
     try {
-      console.log(`📊 Fetching results for exam ${examId}`);
+      console.log(`📊 Fetching results for exam ${examId}, attempt ${attemptId}`);
       
-      const response = await apiClient.get(`/examination/online-exams/${examId}/results`);
+      const response = await apiClient.get(`/examination/exam-results/${examId}/${attemptId}`);
       
       console.log('✅ Results response:', response);
       
       return {
         success: true,
         data: response.data || response,
-        examId: examId
+        examId: examId,
+        attemptId: attemptId
       };
     } catch (error) {
       console.error('❌ Error fetching results:', error);
@@ -241,8 +276,74 @@ export const onlineExamQuestionsService = {
         success: false,
         error: errorResponse?.message || error.message || 'Failed to get exam results',
         examId: examId,
-        data: errorResponse?.data || null
+        attemptId: attemptId,
+        data: errorResponse?.data || null,
+        httpStatus: error.response?.status
       };
+    }
+  },
+
+  /**
+   * Get exam answers
+   * @param {number|string} examId - The exam ID
+   * @param {number|string} attemptId - The attempt ID
+   * @returns {Promise<Object>} Exam answers
+   */
+  async getExamAnswers(examId, attemptId) {
+    try {
+      console.log(`📋 Fetching answers for exam ${examId}, attempt ${attemptId}`);
+      
+      const response = await apiClient.get(`/examination/exam-answers/${examId}/${attemptId}`);
+      
+      console.log('✅ Answers response:', response);
+      
+      return {
+        success: true,
+        data: response.data || response,
+        examId: examId,
+        attemptId: attemptId
+      };
+    } catch (error) {
+      console.error('❌ Error fetching answers:', error);
+      
+      const errorResponse = error.response?.data;
+      
+      return {
+        success: false,
+        error: errorResponse?.message || error.message || 'Failed to get exam answers',
+        examId: examId,
+        attemptId: attemptId,
+        data: errorResponse?.data || null,
+        httpStatus: error.response?.status
+      };
+    }
+  },
+
+  /**
+   * Format answer data based on question type
+   * @param {string} questionType - Question type (MultipleChoice, TrueFalse, etc.)
+   * @param {any} answer - The answer value
+   * @returns {Object} Formatted answer data
+   */
+  formatAnswerData(questionType, answer) {
+    switch (questionType) {
+      case 'MultipleChoice':
+      case 'TrueFalse':
+        return {
+          choice_id: parseInt(answer)
+        };
+      
+      case 'KeywordsEssay':
+      case 'Essay':
+        return {
+          text: answer.toString()
+        };
+      
+      default:
+        console.warn(`Unknown question type: ${questionType}`);
+        return {
+          choice_id: parseInt(answer)
+        };
     }
   }
 };

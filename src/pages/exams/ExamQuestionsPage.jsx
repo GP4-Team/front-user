@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button, Layout, Image, Tooltip, message, Spin } from 'antd';
-import { ClockCircleOutlined, LogoutOutlined, SaveOutlined } from '@ant-design/icons';
+import { ClockCircleOutlined, SendOutlined, SaveOutlined } from '@ant-design/icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -40,7 +40,7 @@ const ExamQuestionsPage = () => {
     reviewExam,
     updateAnswer,
     saveProgress,
-    submitExam,
+    finishExam,
     getAnsweredCount,
     getProgressPercentage,
     isAllAnswered,
@@ -175,27 +175,36 @@ const ExamQuestionsPage = () => {
     setShowCompletionModal(false);
     
     try {
-      // Submit exam answers
-      const result = await submitExam(examId);
+      // Get passed exam ID from exam data
+      const passedExamId = examData?.passed_exam_id;
+      
+      if (!passedExamId) {
+        message.error(language === 'ar' ? 'لم يتم العثور على معرف جلسة الامتحان' : 'Could not find exam session ID');
+        setIsExamEnded(false);
+        return;
+      }
+      
+      // Finish exam session
+      const result = await finishExam(passedExamId);
       
       if (result.success) {
-        message.success(language === 'ar' ? 'تم إرسال الإجابات بنجاح' : 'Answers submitted successfully');
+        message.success(language === 'ar' ? 'تم إنهاء الامتحان بنجاح' : 'Exam finished successfully');
         
-        // Navigate to results page
-        navigate(`/exams/${examId}/results`, { 
+        // Navigate to results page with attempt ID
+        navigate(`/exams/${examId}/results/${passedExamId}`, { 
           state: { 
             examData: examData,
             userAnswers: userAnswers,
-            timeSpent: (examData?.duration || 0) - timeRemaining,
+            timeSpent: (examData?.duration_in_seconds || 0) - timeRemaining,
             submissionData: result.data
           } 
         });
       } else {
-        message.error(result.error || (language === 'ar' ? 'خطأ في إرسال الإجابات' : 'Error submitting answers'));
+        message.error(result.error || (language === 'ar' ? 'خطأ في إنهاء الامتحان' : 'Error finishing exam'));
         setIsExamEnded(false);
       }
     } catch (error) {
-      console.error('Error submitting exam:', error);
+      console.error('Error finishing exam:', error);
       message.error(language === 'ar' ? 'خطأ في الاتصال بالخادم' : 'Server connection error');
       setIsExamEnded(false);
     }
@@ -209,25 +218,44 @@ const ExamQuestionsPage = () => {
     setIsExamEnded(true);
     
     try {
-      // Auto-submit when time ends
-      const result = await submitExam(examId);
+      // Get passed exam ID from exam data
+      const passedExamId = examData?.passed_exam_id;
       
-      message.info(language === 'ar' ? 'انتهى الوقت المحدد وتم إرسال الإجابات' : 'Time is up, answers have been submitted');
-      
-      // Navigate to results page
-      navigate(`/exams/${examId}/results`, { 
-        state: { 
-          examData: examData,
-          userAnswers: userAnswers,
-          timeSpent: examData?.duration || 0,
-          submissionData: result.data,
-          timeUp: true
-        } 
-      });
+      if (passedExamId) {
+        // Auto-finish when time ends
+        const result = await finishExam(passedExamId);
+        
+        message.info(language === 'ar' ? 'انتهى الوقت المحدد وتم إنهاء الامتحان' : 'Time is up, exam has been finished');
+        
+        // Navigate to results page with attempt ID
+        navigate(`/exams/${examId}/results/${passedExamId}`, { 
+          state: { 
+            examData: examData,
+            userAnswers: userAnswers,
+            timeSpent: examData?.duration_in_seconds || 0,
+            submissionData: result.data,
+            timeUp: true
+          } 
+        });
+      } else {
+        message.error(language === 'ar' ? 'لم يتم العثور على معرف جلسة الامتحان' : 'Could not find exam session ID');
+      }
     } catch (error) {
-      console.error('Error auto-submitting exam:', error);
-      message.error(language === 'ar' ? 'خطأ في إرسال الإجابات التلقائي' : 'Error auto-submitting answers');
+      console.error('Error auto-finishing exam:', error);
+      message.error(language === 'ar' ? 'خطأ في إنهاء الامتحان التلقائي' : 'Error auto-finishing exam');
     }
+  };
+
+  // دالة للحصول على الإجابة الصحيحة للسؤال
+  const getCorrectAnswerForQuestion = (questionId) => {
+    const question = questions.find(q => q.id === questionId);
+    if (!question || !question.choices) return null;
+    
+    // البحث عن الإجابة الصحيحة في الـ choices
+    // يمكن أن تكون محددة في الـ API أو نحتاج لتحديدها حسب البيانات المتوفرة
+    // هذا مثال - قد نحتاج لتعديله حسب بنية البيانات الفعلية
+    const correctChoice = question.choices.find(choice => choice.is_correct);
+    return correctChoice ? correctChoice.id : null;
   };
 
   // Handle loading state
@@ -377,13 +405,13 @@ const ExamQuestionsPage = () => {
                     loading={submitLoading}
                     onClick={handleEndExam}
                     className="flex items-center justify-center"
-                    icon={<LogoutOutlined />}
+                    icon={<SendOutlined />}
                     style={endExamButtonStyle}
                     disabled={isExamEnded}
                   >
                     {submitLoading 
                       ? (language === 'ar' ? 'جاري الإرسال...' : 'Submitting...') 
-                      : (language === 'ar' ? 'إنهاء الامتحان' : 'End Exam')
+                      : (language === 'ar' ? 'سبميت' : 'Submit')
                     }
                   </Button>
                 ) : (
@@ -416,14 +444,14 @@ const ExamQuestionsPage = () => {
                 {language === 'ar' ? `السؤال ${currentQuestionIndex + 1}` : `Question ${currentQuestionIndex + 1}`}
               </h1>
               <div className="flex items-center space-x-4">
-                {/* Auto-save indicator */}
+                {/* Timer ومعلومات الامتحان */}
                 {saveLoading && (
                   <Tooltip title={language === 'ar' ? 'جاري الحفظ...' : 'Saving...'}>
                     <SaveOutlined className="text-blue-500 animate-spin" />
                   </Tooltip>
                 )}
                 <ExamTimer 
-                  initialTime={timeRemaining} 
+                  initialTime={timeRemaining || examData?.duration_in_seconds || 0} 
                   onTimeEnd={handleTimeEnd} 
                   isExamEnded={isExamEnded}
                   colors={colors}
@@ -441,8 +469,11 @@ const ExamQuestionsPage = () => {
                 language={language}
                 isDarkMode={isDarkMode}
                 colors={colors}
-                imageMaxWidth={400} // Control image size
+                imageMaxWidth={400}
                 isReviewMode={examStatus === 'revision'}
+                examSettings={examData?.exam_settings}
+                correctAnswer={examData?.exam_settings?.show_correct_answers_directly ? 
+                  getCorrectAnswerForQuestion(currentQuestion.id) : null}
               />
 
               <div className="mt-8">
@@ -455,7 +486,7 @@ const ExamQuestionsPage = () => {
                   colors={colors}
                 />
                 
-                {/* Extra End Exam button for better visibility */}
+                {/* Extra Submit button for better visibility */}
                 {(currentQuestionIndex === questions.length - 1 || allQuestionsAnswered) && examStatus !== 'revision' && (
                   <div className="flex justify-center mt-6">
                     <Button 
@@ -463,13 +494,13 @@ const ExamQuestionsPage = () => {
                       loading={submitLoading}
                       onClick={handleEndExam}
                       className="flex items-center"
-                      icon={<LogoutOutlined />}
+                      icon={<SendOutlined />}
                       style={floatingEndExamButtonStyle}
                       disabled={isExamEnded}
                     >
                       {submitLoading 
                         ? (language === 'ar' ? 'جاري الإرسال...' : 'Submitting...') 
-                        : (language === 'ar' ? 'إنهاء الامتحان' : 'End Exam')
+                        : (language === 'ar' ? 'سبميت' : 'Submit')
                       }
                     </Button>
                   </div>

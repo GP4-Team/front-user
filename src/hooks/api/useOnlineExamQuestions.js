@@ -75,7 +75,13 @@ export const useOnlineExamQuestions = () => {
         setQuestions(questionsList);
         
         // Set time remaining
-        setTimeRemaining(data.time_remaining || data.duration || 0);
+        const examTimeRemaining = data.time_remaining || data.duration_in_seconds || 0;
+        console.log('🕒 [useOnlineExamQuestions] Setting time remaining:', {
+          time_remaining: data.time_remaining,
+          duration_in_seconds: data.duration_in_seconds,
+          calculated: examTimeRemaining
+        });
+        setTimeRemaining(examTimeRemaining);
         
         // Initialize answers
         const existingAnswers = data.answers || {};
@@ -197,19 +203,62 @@ export const useOnlineExamQuestions = () => {
   }, [userAnswers, timeRemaining]);
 
   /**
-   * Submit exam answers
+   * Submit individual answer for a question
+   * @param {number} questionId - Question ID
+   * @param {any} answer - Answer value
+   * @param {string} questionType - Question type
+   * @returns {Promise<Object>} Submit response
    */
-  const submitExam = useCallback(async (examId) => {
+  const submitAnswer = useCallback(async (questionId, answer, questionType) => {
+    try {
+      // Find the question to get student_answer_id
+      const question = questions.find(q => q.id === questionId);
+      if (!question || !question.student_answer_id) {
+        throw new Error('بيانات السؤال غير صحيحة');
+      }
+
+      // Format answer data
+      const answerData = onlineExamQuestionsService.formatAnswerData(questionType, answer);
+      
+      console.log(`📤 Submitting answer for question ${questionId}:`, answerData);
+      
+      const response = await onlineExamQuestionsService.submitAnswer(
+        question.student_answer_id, 
+        answerData
+      );
+      
+      if (response.success) {
+        // Update local answer state
+        updateAnswer(questionId, answer);
+        console.log(`✅ Answer submitted for question ${questionId}`);
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('❌ Error submitting answer:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to submit answer'
+      };
+    }
+  }, [questions, updateAnswer]);
+
+  /**
+   * Finish exam session
+   * @param {number|string} passedExamId - Passed exam session ID
+   * @returns {Promise<Object>} Finish response
+   */
+  const finishExam = useCallback(async (passedExamId) => {
     setSubmitLoading(true);
     setError(null);
     
     try {
-      console.log(`📤 Submitting exam ${examId} with answers:`, userAnswers);
+      console.log(`🏁 Finishing exam session ${passedExamId}`);
       
-      const response = await onlineExamQuestionsService.submitExamAnswers(examId, userAnswers);
+      const response = await onlineExamQuestionsService.finishExam(passedExamId);
       
       if (response.success) {
-        console.log('✅ Exam submitted successfully');
+        console.log('✅ Exam finished successfully');
         setExamStatus('completed');
         
         return {
@@ -227,27 +276,30 @@ export const useOnlineExamQuestions = () => {
         };
       }
     } catch (error) {
-      console.error('❌ Error submitting exam:', error);
-      setError(error.message || 'Failed to submit exam');
+      console.error('❌ Error finishing exam:', error);
+      setError(error.message || 'Failed to finish exam');
       
       return {
         success: false,
-        error: error.message || 'Failed to submit exam'
+        error: error.message || 'Failed to finish exam'
       };
     } finally {
       setSubmitLoading(false);
     }
-  }, [userAnswers]);
+  }, []);
 
   /**
    * Get exam results
+   * @param {number|string} examId - Exam ID
+   * @param {number|string} attemptId - Attempt ID
+   * @returns {Promise<Object>} Results response
    */
-  const getResults = useCallback(async (examId) => {
+  const getResults = useCallback(async (examId, attemptId) => {
     setResultsLoading(true);
     setError(null);
     
     try {
-      const response = await onlineExamQuestionsService.getExamResults(examId);
+      const response = await onlineExamQuestionsService.getExamResults(examId, attemptId);
       
       if (response.success) {
         setExamResults(response.data);
@@ -272,6 +324,46 @@ export const useOnlineExamQuestions = () => {
       return {
         success: false,
         error: error.message || 'Failed to get exam results'
+      };
+    } finally {
+      setResultsLoading(false);
+    }
+  }, []);
+
+  /**
+   * Get exam answers
+   * @param {number|string} examId - Exam ID
+   * @param {number|string} attemptId - Attempt ID
+   * @returns {Promise<Object>} Answers response
+   */
+  const getAnswers = useCallback(async (examId, attemptId) => {
+    setResultsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await onlineExamQuestionsService.getExamAnswers(examId, attemptId);
+      
+      if (response.success) {
+        return {
+          success: true,
+          data: response.data
+        };
+      } else {
+        setError(response.error);
+        
+        return {
+          success: false,
+          error: response.error,
+          data: response.data
+        };
+      }
+    } catch (error) {
+      console.error('❌ Error getting answers:', error);
+      setError(error.message || 'Failed to get exam answers');
+      
+      return {
+        success: false,
+        error: error.message || 'Failed to get exam answers'
       };
     } finally {
       setResultsLoading(false);
@@ -362,11 +454,13 @@ export const useOnlineExamQuestions = () => {
     // Answer management
     updateAnswer,
     updateAnswers,
+    submitAnswer,
     
     // Progress and submission
     saveProgress,
-    submitExam,
+    finishExam,
     getResults,
+    getAnswers,
     
     // Utilities
     checkExamStatus,

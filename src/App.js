@@ -5,7 +5,7 @@ import {
   RouterProvider,
   useLocation,
   Outlet,
-  Navigate
+  Navigate,
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext.jsx";
 import { ThemeProvider } from "./contexts/ThemeContext.jsx";
@@ -29,6 +29,7 @@ import MyExamsPage from "./pages/exams/MyExamsPage.jsx";
 import ExamDetailsPage from "./pages/exams/ExamDetailsPage.jsx";
 import ExamQuestionsPage from "./pages/exams/ExamQuestionsPage.jsx";
 import ExamResultsPage from "./pages/exams/ExamResultsPage.jsx";
+import ExamPage from "./pages/exam/ExamPage.jsx";
 import ExamsApiTestPage from "./pages/testing/ExamsApiTestPage.jsx";
 import AIPortalTestPage from "./pages/testing/AIPortalTestPage.jsx";
 import AIWeaknessPortal from "./pages/student/AIWeaknessPortal.jsx";
@@ -66,129 +67,244 @@ const RootLayout = () => {
 };
 
 // Create router with routes configuration and enable all v7 future flags
-const router = createBrowserRouter([
-  {
-    element: <RootLayout />,
-    children: [
-      // Authentication Routes
-      {
-        path: "/auth",
-        element: <AuthPage />
-      },
-      // Redirect old routes to auth page
-      {
-        path: "/login",
-        element: <Navigate to="/auth?mode=login" replace />
-      },
-      {
-        path: "/register",
-        element: <Navigate to="/auth?mode=register" replace />
-      },
-      
-      // Public Routes with Guest Layout
-      {
-        path: "/",
-        element: <GuestLayout><Home /></GuestLayout>
-      },
-      {
-        path: "/courses",
-        element: <GuestLayout><AllCoursesPage /></GuestLayout>
-      },
-      {
-        path: "/courses/:courseId",
-        element: <GuestLayout><CourseInfoPage /></GuestLayout>
-      },
-      {
-        path: "/exams",
-        element: <GuestLayout><div className="exam-page-background"><MyExamsPage /></div></GuestLayout>
-      },
-      
-      // Testing Routes (Make it accessible to everyone for testing)
-      {
-        path: "/test-apis",
-        element: <GuestLayout><TestApiPage /></GuestLayout>
-      },
-      {
-        path: "/exams-api-test",
-        element: <GuestLayout><ExamsApiTestPage /></GuestLayout>
-      },
-      {
-        path: "/ai-portal-test",
-        element: <GuestLayout><AIPortalTestPage /></GuestLayout>
-      },
-      
-      // Protected Routes
-      {
-        path: "/profile",
-        element: (
-          <PrivateRoute>
-            <MainLayout>
-              <React.Suspense fallback={
-                <div className="flex justify-center items-center h-96">
-                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+const router = createBrowserRouter(
+  [
+    {
+      element: <RootLayout />,
+      children: [
+        // Authentication Routes
+        {
+          path: "/auth",
+          element: <AuthPage />,
+        },
+        // Redirect old routes to auth page
+        {
+          path: "/login",
+          element: <Navigate to="/auth?mode=login" replace />,
+        },
+        {
+          path: "/register",
+          element: <Navigate to="/auth?mode=register" replace />,
+        },
+
+        // Public Routes with Guest Layout
+        {
+          path: "/",
+          element: (
+            <GuestLayout>
+              <Home />
+            </GuestLayout>
+          ),
+        },
+        {
+          path: "/courses",
+          element: (
+            <GuestLayout>
+              <AllCoursesPage />
+            </GuestLayout>
+          ),
+        },
+        {
+          path: "/courses/:courseId",
+          element: (
+            <GuestLayout>
+              <CourseInfoPage />
+            </GuestLayout>
+          ),
+        },
+        {
+          path: "/exams",
+          element: (
+            <GuestLayout>
+              <div className="exam-page-background">
+                <MyExamsPage />
+              </div>
+            </GuestLayout>
+          ),
+        },
+
+        // Testing Routes (Make it accessible to everyone for testing)
+        {
+          path: "/test-apis",
+          element: (
+            <GuestLayout>
+              <TestApiPage />
+            </GuestLayout>
+          ),
+        },
+        {
+          path: "/exams-api-test",
+          element: (
+            <GuestLayout>
+              <ExamsApiTestPage />
+            </GuestLayout>
+          ),
+        },
+        {
+          path: "/ai-portal-test",
+          element: (
+            <GuestLayout>
+              <AIPortalTestPage />
+            </GuestLayout>
+          ),
+        },
+
+        // Protected Routes
+        {
+          path: "/profile",
+          element: (
+            <PrivateRoute>
+              <MainLayout>
+                <React.Suspense
+                  fallback={
+                    <div className="flex justify-center items-center h-96">
+                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+                    </div>
+                  }
+                >
+                  <Profile />
+                </React.Suspense>
+              </MainLayout>
+            </PrivateRoute>
+          ),
+        },
+        {
+          path: "/courses/enrolled",
+          element: (
+            <PrivateRoute>
+              <MainLayout>
+                <EnrolledCoursesPage />
+              </MainLayout>
+            </PrivateRoute>
+          ),
+        },
+        {
+          path: "/courses/:courseId/content",
+          element: (
+            <PrivateRoute>
+              <MainLayout>
+                <CourseDetailPage />
+              </MainLayout>
+            </PrivateRoute>
+          ),
+        },
+        {
+          path: "/exams/:examId",
+          element: (
+            <PrivateRoute>
+              <MainLayout>
+                <div className="exam-page-background">
+                  <ExamDetailsPage />
                 </div>
-              }>
-                <Profile />
-              </React.Suspense>
+              </MainLayout>
+            </PrivateRoute>
+          ),
+        },
+        {
+          path: "/exams/:examId/take",
+          element: (
+            <PrivateRoute>
+              <div className="exam-page-background">
+                <ExamPage />
+              </div>
+            </PrivateRoute>
+          ),
+        },
+        {
+          path: "/exams/:examId/questions",
+          element: (
+            <PrivateRoute>
+              <MainLayout>
+                <div className="exam-page-background">
+                  <ExamQuestionsPage />
+                </div>
+              </MainLayout>
+            </PrivateRoute>
+          ),
+        },
+        {
+          path: "/exams/:examId/results",
+          element: (
+            <PrivateRoute>
+              <MainLayout>
+                <div className="exam-page-background">
+                  <ExamResultsPage />
+                </div>
+              </MainLayout>
+            </PrivateRoute>
+          ),
+        },
+        {
+          path: "/exams/:examId/results/:attemptId",
+          element: (
+            <PrivateRoute>
+              <MainLayout>
+                <div className="exam-page-background">
+                  <ExamResultsPage />
+                </div>
+              </MainLayout>
+            </PrivateRoute>
+          ),
+        },
+        {
+          path: "/student/ai-portal",
+          element: (
+            <PrivateRoute>
+              <MainLayout>
+                <AIWeaknessPortal />
+              </MainLayout>
+            </PrivateRoute>
+          ),
+        },
+
+        // Error Routes
+        {
+          path: "/unauthorized",
+          element: (
+            <MainLayout>
+              <Unauthorized />
             </MainLayout>
-          </PrivateRoute>
-        )
-      },
-      {
-        path: "/courses/enrolled",
-        element: <PrivateRoute><MainLayout><EnrolledCoursesPage /></MainLayout></PrivateRoute>
-      },
-      {
-        path: "/courses/:courseId/content",
-        element: <PrivateRoute><MainLayout><CourseDetailPage /></MainLayout></PrivateRoute>
-      },
-      {
-        path: "/exams/:examId",
-        element: <PrivateRoute><MainLayout><div className="exam-page-background"><ExamDetailsPage /></div></MainLayout></PrivateRoute>
-      },
-      {
-        path: "/exams/:examId/questions",
-        element: <PrivateRoute><MainLayout><div className="exam-page-background"><ExamQuestionsPage /></div></MainLayout></PrivateRoute>
-      },
-      {
-        path: "/exams/:examId/results",
-        element: <PrivateRoute><MainLayout><div className="exam-page-background"><ExamResultsPage /></div></MainLayout></PrivateRoute>
-      },
-      {
-        path: "/student/ai-portal",
-        element: <PrivateRoute><MainLayout><AIWeaknessPortal /></MainLayout></PrivateRoute>
-      },
-      
-      // Error Routes
-      {
-        path: "/unauthorized",
-        element: <MainLayout><Unauthorized /></MainLayout>
-      },
-      {
-        path: "/server-error",
-        element: <MainLayout><ServerError /></MainLayout>
-      },
-      {
-        path: "/not-found",
-        element: <MainLayout><NotFound /></MainLayout>
-      },
-      
-      // Catch all route
-      {
-        path: "*",
-        element: <MainLayout><NotFound /></MainLayout>
-      },
-    ]
+          ),
+        },
+        {
+          path: "/server-error",
+          element: (
+            <MainLayout>
+              <ServerError />
+            </MainLayout>
+          ),
+        },
+        {
+          path: "/not-found",
+          element: (
+            <MainLayout>
+              <NotFound />
+            </MainLayout>
+          ),
+        },
+
+        // Catch all route
+        {
+          path: "*",
+          element: (
+            <MainLayout>
+              <NotFound />
+            </MainLayout>
+          ),
+        },
+      ],
+    },
+  ],
+  {
+    // Enable all future flags to remove warnings
+    future: {
+      v7_startTransition: true,
+      v7_normalizeFormMethod: true,
+      v7_prependBasename: true,
+      v7_relativeSplatPath: true,
+    },
   }
-], {
-  // Enable all future flags to remove warnings
-  future: {
-    v7_startTransition: true,
-    v7_normalizeFormMethod: true,
-    v7_prependBasename: true,
-    v7_relativeSplatPath: true
-  }
-});
+);
 
 /**
  * Main App component
@@ -198,8 +314,8 @@ function App() {
   return (
     <ErrorBoundary>
       {/* Router Provider should be placed at the top level for context access */}
-      <RouterProvider 
-        router={router} 
+      <RouterProvider
+        router={router}
         fallbackElement={
           <div className="flex justify-center items-center h-screen">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
