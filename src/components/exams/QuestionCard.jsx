@@ -346,8 +346,8 @@ const QuestionCard = ({
       <div className="question-options">
         {renderOptions()}
         
-        {/* نظام الفيدباك الفوري */}
-        {!isReview && examSettings && (
+        {/* نظام الفيدباك الفوري - disabled until examSettings is properly passed */}
+        {/* {!isReview && examSettings && (
           <InstantFeedback
             questionType={questionType}
             userAnswer={userAnswer}
@@ -356,7 +356,7 @@ const QuestionCard = ({
             showCorrectAnswers={examSettings.show_correct_answers_directly || false}
             className="mt-4"
           />
-        )}
+        )} */}
       </div>
       
       {/* Question status and explanation */}

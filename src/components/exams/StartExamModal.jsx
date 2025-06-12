@@ -38,7 +38,7 @@ const StartExamModal = ({
       className={isDarkMode ? 'dark-mode-modal' : ''}
       maskClosable={false}
       closeIcon={null}
-      width={examData ? 500 : 400}
+      width={400}
       bodyStyle={{ 
         padding: '30px 20px',
         textAlign: 'center',
@@ -84,7 +84,7 @@ const StartExamModal = ({
             width: '140px',
           }}
         >
-          {texts.confirmText}
+          {confirmText}
         </Button>
         
         <Button
