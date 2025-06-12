@@ -191,22 +191,7 @@ const UserCoursesSection = ({ userCourses, translations = {} }) => {
   }, [userCourses, language, isRTL, isDarkMode]);
 
   if (!userCourses || userCourses.length === 0) {
-    return (
-      <section 
-        className={`py-10 px-4 ${isDarkMode ? 'bg-background-card-dark' : 'bg-background-card-light'}`}
-      >
-        <div className="container mx-auto">
-          <div className="text-center py-8">
-            <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-text-light' : 'text-text-dark'}`}>
-              {getText(finalTranslations.myCourses)}
-            </h2>
-            <p className={`${isDarkMode ? 'text-neutral-400' : 'text-neutral-600'}`}>
-              {isArabic ? 'لم تقم بالتسجيل في أي مقررات بعد' : 'You haven\'t enrolled in any courses yet'}
-            </p>
-          </div>
-        </div>
-      </section>
-    );
+    return null; // Don't render anything if no courses
   }
 
   return (

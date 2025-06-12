@@ -6,10 +6,6 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 import Navbar from "../../components/navigation/Navbar";
 import CoursesService from "../../services/api/courses.service";
-import CourseInfoCard from "../../components/courseInfo/CourseInfoCard";
-import CourseInfoTabs from "../../components/courseInfo/CourseInfoTabs";
-import CourseInfoHeader from "../../components/courseInfo/CourseInfoHeader";
-import InstructorInfo from "../../components/courseInfo/InstructorInfo";
 
 const CourseInfoPage = () => {
   const { courseId } = useParams();
@@ -22,7 +18,6 @@ const CourseInfoPage = () => {
   const [course, setCourse] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("description");
   
   // Helper function to get text based on language
   const getText = (obj) => {
@@ -97,19 +92,6 @@ const CourseInfoPage = () => {
     return levels[levelId] || 'General Level';
   };
 
-  const getMaterialIcon = (type) => {
-    const iconMap = {
-      'video': 'youtube',
-      'audio': 'audio',
-      'image': 'image',
-      'pdf': 'file',
-      'quiz': 'exam',
-      'exam': 'exam',
-      'document': 'file'
-    };
-    return iconMap[type] || 'youtube';
-  };
-
   // Effect to fetch course data from API
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -119,7 +101,7 @@ const CourseInfoPage = () => {
         
         console.log('🔍 Fetching course info for ID:', courseId);
         
-        // استدعاء الـ API الحقيقي لجلب معلومات الكورس باستخدام endpoint api/courses/{id}
+        // Call real API to get course details using api/courses/{id}
         const courseResponse = await CoursesService.getCourseDetails(courseId);
         
         console.log('✅ Course details received:', courseResponse);
@@ -127,104 +109,36 @@ const CourseInfoPage = () => {
         if (courseResponse.success && courseResponse.data) {
           const courseData = courseResponse.data;
           
-          // محاولة جلب محتوى الكورس (materials) - تم حذف هذا القسم لأننا لا نعرض الدروس
-          // في صفحة معلومات الكورس
-          
-          // تحويل بيانات الـ API إلى التنسيق المطلوب للمكونات
+          // Transform API data to the format required by components
+          // Only use data that's actually available from the API
           const transformedCourse = {
             id: courseData.id,
             title: {
               ar: courseData.name,
               en: courseData.name
             },
-            subtitle: {
-              ar: `دورة شاملة في ${courseData.name}`,
-              en: `Comprehensive course in ${courseData.name}`
-            },
             description: {
-              ar: courseData.description || `دورة شاملة في ${courseData.name} للمستوى التعليمي المحدد`,
-              en: courseData.description || `Comprehensive course in ${courseData.name} for the specified educational level`
+              ar: `دورة ${courseData.name} للمستوى ${getLevelNameAr(courseData.educational_level_id)}`,
+              en: `${courseData.name} course for ${getLevelNameEn(courseData.educational_level_id)}`
             },
-            instructor: {
-              ar: courseData.instructor_name || "أستاذ متخصص",
-              en: courseData.instructor_name || "Specialized Instructor"
-            },
-            instructorAvatar: courseData.instructor_avatar || "/api/placeholder/100/100",
             category: {
               ar: getCategoryNameAr(courseData.educational_department_id),
               en: getCategoryNameEn(courseData.educational_department_id)
-            },
-            subcategory: {
-              ar: getLevelNameAr(courseData.educational_level_id),
-              en: getLevelNameEn(courseData.educational_level_id)
             },
             level: {
               ar: getLevelNameAr(courseData.educational_level_id),
               en: getLevelNameEn(courseData.educational_level_id)
             },
-            levelId: `level-${courseData.educational_level_id}`,
-            rating: courseData.rating || 4.5,
-            reviewsCount: courseData.reviews_count || 1,
-            studentsCount: courseData.students_count || 100,
-            price: {
-              amount: courseData.price || 299,
-              discountedAmount: courseData.discounted_price || 199,
-              discountPercentage: courseData.discount_percentage || 33,
-              currency: courseData.currency || "SAR",
-              expiryTime: courseData.discount_expiry || "",
-            },
             image: courseData.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
-            badge: {
-              ar: courseData.badge || "مميز",
-              en: courseData.badge || "Featured",
-            },
-            courseInfo: [
-              {
-                title: { 
-                  ar: `${courseData.duration_hours || 40} ساعة من المحتوى التعليمي`, 
-                  en: `${courseData.duration_hours || 40} hours of educational content` 
-                },
-                icon: "Clock",
-              },
-              {
-                title: {
-                  ar: courseData.name,
-                  en: courseData.name
-                },
-                icon: "Book",
-              },
-              {
-                title: { 
-                  ar: `${courseData.materials_count || 0} مادة تعليمية`, 
-                  en: `${courseData.materials_count || 0} educational materials` 
-                },
-                icon: "FileText",
-              },
-              {
-                title: { ar: "متاحة دائماً", en: "Always available" },
-                icon: "Clock",
-              },
-            ],
-            reviews: [
-              {
-                id: 1,
-                user: {
-                  name: { ar: "طالب", en: "Student" },
-                  avatar: "/api/placeholder/40/40",
-                  displayName: { ar: "محمد", en: "Mohammed" }
-                },
-                rating: courseData.rating || 4,
-                date: new Date().toISOString().split('T')[0],
-                comment: { ar: "", en: "" }
-              }
-            ],
-            // الاحتفاظ بالبيانات الأصلية من الـ API
+            code: courseData.code,
+            color: courseData.color || '#4285F4',
+            // Keep original API data for reference
             originalData: courseData
           };
           
           setCourse(transformedCourse);
           
-          // تحديث عنوان الصفحة
+          // Update page title
           document.title = courseData.name;
         } else {
           setError('Course not found or invalid response');
@@ -242,13 +156,13 @@ const CourseInfoPage = () => {
     }
   }, [courseId, language]);
 
-  // وظيفة التسجيل في الكورس / الدخول للمادة
+  // Function to handle enrollment / access to course content
   const handleEnrollment = () => {
-    // توجيه مباشر إلى صفحة محتوى المادة
+    // Direct navigation to course content page
     navigate(`/courses/${courseId}/content`);
   };
 
-  // إظهار شاشة التحميل
+  // Show loading screen
   if (isLoading) {
     return (
       <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -265,7 +179,7 @@ const CourseInfoPage = () => {
     );
   }
 
-  // إظهار شاشة الخطأ
+  // Show error screen
   if (error) {
     return (
       <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -297,7 +211,7 @@ const CourseInfoPage = () => {
     );
   }
 
-  // إذا لم يتم العثور على الكورس
+  // If course not found
   if (!course) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -328,14 +242,37 @@ const CourseInfoPage = () => {
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {/* Course Details - Left Column (2/3 width) */}
             <div className="lg:w-2/3 space-y-6">
-              <CourseInfoHeader course={course} getText={getText} />
-              <CourseInfoTabs 
-                activeTab={activeTab} 
-                setActiveTab={setActiveTab} 
-                language={language} 
-              />
+              {/* Course Header */}
+              <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm p-6`}>
+                <div className="flex items-start gap-4">
+                  <img
+                    src={course.image}
+                    alt={getText(course.title)}
+                    className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                    onError={(e) => {
+                      e.target.src = 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp';
+                    }}
+                  />
+                  <div className="flex-1">
+                    <h1 className={`text-2xl lg:text-3xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {getText(course.title)}
+                    </h1>
+                    <p className={`text-lg mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {getText(course.description)}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${isDarkMode ? 'bg-purple-900 text-purple-200' : 'bg-purple-100 text-purple-800'}`}>
+                        {getText(course.category)}
+                      </span>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${isDarkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'}`}>
+                        {getText(course.level)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
               
-              {/* Show only description tab content */}
+              {/* Course Description */}
               <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm p-6`}>
                 <h3 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   {language === "ar" ? "وصف الكورس" : "Course Description"}
@@ -347,36 +284,111 @@ const CourseInfoPage = () => {
                 </div>
               </div>
               
-              {/* Instructor Info */}
-              <InstructorInfo 
-                instructor={course.instructor} 
-                instructorAvatar={course.instructorAvatar} 
-                getText={getText} 
-                language={language}
-              />
+              {/* Course Details from API */}
+              <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm p-6`}>
+                <h3 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {language === "ar" ? "تفاصيل الكورس" : "Course Details"}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                    <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {language === "ar" ? "رمز الكورس" : "Course Code"}
+                    </h4>
+                    <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {course.code}
+                    </p>
+                  </div>
+                  <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                    <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {language === "ar" ? "المادة الدراسية" : "Subject"}
+                    </h4>
+                    <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {getText(course.category)}
+                    </p>
+                  </div>
+                  <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                    <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {language === "ar" ? "المستوى التعليمي" : "Educational Level"}
+                    </h4>
+                    <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {getText(course.level)}
+                    </p>
+                  </div>
+                  <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                    <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {language === "ar" ? "الحالة" : "Status"}
+                    </h4>
+                    <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {language === "ar" ? "متاح للدراسة" : "Available for Study"}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
             
-            {/* Course Info Card - Right Column (1/3 width) */}
+            {/* Course Action Card - Right Column (1/3 width) */}
             <div className="lg:w-1/3">
-              <CourseInfoCard 
-                course={course} 
-                getText={getText} 
-                language={language}
-                handleEnrollment={handleEnrollment}
-              />
+              <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm p-6 sticky top-24`}>
+                {/* Course Image */}
+                <div className="mb-6">
+                  <img
+                    src={course.image}
+                    alt={getText(course.title)}
+                    className="w-full h-48 object-cover rounded-lg"
+                    onError={(e) => {
+                      e.target.src = 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp';
+                    }}
+                  />
+                </div>
+                
+                {/* Course Title */}
+                <h2 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {getText(course.title)}
+                </h2>
+                
+                {/* Course Info */}
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center">
+                    <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {language === "ar" ? "المادة:" : "Subject:"}
+                    </span>
+                    <span className={`text-sm ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {getText(course.category)}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {language === "ar" ? "المستوى:" : "Level:"}
+                    </span>
+                    <span className={`text-sm ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {getText(course.level)}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {language === "ar" ? "الرمز:" : "Code:"}
+                    </span>
+                    <span className={`text-sm ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {course.code}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Access Button */}
+                <button
+                  onClick={handleEnrollment}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-6 rounded-lg transition duration-300 flex items-center justify-center"
+                >
+                  {language === "ar" ? "الدخول للمادة" : "Access Course"}
+                </button>
+              </div>
               
-              {/* Social Share */}
+              {/* Share Section */}
               <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm p-4 mt-6`}>
                 <h3 className={`font-medium text-base mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   {language === "ar" ? "شارك الكورس" : "Share Course"}
                 </h3>
                 <div className="flex gap-3 justify-center">
-                  <button className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}>
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
-                    </svg>
-                  </button>
-                  
                   <button className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}>
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M22.46,6C21.69,6.35 20.86,6.58 20,6.69C20.88,6.16 21.56,5.32 21.88,4.31C21.05,4.81 20.13,5.16 19.16,5.36C18.37,4.5 17.26,4 16,4C13.65,4 11.73,5.92 11.73,8.29C11.73,8.63 11.77,8.96 11.84,9.27C8.28,9.09 5.11,7.38 3,4.79C2.63,5.42 2.42,6.16 2.42,6.94C2.42,8.43 3.17,9.75 4.33,10.5C3.62,10.5 2.96,10.3 2.38,10C2.38,10 2.38,10 2.38,10.03C2.38,12.11 3.86,13.85 5.82,14.24C5.46,14.34 5.08,14.39 4.69,14.39C4.42,14.39 4.15,14.36 3.89,14.31C4.43,16 6,17.26 7.89,17.29C6.43,18.45 4.58,19.13 2.56,19.13C2.22,19.13 1.88,19.11 1.54,19.07C3.44,20.29 5.7,21 8.12,21C16,21 20.33,14.46 20.33,8.79C20.33,8.6 20.33,8.42 20.32,8.23C21.16,7.63 21.88,6.87 22.46,6Z"/>

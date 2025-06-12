@@ -9,13 +9,13 @@ import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import Navbar from "../../components/navigation/Navbar";
 import HeroSection from "../../components/home/HeroSection";
 import UserCoursesSection from "../../components/home/UserCoursesSection";
-import SubjectsSection from "../../components/home/SubjectsSection";
+// import SubjectsSection from "../../components/home/SubjectsSection"; // Disabled after removing section
 import FeaturedCoursesSection from "../../components/home/FeaturedCoursesSection";
 import ExamsSection from "../../components/home/ExamsSection";
 import { useExams } from "../../hooks/api/useExams";
 import HomeController from "../../controllers/HomeController";
-import { FEATURED_COURSES } from "../../data/mockData"; // للدعم في حالة فشل الـAPI
-import { debugFeaturedCourses } from "../../utils/debugHelper"; // Debug helper
+import { FEATURED_COURSES } from "../../data/mockData";
+import { debugFeaturedCourses } from "../../utils/debugHelper";
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
@@ -46,19 +46,16 @@ const HomePage = () => {
   // Ref for page animations
   const pageRef = useRef(null);
   
-  // جلب بيانات الهوم من الـAPI عند تحميل المكون
+  // Fetch home data from API when component mounts
   useEffect(() => {
     const fetchHomeData = async () => {
-      // عدم عرض شاشة تحميل كاملة - فقط عند الحاجة
       try {
-        // إضافة debug لفحص المشكلة
         if (DEBUG) {
           console.log('🔍 === DEBUGGING FEATURED COURSES ===');
           const debugHelper = debugFeaturedCourses();
           await debugHelper.runAllTests();
         }
         
-        // استدعاء الخدمة لجلب بيانات الصفحة الرئيسية
         const result = await HomeController.getHomePageData();
         
         if (DEBUG) {
@@ -66,12 +63,10 @@ const HomePage = () => {
         }
         
         if (result.success) {
-          // تعيين البيانات إذا تم جلبها بنجاح
           if (result.featuredCourses.success) {
             setFeaturedCourses(result.featuredCourses.data);
             console.log('✅ Featured courses set from API:', result.featuredCourses.data);
           } else {
-            // في حالة فشل جلب الدورات المميزة، استخدم البيانات الوهمية
             console.warn('Using mock featured courses due to API failure');
             setFeaturedCourses(FEATURED_COURSES);
             console.log('⚠️ Featured courses set from MOCK data:', FEATURED_COURSES);
@@ -84,7 +79,6 @@ const HomePage = () => {
           setError(null);
         } else {
           setError(result.error);
-          // في حالة فشل الـAPI، استخدم البيانات الوهمية
           console.warn('Using mock data due to API failure');
           setFeaturedCourses(FEATURED_COURSES);
           console.log('🛠️ Fallback: Featured courses set from MOCK data:', FEATURED_COURSES);
@@ -93,7 +87,6 @@ const HomePage = () => {
         console.error('Error fetching home page data:', err);
         setError('حدث خطأ أثناء جلب بيانات الصفحة الرئيسية');
         
-        // في حالة حدوث استثناء، استخدم البيانات الوهمية
         setFeaturedCourses(FEATURED_COURSES);
         console.log('🔥 Exception: Featured courses set from MOCK data:', FEATURED_COURSES);
       } finally {
@@ -104,12 +97,11 @@ const HomePage = () => {
     fetchHomeData();
   }, []);
   
-  // جلب دورات المستخدم إذا كان مسجل دخول
+  // Fetch user courses if logged in
   useEffect(() => {
     const fetchUserCourses = async () => {
       if (isAuthenticated && user) {
         try {
-          // استدعاء خدمة دورات المستخدم
           const result = await HomeController.getUserCoursesData();
           
           if (DEBUG) {
@@ -119,7 +111,6 @@ const HomePage = () => {
           if (result.success) {
             setUserCourses(result.data);
           } else {
-            // في حالة فشل جلب دورات المستخدم، استخدم البيانات الوهمية
             console.warn('Using mock user courses due to API failure');
             const mockUserCourses = [
               {...FEATURED_COURSES[0], progress: 65},
@@ -130,7 +121,6 @@ const HomePage = () => {
         } catch (err) {
           console.error('Error fetching user courses:', err);
           
-          // في حالة حدوث استثناء، استخدم البيانات الوهمية
           const mockUserCourses = [
             {...FEATURED_COURSES[0], progress: 65},
             {...FEATURED_COURSES[2], progress: 32}
@@ -145,7 +135,7 @@ const HomePage = () => {
     fetchUserCourses();
   }, [isAuthenticated, user]);
 
-  // جلب الامتحانات الجديدة عند تحميل المكون
+  // Fetch online exams when component mounts
   useEffect(() => {
     const loadOnlineExams = async () => {
       try {
@@ -153,7 +143,6 @@ const HomePage = () => {
           console.log('🔍 Fetching online exams for HomePage...');
         }
         
-        // جلب الامتحانات الاونلاين (بدون معاملات خاصة في البداية)
         await fetchOnlineExams();
         
         if (DEBUG) {
@@ -161,14 +150,13 @@ const HomePage = () => {
         }
       } catch (err) {
         console.error('Error fetching online exams:', err);
-        // الخطأ يُدار بالفعل في الhook
       }
     };
     
     loadOnlineExams();
-  }, []); // إزالة dependency المشكوك فيه
+  }, []);
 
-  // تسجيل بيانات للتصحيح
+  // Debug logging
   useEffect(() => {
     if (DEBUG) {
       console.log('🏠 === HomePage Debug Info ===');
@@ -183,7 +171,6 @@ const HomePage = () => {
       console.log('User Courses:', userCourses);
       console.log('=================================');
       
-      // Additional debugging for ExamsSection
       if (onlineExams && onlineExams.length > 0) {
         console.log('📊 [HomePage] First 3 exams that will be shown:', onlineExams.slice(0, 3));
         onlineExams.slice(0, 3).forEach((exam, index) => {
@@ -206,14 +193,11 @@ const HomePage = () => {
   useEffect(() => {
     let animationsCreated = false;
     
-    // Limit animations if needed for performance
     const isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     
-    // Only create animations if not in reduced motion mode
     if (!isReducedMotion) {
       animationsCreated = true;
       
-      // Smooth scroll to section when URL has #section
       if (window.location.hash) {
         const targetId = window.location.hash.substring(1);
         const targetElement = document.getElementById(targetId);
@@ -232,7 +216,6 @@ const HomePage = () => {
     }
     
     return () => {
-      // Clean up all scroll triggers if we created animations
       if (animationsCreated) {
         ScrollTrigger.getAll().forEach(trigger => trigger.kill());
       }
@@ -353,12 +336,10 @@ const HomePage = () => {
 
   // Get text helper function
   const getText = (textObj) => {
-    // Check if textObj is undefined or not an object
     if (!textObj || typeof textObj !== 'object') {
       return textObj || '';
     }
     
-    // Return the appropriate language version or fallback
     return textObj[language] || textObj.en || '';
   };
 
@@ -387,13 +368,13 @@ const HomePage = () => {
     error: getText(UI.error)
   };
 
-  // رسالة التحميل - فقط للتحميل الأولي وبشكل بسيط
+  // Loading message for initial load only
   if (isInitialLoading) {
     return (
       <div className={`min-h-screen ${isDarkMode ? 'bg-background-dark text-text-light' : 'bg-background-light text-text-dark'}`}>
         <Navbar />
-        <div className="pt-16"></div>
-        <div className="flex items-center justify-center h-96">
+        <div className="pt-8"></div>
+        <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-base mb-4"></div>
             <p className="text-lg">{translations.loading}</p>
@@ -408,11 +389,11 @@ const HomePage = () => {
       ref={pageRef}
       className={`min-h-screen ${isDarkMode ? 'bg-background-dark text-text-light' : 'bg-background-light text-text-dark'}`}
     >
-      {/* الهيدر الأساسي */}
+      {/* Main Header */}
       <Navbar />
       
-      {/* Add space to prevent content from being hidden under the navbar */}
-      <div className="pt-16"></div>
+      {/* Add minimal space to prevent content from being hidden under the navbar */}
+      <div className="pt-8"></div>
       
       {/* Error Message (if any) */}
       {error && (
@@ -427,20 +408,20 @@ const HomePage = () => {
       {/* Hero Section */}
       <HeroSection translations={translations} />
 
-      {/* User's Courses Section (if logged in) */}
-      {userCourses.length > 0 && (
+      {/* User's Courses Section (if logged in and has courses) */}
+      {isAuthenticated && userCourses && userCourses.length > 0 && (
         <UserCoursesSection userCourses={userCourses} translations={translations} />
       )}
 
-      {/* Subject Categories Section */}
-      <SubjectsSection translations={translations} />
+      {/* Subject Categories Section - Removed as requested by user */}
+      {/* <SubjectsSection translations={translations} /> */}
 
       {/* Featured Courses Section */}
       <div id="featured-courses-wrapper">
         <FeaturedCoursesSection courses={featuredCourses} translations={translations} />
       </div>
 
-      {/* Online Exams Section - استخدام الامتحانات الجديدة */}
+      {/* Online Exams Section */}
       <div id="online-exams-section-wrapper">
         <ExamsSection 
           exams={onlineExams} 

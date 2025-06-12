@@ -233,7 +233,7 @@ const SubjectsSection = ({ translations }) => {
   return (
     <section 
       ref={sectionRef}
-      className={`py-12 px-4 ${isDarkMode ? 'bg-background-dark' : 'bg-neutral-50'}`}
+      className={`py-6 px-4 ${isDarkMode ? 'bg-background-dark' : 'bg-neutral-50'}`}
     >
       <div className="container mx-auto">
         <h2 
