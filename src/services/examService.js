@@ -1,269 +1,270 @@
 // src/services/examService.js
-import api from './api';
-import { handleApiError } from './utils/errorHandler';
-
 /**
- * Exam Service - Handle all exam operations using the correct API base
+ * خدمات API للامتحانات الإلكترونية
+ * Online Exam API Services
  */
+import api from './api';
+
 class ExamService {
   /**
-   * Get all exams for the user
-   * @param {Object} params - Query parameters
-   * @returns {Promise<Array>} User exams
-   */
-  async getUserExams(params = {}) {
-    try {
-      const response = await api.get('/exams/user', { params });
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error, 'Failed to fetch user exams');
-    }
-  }
-
-  /**
-   * Get featured exams
-   * @param {number} limit - Number of exams to fetch
-   * @returns {Promise<Array>} Featured exams
-   */
-  async getFeaturedExams(limit = 6) {
-    try {
-      const response = await api.get('/exams/featured', { 
-        params: { limit } 
-      });
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error, 'Failed to fetch featured exams');
-    }
-  }
-
-  /**
-   * Get specific exam details by ID
-   * @param {number|string} examId - Exam ID
-   * @returns {Promise<Object>} Exam details
-   */
-  async getExamById(examId) {
-    try {
-      const response = await api.get(`/exams/${examId}`);
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error, 'Failed to fetch exam details');
-    }
-  }
-
-  /**
-   * Start an exam and get questions
-   * @param {number|string} examId - Exam ID
-   * @returns {Promise<Object>} Exam start response with questions
-   */
-  async startExam(examId) {
-    try {
-      const response = await api.post(`/exams/${examId}/start`);
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error, 'Failed to start exam');
-    }
-  }
-
-  /**
-   * Get exam questions
-   * @param {number|string} examId - Exam ID
-   * @returns {Promise<Array>} List of questions
+   * جلب أسئلة الامتحان مع إدارة حالة الامتحان
+   * Get exam questions with exam state management
+   * This endpoint handles all exam states (start, continue, retry, revision)
+   * @param {number} examId - معرف الامتحان
+   * @returns {Promise} - بيانات الامتحان والأسئلة
    */
   async getExamQuestions(examId) {
     try {
-      const response = await api.get(`/exams/${examId}/questions`);
-      return response.data;
+      console.log(`📝 [ExamService] Getting exam questions for exam ${examId}`);
+      console.log('🔄 [ExamService] This endpoint handles exam state automatically (start/continue/retry/revision)');
+      
+      const response = await api.post(`/examination/online-exams/${examId}/questions`);
+      
+      if (response.data && response.data.success) {
+        console.log('✅ [ExamService] Exam questions loaded successfully');
+        console.log(`📊 [ExamService] Exam Status: ${response.data.data.status}`);
+        console.log(`⏱️ [ExamService] Duration: ${response.data.data.duration_in_seconds}s`);
+        console.log(`❓ [ExamService] Questions: ${response.data.data.questions?.length || 0}`);
+        
+        return {
+          success: true,
+          data: response.data.data
+        };
+      }
+      
+      throw new Error(response.data?.message || 'Failed to load exam questions');
     } catch (error) {
-      throw handleApiError(error, 'Failed to fetch exam questions');
+      console.error('❌ [ExamService] Error loading exam questions:', error);
+      
+      // Handle specific error cases
+      if (error.response?.status === 404) {
+        return {
+          success: false,
+          message: 'الامتحان غير موجود أو غير متاح',
+          status: 404
+        };
+      }
+      
+      if (error.response?.status === 403) {
+        return {
+          success: false,
+          message: 'غير مصرح لك بالوصول لهذا الامتحان',
+          status: 403
+        };
+      }
+      
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || 'خطأ في تحميل الأسئلة',
+        status: error.response?.status
+      };
     }
   }
 
   /**
-   * Submit an answer during the exam
-   * @param {number|string} examId - Exam ID
-   * @param {number|string} questionId - Question ID
-   * @param {any} answer - Answer data
-   * @returns {Promise<Object>} Submit response
+   * إرسال إجابة على سؤال
+   * Submit answer for a question
+   * @param {number} studentAnswerId - معرف إجابة الطالب
+   * @param {object} answerData - بيانات الإجابة
+   * @returns {Promise} - نتيجة الإرسال
    */
-  async submitAnswer(examId, questionId, answer) {
+  async submitAnswer(studentAnswerId, answerData) {
     try {
-      const response = await api.post(`/exams/${examId}/questions/${questionId}/answer`, { 
-        answer 
-      });
-      return response.data;
+      console.log(`📤 [ExamService] Submitting answer for student answer ID ${studentAnswerId}:`, answerData);
+      
+      // Validate required data
+      if (!studentAnswerId) {
+        throw new Error('Student answer ID is required');
+      }
+      
+      if (!answerData || (!answerData.choice_id && !answerData.text)) {
+        throw new Error('Answer data is required (choice_id or text)');
+      }
+      
+      const response = await api.post(`/examination/submit-answer/${studentAnswerId}`, answerData);
+      
+      if (response.data && response.data.success) {
+        console.log('✅ [ExamService] Answer submitted successfully');
+        return {
+          success: true,
+          data: response.data.data
+        };
+      }
+      
+      throw new Error(response.data?.message || 'Failed to submit answer');
     } catch (error) {
-      throw handleApiError(error, 'Failed to submit answer');
+      console.error('❌ [ExamService] Error submitting answer:', error);
+      
+      // Handle specific validation errors
+      if (error.response?.status === 422) {
+        const validationErrors = error.response.data?.errors || {};
+        const errorMessages = Object.values(validationErrors).flat();
+        return {
+          success: false,
+          message: errorMessages.join(', ') || 'بيانات الإجابة غير صحيحة',
+          status: 422
+        };
+      }
+      
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || 'خطأ في إرسال الإجابة',
+        status: error.response?.status
+      };
     }
   }
 
   /**
-   * Save answer without submitting (draft)
-   * @param {number|string} examId - Exam ID
-   * @param {number|string} questionId - Question ID
-   * @param {any} answer - Answer data
-   * @returns {Promise<Object>} Save response
+   * إنهاء الامتحان
+   * Finish exam session
+   * @param {number} passedExamId - معرف الجلسة المنقولة
+   * @returns {Promise} - نتيجة إنهاء الامتحان
    */
-  async saveAnswer(examId, questionId, answer) {
+  async finishExam(passedExamId) {
     try {
-      const response = await api.post(`/exams/${examId}/questions/${questionId}/save`, { 
-        answer 
-      });
-      return response.data;
+      console.log(`🏁 [ExamService] Finishing exam session ${passedExamId}`);
+      
+      const response = await api.post(`/examination/finish-exam/${passedExamId}`);
+      
+      if (response.data && response.data.success) {
+        console.log('✅ [ExamService] Exam finished successfully');
+        return {
+          success: true,
+          data: response.data.data
+        };
+      }
+      
+      throw new Error(response.data?.message || 'Failed to finish exam');
     } catch (error) {
-      throw handleApiError(error, 'Failed to save answer');
+      console.error('❌ [ExamService] Error finishing exam:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || 'خطأ في إنهاء الامتحان',
+        status: error.response?.status
+      };
     }
   }
 
   /**
-   * Submit the entire exam
-   * @param {number|string} examId - Exam ID
-   * @param {Object} answers - All answers
-   * @returns {Promise<Object>} Exam submission result
+   * جلب إجابات الامتحان
+   * Get exam answers
+   * @param {number} examId - معرف الامتحان
+   * @param {number} attemptId - معرف المحاولة
+   * @returns {Promise} - إجابات الامتحان
    */
-  async submitExam(examId, answers) {
+  async getExamAnswers(examId, attemptId) {
     try {
-      const response = await api.post(`/exams/${examId}/submit`, { answers });
-      return response.data;
+      console.log(`📋 [ExamService] Getting answers for exam ${examId}, attempt ${attemptId}`);
+      
+      const response = await api.get(`/examination/exam-answers/${examId}/${attemptId}`);
+      
+      if (response.data && response.data.success) {
+        console.log('✅ [ExamService] Answers loaded successfully');
+        return {
+          success: true,
+          data: response.data.data
+        };
+      }
+      
+      throw new Error(response.data?.message || 'Failed to load exam answers');
     } catch (error) {
-      throw handleApiError(error, 'Failed to submit exam');
+      console.error('❌ [ExamService] Error loading answers:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || 'خطأ في تحميل الإجابات',
+        status: error.response?.status
+      };
     }
   }
 
   /**
+   * جلب نتائج الامتحان
    * Get exam results
-   * @param {number|string} examId - Exam ID
-   * @param {number|string} attemptId - Specific attempt ID (optional)
-   * @returns {Promise<Object>} Exam results
+   * @param {number} examId - معرف الامتحان
+   * @param {number} attemptId - معرف المحاولة
+   * @returns {Promise} - نتائج الامتحان
    */
-  async getExamResults(examId, attemptId = null) {
+  async getExamResults(examId, attemptId) {
     try {
-      const endpoint = attemptId 
-        ? `/exams/${examId}/attempts/${attemptId}/results`
-        : `/exams/${examId}/results`;
-      const response = await api.get(endpoint);
-      return response.data;
+      console.log(`🏆 [ExamService] Getting results for exam ${examId}, attempt ${attemptId}`);
+      
+      const response = await api.get(`/examination/exam-results/${examId}/${attemptId}`);
+      
+      if (response.data && response.data.success) {
+        console.log('✅ [ExamService] Results loaded successfully');
+        return {
+          success: true,
+          data: response.data.data
+        };
+      }
+      
+      throw new Error(response.data?.message || 'Failed to load exam results');
     } catch (error) {
-      throw handleApiError(error, 'Failed to fetch exam results');
+      console.error('❌ [ExamService] Error loading results:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || 'خطأ في تحميل النتائج',
+        status: error.response?.status
+      };
     }
   }
 
   /**
-   * Get all previous attempts for an exam
-   * @param {number|string} examId - Exam ID
-   * @returns {Promise<Array>} List of attempts
+   * تنسيق بيانات الإجابة حسب نوع السؤال
+   * Format answer data based on question type
+   * @param {string} questionType - نوع السؤال
+   * @param {any} answer - الإجابة
+   * @returns {object} - بيانات الإجابة المنسقة
    */
-  async getExamAttempts(examId) {
-    try {
-      const response = await api.get(`/exams/${examId}/attempts`);
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error, 'Failed to fetch exam attempts');
+  formatAnswerData(questionType, answer) {
+    switch (questionType) {
+      case 'MultipleChoice':
+      case 'TrueFalse':
+        return {
+          choice_id: parseInt(answer)
+        };
+      
+      case 'KeywordsEssay':
+      case 'Essay':
+        return {
+          text: answer.toString()
+        };
+      
+      default:
+        console.warn(`Unknown question type: ${questionType}`);
+        return {
+          choice_id: parseInt(answer)
+        };
     }
   }
 
   /**
-   * Get exam statistics
-   * @param {number|string} examId - Exam ID
-   * @returns {Promise<Object>} Exam statistics
+   * التحقق من صحة الإجابة
+   * Validate answer format
+   * @param {string} questionType - نوع السؤال
+   * @param {any} answer - الإجابة
+   * @returns {boolean} - صحة التنسيق
    */
-  async getExamStats(examId) {
-    try {
-      const response = await api.get(`/exams/${examId}/stats`);
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error, 'Failed to fetch exam statistics');
+  validateAnswer(questionType, answer) {
+    if (!answer && answer !== 0) {
+      return false;
     }
-  }
 
-  /**
-   * Get exam progress during an active session
-   * @param {number|string} examId - Exam ID
-   * @returns {Promise<Object>} Current exam progress
-   */
-  async getExamProgress(examId) {
-    try {
-      const response = await api.get(`/exams/${examId}/progress`);
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error, 'Failed to fetch exam progress');
-    }
-  }
-
-  /**
-   * Pause an exam
-   * @param {number|string} examId - Exam ID
-   * @returns {Promise<Object>} Pause response
-   */
-  async pauseExam(examId) {
-    try {
-      const response = await api.post(`/exams/${examId}/pause`);
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error, 'Failed to pause exam');
-    }
-  }
-
-  /**
-   * Resume a paused exam
-   * @param {number|string} examId - Exam ID
-   * @returns {Promise<Object>} Resume response
-   */
-  async resumeExam(examId) {
-    try {
-      const response = await api.post(`/exams/${examId}/resume`);
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error, 'Failed to resume exam');
-    }
-  }
-
-  /**
-   * Get exam time remaining
-   * @param {number|string} examId - Exam ID
-   * @returns {Promise<Object>} Time remaining data
-   */
-  async getTimeRemaining(examId) {
-    try {
-      const response = await api.get(`/exams/${examId}/time-remaining`);
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error, 'Failed to fetch time remaining');
-    }
-  }
-
-  /**
-   * Flag a question for review
-   * @param {number|string} examId - Exam ID
-   * @param {number|string} questionId - Question ID
-   * @param {boolean} flagged - Flag status
-   * @returns {Promise<Object>} Flag response
-   */
-  async flagQuestion(examId, questionId, flagged = true) {
-    try {
-      const response = await api.post(`/exams/${examId}/questions/${questionId}/flag`, { 
-        flagged 
-      });
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error, 'Failed to flag question');
-    }
-  }
-
-  /**
-   * Search/filter exams
-   * @param {Object} filters - Search filters
-   * @returns {Promise<Array>} Filtered exams
-   */
-  async searchExams(filters = {}) {
-    try {
-      const response = await api.get('/exams/search', { params: filters });
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error, 'Failed to search exams');
+    switch (questionType) {
+      case 'MultipleChoice':
+      case 'TrueFalse':
+        return !isNaN(parseInt(answer)) && parseInt(answer) > 0;
+      
+      case 'KeywordsEssay':
+      case 'Essay':
+        return typeof answer === 'string' && answer.trim().length > 0;
+      
+      default:
+        return false;
     }
   }
 }
 
-// Export single instance
+// تصدير كـ singleton
 const examService = new ExamService();
 export default examService;

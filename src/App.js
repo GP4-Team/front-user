@@ -29,6 +29,7 @@ import MyExamsPage from "./pages/exams/MyExamsPage.jsx";
 import ExamDetailsPage from "./pages/exams/ExamDetailsPage.jsx";
 import ExamQuestionsPage from "./pages/exams/ExamQuestionsPage.jsx";
 import ExamResultsPage from "./pages/exams/ExamResultsPage.jsx";
+import ExamPage from "./pages/exam/ExamPage.jsx";
 import ExamsApiTestPage from "./pages/testing/ExamsApiTestPage.jsx";
 import AIPortalTestPage from "./pages/testing/AIPortalTestPage.jsx";
 import AIWeaknessPortal from "./pages/student/AIWeaknessPortal.jsx";
@@ -147,11 +148,19 @@ const router = createBrowserRouter([
         element: <PrivateRoute><MainLayout><div className="exam-page-background"><ExamDetailsPage /></div></MainLayout></PrivateRoute>
       },
       {
+        path: "/exams/:examId/take",
+        element: <PrivateRoute><div className="exam-page-background"><ExamPage /></div></PrivateRoute>
+      },
+      {
         path: "/exams/:examId/questions",
         element: <PrivateRoute><MainLayout><div className="exam-page-background"><ExamQuestionsPage /></div></MainLayout></PrivateRoute>
       },
       {
         path: "/exams/:examId/results",
+        element: <PrivateRoute><MainLayout><div className="exam-page-background"><ExamResultsPage /></div></MainLayout></PrivateRoute>
+      },
+      {
+        path: "/exams/:examId/results/:attemptId",
         element: <PrivateRoute><MainLayout><div className="exam-page-background"><ExamResultsPage /></div></MainLayout></PrivateRoute>
       },
       {

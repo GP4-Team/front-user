@@ -18,7 +18,7 @@ import useOnlineExamQuestions from '../../hooks/api/useOnlineExamQuestions';
 const { Title, Text, Paragraph } = Typography;
 
 const ExamResultsPage = () => {
-  const { examId } = useParams();
+  const { examId, attemptId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { isDarkMode } = useTheme();
@@ -68,10 +68,18 @@ const ExamResultsPage = () => {
       return;
     }
 
+    if (!attemptId) {
+      message.error(language === 'ar' ? 'معرف المحاولة مطلوب' : 'Attempt ID is required');
+      navigate(`/exams/${examId}`);
+      return;
+    }
+
     const loadResults = async () => {
       try {
         clearError();
-        const result = await getResults(examId);
+        console.log(`📊 Loading results for exam ${examId}, attempt ${attemptId}`);
+        
+        const result = await getResults(examId, attemptId);
         
         if (!result.success) {
           message.error(result.error || (language === 'ar' ? 'خطأ في تحميل النتائج' : 'Error loading results'));
@@ -83,7 +91,7 @@ const ExamResultsPage = () => {
     };
 
     loadResults();
-  }, [examId, isAuthenticated, user, language, navigate, getResults, clearError]);
+  }, [examId, attemptId, isAuthenticated, user, language, navigate, getResults, clearError]);
 
   const handleRetryExam = () => {
     setRetryLoading(true);
