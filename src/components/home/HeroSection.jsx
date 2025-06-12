@@ -249,7 +249,7 @@ const HeroSection = ({ translations }) => {
   return (
     <section 
       ref={heroRef}
-      className={`pt-24 md:pt-32 pb-6 md:pb-8 relative overflow-hidden min-h-[calc(100vh-64px)] flex items-center ${
+      className={`pt-32 md:pt-40 pb-12 md:pb-16 relative overflow-hidden min-h-[calc(100vh-64px)] flex items-center ${
         isDarkMode ? 'bg-background-dark' : 'bg-gradient-to-br from-background-light via-blue-50 to-neutral-100'
       }`}
     >

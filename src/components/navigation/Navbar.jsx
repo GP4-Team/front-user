@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  User, Menu, X, Sun, Moon, Search, Globe, ChevronDown, 
-  Home, BookOpen, GraduationCap, FileText, Brain
+  User, Menu, X, Sun, Moon, Globe, ChevronDown, 
+  Home, BookOpen, FileText, Brain
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -142,13 +142,13 @@ const Navbar = () => {
     home: isArabic ? 'الرئيسية' : 'Home',
     courses: isArabic ? 'الكورسات' : 'Courses',
     exams: isArabic ? 'الامتحانات' : 'Exams',
-    subjects: isArabic ? 'المواد الدراسية' : 'Subjects',
+    // subjects: isArabic ? 'المواد الدراسية' : 'Subjects', // Removed
     profile: isArabic ? 'الملف الشخصي' : 'Profile',
     myCourses: isArabic ? 'كورساتي' : 'My Courses',
     login: isArabic ? 'تسجيل الدخول' : 'Login',
     register: isArabic ? 'سجل مجاناً' : 'Register Free',
-    logout: isArabic ? 'تسجيل الخروج' : 'Logout',
-    search: isArabic ? 'بحث...' : 'Search...'
+    logout: isArabic ? 'تسجيل الخروج' : 'Logout'
+    // search: isArabic ? 'بحث...' : 'Search...' // Removed
   };
 
 
@@ -243,19 +243,6 @@ const Navbar = () => {
               <span>{translations.exams}</span>
               <span className={`absolute -bottom-1 ${isRTL ? 'right-0' : 'left-0'} w-0 h-0.5 ${isDarkMode ? 'bg-primary-light' : 'bg-accent'} transition-all duration-300 group-hover:w-full`}></span>
             </Link>
-            <Link 
-              ref={el => navItemsRef.current[3] = el}
-              to="/subjects" 
-              className={`${
-                isDarkMode
-                  ? 'text-neutral-200 hover:text-text-light'
-                  : (isScrolled ? 'text-text-dark hover:text-primary-base' : 'text-text-light hover:text-accent')
-              } transition-colors flex items-center gap-2 py-1 relative group`}
-            >
-              <GraduationCap size={18} />
-              <span>{translations.subjects}</span>
-              <span className={`absolute -bottom-1 ${isRTL ? 'right-0' : 'left-0'} w-0 h-0.5 ${isDarkMode ? 'bg-primary-light' : 'bg-accent'} transition-all duration-300 group-hover:w-full`}></span>
-            </Link>
           </div>
           
           {/* Actions */}
@@ -263,25 +250,8 @@ const Navbar = () => {
             ref={actionsRef}
             className="flex items-center space-x-2 rtl:space-x-reverse"
           >
-            {/* Search Box - Desktop Only */}
-            <div className={`relative hidden lg:block ${
-              isDarkMode 
-                ? 'bg-neutral-800 text-text-light' 
-                : (isScrolled ? 'bg-neutral-100 text-text-dark' : 'bg-primary-dark text-text-light')
-            } rounded-full overflow-hidden px-3 py-1.5`}>
-              <div className="flex items-center">
-                <Search size={16} className={`${isRTL ? 'ml-2' : 'mr-2'}`} />
-                <input 
-                  type="text" 
-                  placeholder={translations.search}
-                  className={`${
-                    isDarkMode 
-                      ? 'bg-neutral-800 text-text-light placeholder-neutral-400' 
-                      : (isScrolled ? 'bg-neutral-100 text-text-dark placeholder-neutral-500' : 'bg-primary-dark text-text-light placeholder-neutral-300')
-                  } text-sm border-none outline-none w-44`}
-                />
-              </div>
-            </div>
+            {/* Search Box - Removed as requested */}
+            {/* Desktop search box removed */}
 
             
             {/* Language Toggle */}
@@ -471,17 +441,7 @@ const Navbar = () => {
               <FileText size={18} />
               {translations.exams}
             </Link>
-            <Link 
-              to="/subjects" 
-              className={`mobile-menu-item px-4 py-2 rounded-md ${
-                isDarkMode 
-                  ? 'hover:bg-neutral-800' 
-                  : 'hover:bg-primary-base hover:text-text-light'
-              } transition-colors flex items-center gap-2`}
-            >
-              <GraduationCap size={18} />
-              {translations.subjects}
-            </Link>
+            {/* Subjects link removed as requested */}
             {isAuthenticated && (
               <Link 
                 to="/student/ai-portal" 
@@ -496,25 +456,8 @@ const Navbar = () => {
               </Link>
             )}
 
-            {/* Mobile Search Box */}
-            <div className={`px-4 py-2`}>
-              <div className={`flex items-center px-3 py-2 rounded-md ${
-                isDarkMode 
-                  ? 'bg-neutral-800' 
-                  : 'bg-neutral-100'
-              }`}>
-                <Search size={16} className={`${isRTL ? 'ml-2' : 'mr-2'} text-neutral-500`} />
-                <input 
-                  type="text" 
-                  placeholder={translations.search}
-                  className={`${
-                    isDarkMode 
-                      ? 'bg-neutral-800 text-text-light placeholder-neutral-400' 
-                      : 'bg-neutral-100 text-text-dark placeholder-neutral-500'
-                  } text-sm border-none outline-none w-full`}
-                />
-              </div>
-            </div>
+            {/* Mobile Search Box - Removed as requested */}
+            {/* Mobile search removed */}
           </div>
         </div>
       </div>

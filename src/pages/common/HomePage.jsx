@@ -8,7 +8,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import Navbar from "../../components/navigation/Navbar";
 import HeroSection from "../../components/home/HeroSection";
-import UserCoursesSection from "../../components/home/UserCoursesSection";
+// import UserCoursesSection from "../../components/home/UserCoursesSection"; // Removed to eliminate empty space
 // import SubjectsSection from "../../components/home/SubjectsSection"; // Disabled after removing section
 import FeaturedCoursesSection from "../../components/home/FeaturedCoursesSection";
 import ExamsSection from "../../components/home/ExamsSection";
@@ -40,7 +40,7 @@ const HomePage = () => {
   const [error, setError] = useState(null);
   const [featuredCourses, setFeaturedCourses] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [userCourses, setUserCourses] = useState([]);
+  // const [userCourses, setUserCourses] = useState([]); // Removed with UserCoursesSection
   const isArabic = language === "ar";
   
   // Ref for page animations
@@ -97,43 +97,7 @@ const HomePage = () => {
     fetchHomeData();
   }, []);
   
-  // Fetch user courses if logged in
-  useEffect(() => {
-    const fetchUserCourses = async () => {
-      if (isAuthenticated && user) {
-        try {
-          const result = await HomeController.getUserCoursesData();
-          
-          if (DEBUG) {
-            console.log('User Courses API Response:', result);
-          }
-          
-          if (result.success) {
-            setUserCourses(result.data);
-          } else {
-            console.warn('Using mock user courses due to API failure');
-            const mockUserCourses = [
-              {...FEATURED_COURSES[0], progress: 65},
-              {...FEATURED_COURSES[2], progress: 32}
-            ];
-            setUserCourses(mockUserCourses);
-          }
-        } catch (err) {
-          console.error('Error fetching user courses:', err);
-          
-          const mockUserCourses = [
-            {...FEATURED_COURSES[0], progress: 65},
-            {...FEATURED_COURSES[2], progress: 32}
-          ];
-          setUserCourses(mockUserCourses);
-        }
-      } else {
-        setUserCourses([]);
-      }
-    };
-    
-    fetchUserCourses();
-  }, [isAuthenticated, user]);
+  // Fetch user courses removed - no longer needed
 
   // Fetch online exams when component mounts
   useEffect(() => {
@@ -168,7 +132,7 @@ const HomePage = () => {
       console.log('Exams Loading:', examsLoading);
       console.log('Exams Error:', examsError);
       console.log('Categories:', categories);
-      console.log('User Courses:', userCourses);
+      // console.log('User Courses:', userCourses); // Removed
       console.log('=================================');
       
       if (onlineExams && onlineExams.length > 0) {
@@ -187,7 +151,7 @@ const HomePage = () => {
         console.log('⚠️ [HomePage] No online exams to display');
       }
     }
-  }, [language, isArabic, featuredCourses, onlineExams, examsLoading, examsError, categories, userCourses]);
+  }, [language, isArabic, featuredCourses, onlineExams, examsLoading, examsError, categories]);
 
   // Page-level animations
   useEffect(() => {
@@ -408,10 +372,8 @@ const HomePage = () => {
       {/* Hero Section */}
       <HeroSection translations={translations} />
 
-      {/* User's Courses Section (if logged in and has courses) */}
-      {isAuthenticated && userCourses && userCourses.length > 0 && (
-        <UserCoursesSection userCourses={userCourses} translations={translations} />
-      )}
+      {/* User's Courses Section - Completely removed to eliminate empty space */}
+      {/* <UserCoursesSection userCourses={userCourses} translations={translations} /> */}
 
       {/* Subject Categories Section - Removed as requested by user */}
       {/* <SubjectsSection translations={translations} /> */}
