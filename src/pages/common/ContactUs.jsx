@@ -3,7 +3,7 @@ import { Mail, Phone, MapPin, Clock, Send, MessageSquare, HelpCircle, Users } fr
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import Navbar from '../../components/navigation/Navbar';
-import Footer from '../../components/layout/Footer';
+import UnifiedFooter from '../../components/common/UnifiedFooter';
 
 const ContactUs = () => {
   const { language, isRTL } = useLanguage();
@@ -329,7 +329,7 @@ const ContactUs = () => {
       </div>
       
       {/* Footer */}
-      <Footer />
+      <UnifiedFooter />
     </div>
   );
 };

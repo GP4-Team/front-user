@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar from '../navigation/Navbar';
-import SimpleFooter from './SimpleFooter';
+import UnifiedFooter from '../common/UnifiedFooter';
 import { useTheme } from '../../contexts/ThemeContext';
 import gsap from 'gsap';
 
@@ -38,7 +38,7 @@ const MainLayout = ({ children }) => {
       <main ref={mainRef} className="flex-grow pt-16">
         {children}
       </main>
-      <SimpleFooter />
+      <UnifiedFooter />
     </div>
   );
 };

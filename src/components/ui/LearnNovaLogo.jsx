@@ -1,8 +1,8 @@
-// components/ui/LearnOvaLogo.jsx
+// components/ui/LearnNovaLogo.jsx
 import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const LearnOvaLogo = ({ 
+const LearnNovaLogo = ({ 
   size = 'medium', 
   variant = 'full', 
   className = '',
@@ -89,4 +89,4 @@ const LearnOvaLogo = ({
   );
 };
 
-export default LearnOvaLogo;
+export default LearnNovaLogo;

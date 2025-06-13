@@ -83,7 +83,7 @@ const FooterSection = () => {
         {/* Copyright */}
         <div className="text-center pt-6 border-t border-gray-200">
           <p className="text-gray-500 text-sm">
-            {getText("© 2025 ليرننوفا. جميع الحقوق محفوظة", "© 2025 LearnNova. All rights reserved")}
+          {getText("© 2025 ليرننوفا. جميع الحقوق محفوظة", "© 2025 LearnNova. All rights reserved")}
           </p>
         </div>
       </div>

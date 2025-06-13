@@ -8,14 +8,14 @@ import { handleApiError } from '../utils/errorHandler';
  */
 class ExamsService {
   /**
-   * Get all online exams for the user with multiple fallback strategies
+   * Get all available exams for the user
    * @param {Object} params - Query parameters (optional)
    * @param {number|string} examId - Specific exam ID (optional) for single exam fetch
-   * @returns {Promise<Array>} User online exams with status
+   * @returns {Promise<Array>} Available exams with status
    */
   async getOnlineExams(params = {}, examId = null) {
     try {
-      console.log('🎯 [ExamsService] === FETCHING ONLINE EXAMS ===');
+      console.log('🎯 [ExamsService] === FETCHING AVAILABLE EXAMS ===');
       console.log('Parameters:', params);
       console.log('API Base URL:', api.defaults.baseURL);
       
@@ -34,17 +34,46 @@ class ExamsService {
         return await this.getOnlineExamById(examId);
       }
       
-      // Try multiple endpoints in order of preference for all exams
-      const endpoints = [
+      // Use the new available-exams endpoint
+      const endpoint = '/examination/available-exams';
+      console.log('🚀 [ExamsService] Making request to:', endpoint);
+      
+      const response = await api.get(endpoint, { params });
+      
+      console.log('✅ [ExamsService] SUCCESS with available-exams endpoint');
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(Object.entries(response.headers || {})));
+      console.log('📦 [ExamsService] Raw response data:', response.data);
+      console.log('Response data type:', typeof response.data);
+      console.log('Response data keys:', response.data ? Object.keys(response.data) : 'none');
+      
+      // Parse the response
+      const parsedData = this.parseExamsResponse(response.data);
+      console.log('🔄 [ExamsService] Parsed data:', parsedData);
+      
+      if (parsedData && (parsedData.exams || Array.isArray(parsedData))) {
+        const finalExams = parsedData.exams || parsedData;
+        console.log('🎉 [ExamsService] Final exams array:', finalExams);
+        console.log('📊 [ExamsService] Number of exams:', finalExams.length);
+        
+        if (finalExams.length > 0) {
+          console.log('🔍 [ExamsService] First exam sample:', finalExams[0]);
+        }
+        
+        return { exams: finalExams, ...parsedData };
+      }
+      
+      // Fallback to other endpoints if the main one fails
+      const fallbackEndpoints = [
         { url: '/examination/online-exams', method: 'get', params },
         { url: '/exams/online', method: 'get', params },
         { url: '/exams/user', method: 'get', params },
         { url: '/exams', method: 'get', params: { ...params, type: 'online' } }
       ];
       
-      for (const [index, endpoint] of endpoints.entries()) {
+      for (const [index, endpoint] of fallbackEndpoints.entries()) {
         try {
-          console.log(`🚀 [ExamsService] Trying endpoint ${index + 1}/${endpoints.length}: ${endpoint.method.toUpperCase()} ${endpoint.url}`);
+          console.log(`🚀 [ExamsService] Trying fallback endpoint ${index + 1}/${fallbackEndpoints.length}: ${endpoint.method.toUpperCase()} ${endpoint.url}`);
           console.log('Request params:', endpoint.params);
           
           let response;
@@ -54,7 +83,7 @@ class ExamsService {
             response = await api.get(endpoint.url, { params: endpoint.params });
           }
           
-          console.log(`✅ [ExamsService] SUCCESS with endpoint ${index + 1}: ${endpoint.url}`);
+          console.log(`✅ [ExamsService] SUCCESS with fallback endpoint ${index + 1}: ${endpoint.url}`);
           console.log('Response status:', response.status);
           console.log('Response headers:', Object.fromEntries(Object.entries(response.headers || {})));
           console.log('📦 [ExamsService] Raw response data:', response.data);
@@ -85,8 +114,8 @@ class ExamsService {
             message: endpointError.message
           });
           
-          // If it's the last endpoint, we'll handle the error below
-          if (index === endpoints.length - 1) {
+          // If it's the last fallback endpoint, we'll handle the error below
+          if (index === fallbackEndpoints.length - 1) {
             throw endpointError;
           }
           
@@ -95,8 +124,8 @@ class ExamsService {
         }
       }
       
-      // If all endpoints failed, return empty array instead of throwing error
-      console.warn('⚠️ [ExamsService] All endpoints failed, returning empty array');
+      // If all fallback endpoints failed, return empty array instead of throwing error
+      console.warn('⚠️ [ExamsService] All fallback endpoints failed, returning empty array');
       return { exams: [] };
       
     } catch (error) {
@@ -151,18 +180,52 @@ class ExamsService {
       return { exams: responseData };
     }
 
+    // New available-exams format
+    if (responseData.success === true && responseData.data && Array.isArray(responseData.data)) {
+      console.log('📦 [ExamsService] Available-exams format detected');
+      // Transform the data to match our expected format
+      const transformedExams = responseData.data.map(exam => ({
+        id: exam.id || exam.exam_id,
+        name: exam.name || exam.title,
+        title: exam.name || exam.title,
+        description: exam.description,
+        courseName: exam.course?.name || exam.subject,
+        subject: exam.course?.name || exam.subject,
+        duration: exam.duration_formatted || exam.duration,
+        numberOfQuestions: exam.question_number || exam.questions_count,
+        questionNumber: exam.question_number || exam.questions_count,
+        examCategory: exam.exam_category?.name || exam.category,
+        educationLevel: exam.education_level?.name || exam.level,
+        allowedChances: exam.allowed_chances,
+        status: 'start', // Default status for available exams
+        canTakeExam: true,
+        availabilityStatus: 'available',
+        actionButton: exam.action_button || 'ابدأ الامتحان',
+        minPercentage: exam.min_percentage,
+        startAt: exam.start_at,
+        endAt: exam.end_at,
+        timeRemaining: exam.time_remaining,
+        ...exam // Include all original properties
+      }));
+      
+      return {
+        exams: transformedExams,
+        total: responseData.pagination?.total || transformedExams.length,
+        pagination: responseData.pagination,
+        filters_applied: responseData.filters_applied,
+        registered_courses_count: responseData.registered_courses_count
+      };
+    }
+
     // Laravel success response with single exam
     if (responseData.success === true && responseData.data && !Array.isArray(responseData.data)) {
       console.log('📦 [ExamsService] Single exam response detected');
-      return { exams: [responseData] }; // Wrap single exam in array
+      return { exams: [responseData.data] };
     }
 
-    // Laravel success response with array
+    // Laravel success response with nested structure
     if (responseData.success === true) {
-      if (Array.isArray(responseData.data)) {
-        console.log('📦 [ExamsService] Laravel array response detected');
-        return { exams: responseData.data };
-      } else if (responseData.data && Array.isArray(responseData.data.exams)) {
+      if (responseData.data && Array.isArray(responseData.data.exams)) {
         console.log('📦 [ExamsService] Nested exams array detected');
         return responseData.data;
       } else if (responseData.data && Array.isArray(responseData.data.data)) {

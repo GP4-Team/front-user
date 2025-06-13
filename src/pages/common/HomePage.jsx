@@ -13,6 +13,7 @@ import HeroSection from "../../components/home/HeroSection";
 import FeaturedCoursesSection from "../../components/home/FeaturedCoursesSection";
 import ExamsSection from "../../components/home/ExamsSection";
 import { useExams } from "../../hooks/api/useExams";
+import { useRealExamination } from "../../hooks/api/useRealExamination";
 import HomeController from "../../controllers/HomeController";
 import { FEATURED_COURSES } from "../../data/mockData";
 import { debugFeaturedCourses } from "../../utils/debugHelper";
@@ -28,7 +29,15 @@ const HomePage = () => {
   const { language, isRTL } = useLanguage();
   const { isDarkMode } = useTheme();
   
-  // Use the new online exams hook
+  // Use the same hook as MyExamsPage for consistency
+  const {
+    availableExams,
+    availableExamsLoading,
+    availableExamsError,
+    fetchAvailableExams
+  } = useRealExamination();
+  
+  // Keep the old hook for fallback (can be removed later)
   const { 
     onlineExams, 
     loading: examsLoading, 
@@ -99,26 +108,47 @@ const HomePage = () => {
   
   // Fetch user courses removed - no longer needed
 
-  // Fetch online exams when component mounts
+  // Fetch available exams using the same method as MyExamsPage
+  useEffect(() => {
+    const loadAvailableExams = async () => {
+      try {
+        if (DEBUG) {
+          console.log('🔍 Fetching available exams for HomePage using useRealExamination...');
+        }
+        
+        await fetchAvailableExams(); // No parameters needed - will fetch all available
+        
+        if (DEBUG) {
+          console.log('✅ Available exams fetched successfully for HomePage');
+        }
+      } catch (err) {
+        console.error('Error fetching available exams:', err);
+      }
+    };
+    
+    loadAvailableExams();
+  }, [fetchAvailableExams]);
+
+  // Fetch online exams when component mounts (legacy - can be removed later)
   useEffect(() => {
     const loadOnlineExams = async () => {
       try {
         if (DEBUG) {
-          console.log('🔍 Fetching online exams for HomePage...');
+          console.log('🔍 Fetching legacy online exams for HomePage...');
         }
         
         await fetchOnlineExams();
         
         if (DEBUG) {
-          console.log('✅ Online exams fetched successfully');
+          console.log('✅ Legacy online exams fetched successfully');
         }
       } catch (err) {
-        console.error('Error fetching online exams:', err);
+        console.error('Error fetching legacy online exams:', err);
       }
     };
     
     loadOnlineExams();
-  }, []);
+  }, [fetchOnlineExams]);
 
   // Debug logging
   useEffect(() => {
@@ -127,7 +157,11 @@ const HomePage = () => {
       console.log('Language:', language);
       console.log('Is Arabic:', isArabic);
       console.log('Featured Courses:', featuredCourses);
-      console.log('Online Exams Count:', onlineExams ? onlineExams.length : 0);
+      console.log('Available Exams Count:', availableExams ? availableExams.length : 0);
+      console.log('Available Exams Data:', availableExams);
+      console.log('Available Exams Loading:', availableExamsLoading);
+      console.log('Available Exams Error:', availableExamsError);
+      console.log('Legacy Online Exams Count:', onlineExams ? onlineExams.length : 0);
       console.log('Online Exams Data:', onlineExams);
       console.log('Exams Loading:', examsLoading);
       console.log('Exams Error:', examsError);
@@ -135,10 +169,29 @@ const HomePage = () => {
       // console.log('User Courses:', userCourses); // Removed
       console.log('=================================');
       
+      // Show available exams info (limit to first 6 for home page)
+      if (availableExams && availableExams.length > 0) {
+        const homePageExams = availableExams.slice(0, 6);
+        console.log('📊 [HomePage] Available exams that will be shown (first 6):', homePageExams);
+        homePageExams.forEach((exam, index) => {
+          console.log(`📋 [HomePage] Available Exam ${index + 1}/6:`, {
+            id: exam.id,
+            name: exam.name,
+            status: exam.status,
+            courseName: exam.course?.name,
+            duration: exam.duration_formatted,
+            numberOfQuestions: exam.question_number
+          });
+        });
+      } else {
+        console.log('⚠️ [HomePage] No available exams to display');
+      }
+      
+      // Legacy online exams info
       if (onlineExams && onlineExams.length > 0) {
-        console.log('📊 [HomePage] First 3 exams that will be shown:', onlineExams.slice(0, 3));
-        onlineExams.slice(0, 3).forEach((exam, index) => {
-          console.log(`📋 [HomePage] Exam ${index + 1}:`, {
+        console.log('📊 [HomePage] First 6 legacy exams that will be shown:', onlineExams.slice(0, 6));
+        onlineExams.slice(0, 6).forEach((exam, index) => {
+          console.log(`📋 [HomePage] Legacy Exam ${index + 1}/6:`, {
             id: exam.id,
             name: exam.name,
             status: exam.status,
@@ -148,10 +201,10 @@ const HomePage = () => {
           });
         });
       } else {
-        console.log('⚠️ [HomePage] No online exams to display');
+        console.log('⚠️ [HomePage] No legacy online exams to display');
       }
     }
-  }, [language, isArabic, featuredCourses, onlineExams, examsLoading, examsError, categories]);
+  }, [language, isArabic, featuredCourses, availableExams, availableExamsLoading, availableExamsError, onlineExams, examsLoading, examsError, categories]);
 
   // Page-level animations
   useEffect(() => {
@@ -193,8 +246,8 @@ const HomePage = () => {
       ar: "اكتشف طريقك للتميز في التعليم!"
     },
     subHeading: {
-      en: "Whether you are a student, teacher, or professional seeking to develop your skills, Eduara provides the tools and courses necessary for success.",
-      ar: "سواء كنت طالباً، معلماً، أو محترفاً يسعى لتطوير مهاراته، اديورا تقدم لك الأدوات والدورات اللازمة لتحقيق النجاح."
+      en: "Whether you are a student, teacher, or professional seeking to develop your skills, LearnNova provides the tools and courses necessary for success.",
+      ar: "سواء كنت طالباً، معلماً، أو محترفاً يسعى لتطوير مهاراته، ليرننوفا تقدم لك الأدوات والدورات اللازمة لتحقيق النجاح."
     },
     featuredCourses: {
       en: "Featured Courses",
@@ -205,8 +258,8 @@ const HomePage = () => {
       ar: "تصفح جميع الدورات"
     },
     upcomingExams: {
-      en: "Online Exams",
-      ar: "الاختبارات الإلكترونية"
+      en: "Available Exams",
+      ar: "الاختبارات المتاحة"
     },
     viewAllExams: {
       en: "View All Exams",
@@ -383,13 +436,13 @@ const HomePage = () => {
         <FeaturedCoursesSection courses={featuredCourses} translations={translations} />
       </div>
 
-      {/* Online Exams Section */}
-      <div id="online-exams-section-wrapper">
+      {/* Available Exams Section */}
+      <div id="available-exams-section-wrapper">
         <ExamsSection 
-          exams={onlineExams} 
+          exams={availableExams && availableExams.length > 0 ? availableExams.slice(0, 6) : onlineExams.slice(0, 6)} 
           translations={translations} 
-          loading={examsLoading}
-          error={examsError}
+          loading={availableExamsLoading || examsLoading}
+          error={availableExamsError || examsError}
         />
       </div>
     </div>

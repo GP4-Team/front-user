@@ -3,7 +3,7 @@ import { ArrowRight, Users, Target, Award, Heart, BookOpen, Lightbulb } from 'lu
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import Navbar from '../../components/navigation/Navbar';
-import Footer from '../../components/layout/Footer';
+import UnifiedFooter from '../../components/common/UnifiedFooter';
 
 const AboutUs = () => {
   const { language, isRTL } = useLanguage();
@@ -232,7 +232,7 @@ const AboutUs = () => {
       </div>
       
       {/* Footer */}
-      <Footer />
+      <UnifiedFooter />
     </div>
   );
 };

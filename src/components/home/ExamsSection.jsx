@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Clock, Users, Award } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -40,19 +40,22 @@ const getSubjectIcon = (category, size = 24) => {
 const ExamsSection = ({ exams = [], translations, loading = false, error = null }) => {
   const { language, isRTL } = useLanguage();
   const { isDarkMode } = useTheme();
+  const navigate = useNavigate();
   const isArabic = language === 'ar';
   const sectionRef = useRef(null);
   const examRefs = useRef([]);
   
-  // Ensure exams is always an array even if null or undefined is passed
-  const examData = Array.isArray(exams) ? exams : [];
+  // Ensure exams is always an array and limit to first 3 exams for home page display
+  const allExams = Array.isArray(exams) ? exams : [];
+  const examData = allExams.slice(0, 3); // Show only first 3 exams
   
   // Enhanced debug logging
   useEffect(() => {
     if (DEBUG) {
       console.log('🏠 === ExamsSection DEBUG INFO ===');
       console.log('Raw exams prop:', exams);
-      console.log('Processed examData:', examData);
+      console.log('All exams count:', allExams.length);
+      console.log('Limited examData (first 3):', examData);
       console.log('ExamData length:', examData.length);
       console.log('ExamData type:', typeof examData);
       console.log('Loading state:', loading);
@@ -62,7 +65,7 @@ const ExamsSection = ({ exams = [], translations, loading = false, error = null 
       
       // Log each individual exam
       if (examData.length > 0) {
-        console.log('📋 Individual exams:');
+        console.log('📋 Individual exams (showing first 3):');
         examData.forEach((exam, index) => {
           console.log(`Exam ${index + 1}:`, {
             originalData: exam,
@@ -77,11 +80,11 @@ const ExamsSection = ({ exams = [], translations, loading = false, error = null 
           });
         });
       } else {
-        console.log('❌ No exams to display');
+        console.log('❌ No exams to display (after limiting to 3)');
       }
       console.log('=====================================');
     }
-  }, [exams, examData, loading, error, language, isArabic]);
+  }, [exams, allExams, examData, loading, error, language, isArabic]);
 
   // Show detailed exam information when rendering cards
   const renderExamCard = (exam, idx) => {
@@ -159,11 +162,19 @@ const ExamsSection = ({ exams = [], translations, loading = false, error = null 
       }
     }
 
+    // Handle card click to navigate to exam details
+    const handleCardClick = () => {
+      if (examId) {
+        navigate(`/exams/${examId}`);
+      }
+    };
+
     return (
       <div 
         key={examId || idx}
         ref={el => examRefs.current[idx] = el}
-        className={`rounded-xl overflow-hidden shadow-md transition-transform hover:-translate-y-1 duration-300 ${isDarkMode ? 'bg-neutral-800' : 'bg-background-card-light'}`}
+        onClick={handleCardClick}
+        className={`rounded-xl overflow-hidden shadow-md transition-transform hover:-translate-y-1 duration-300 cursor-pointer ${isDarkMode ? 'bg-neutral-800' : 'bg-background-card-light'}`}
       >
         <div className={`p-4 flex items-start justify-between border-b ${isDarkMode ? 'border-neutral-700' : 'border-neutral-100'}`}>
           <div className="flex items-center">
@@ -251,6 +262,12 @@ const ExamsSection = ({ exams = [], translations, loading = false, error = null 
           
           <button 
             disabled={!isActionEnabled}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent card click when button is clicked
+              if (examId) {
+                navigate(`/exams/${examId}`);
+              }
+            }}
             className={`w-full py-2 text-sm font-medium rounded-lg transition-colors duration-300 ${actionButtonClass}`}
           >
             {statusLabel}
@@ -283,7 +300,7 @@ const ExamsSection = ({ exams = [], translations, loading = false, error = null 
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {loading ? (
-            // Loading state
+            // Loading state - show 3 skeleton cards to match the exam limit
             [1, 2, 3].map((_, idx) => (
               <div key={idx} className={`rounded-xl overflow-hidden shadow-md ${isDarkMode ? 'bg-neutral-800' : 'bg-background-card-light'}`}>
                 <div className="p-4 animate-pulse">
@@ -322,12 +339,14 @@ const ExamsSection = ({ exams = [], translations, loading = false, error = null 
                 {isArabic ? 'لا توجد اختبارات متاحة حالياً' : 'No exams available at the moment'}
               </div>
               <p className={`text-sm ${isDarkMode ? 'text-neutral-500' : 'text-neutral-500'}`}>
-                {isArabic ? 'لم يتم إرجاع أي امتحانات من الـ API' : 'No exams returned from API'}
+                {isArabic ? 'سيتم عرض أول 3 امتحانات فقط في الصفحة الرئيسية' : 'Only the first 3 exams are shown on the homepage'}
               </p>
               {DEBUG && (
                 <div className={`mt-4 p-4 text-xs ${isDarkMode ? 'bg-neutral-800 text-neutral-400' : 'bg-neutral-100 text-neutral-600'} rounded`}>
                   <p className="font-semibold mb-2">{isArabic ? 'تفاصيل التشخيص:' : 'Debug info:'}</p>
-                  <p>Total exams received: {examData.length}</p>
+                  <p>Total exams received: {allExams.length}</p>
+                  <p>Showing first: 3 exams</p>
+                  <p>Limited examData count: {examData.length}</p>
                   <p>Loading state: {loading ? 'true' : 'false'}</p>
                   <p>Error state: {error || 'none'}</p>
                   <p>Exams prop type: {typeof exams}</p>
