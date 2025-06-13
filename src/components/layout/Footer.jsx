@@ -30,16 +30,16 @@ const Footer = () => {
   // Text content based on language
   const content = {
     companyName: {
-      en: "Eduara",
-      ar: "إديورا",
+      en: "LearnNova",
+      ar: "ليرننوفا",
     },
     slogan: {
       en: "Empowering Education for Everyone",
       ar: "تمكين التعليم للجميع",
     },
     copyright: {
-      en: "© 2025 Eduara. All rights reserved.",
-      ar: "© 2025 إديورا. جميع الحقوق محفوظة.",
+      en: "© 2025 LearnNova. All rights reserved.",
+      ar: "© 2025 ليرننوفا. جميع الحقوق محفوظة.",
     },
     quickLinks: {
       title: {
@@ -94,7 +94,7 @@ const Footer = () => {
         en: "Contact Us",
         ar: "تواصل معنا",
       },
-      email: "support@eduara.com",
+      email: "support@learnnova.com",
       phone: "+20 123 456 7890",
       address: {
         en: "123 Education St., Cairo, Egypt",
@@ -160,7 +160,11 @@ const Footer = () => {
                   isRTL ? "ml-3" : "mr-3"
                 }`}
               >
-                <span className="text-2xl font-bold text-white">E</span>
+                <img 
+                  src="/Group 2.png" 
+                  alt="LearnNova Logo" 
+                  className="w-8 h-8 object-contain"
+                />
               </div>
               <div>
                 <h3 className="text-2xl font-bold">{getText(content.companyName)}</h3>
@@ -169,8 +173,8 @@ const Footer = () => {
             </div>
             <p className={`text-gray-300 mb-6 text-sm ${isRTL ? "text-right" : "text-left"}`}>
               {isArabic
-                ? "منصة تعليمية متكاملة تقدم دورات وامتحانات في مختلف المواد الدراسية بطريقة تفاعلية وحديثة."
-                : "A comprehensive educational platform offering courses and exams in various subjects in an interactive and modern way."}
+                ? "منصة تعليمية متطورة تقدم دورات وامتحانات تفاعلية لجميع المراحل الدراسية."
+                : "An advanced educational platform offering interactive courses and exams for all academic levels."}
             </p>
             <div className="flex space-x-4 rtl:space-x-reverse">
               <a
@@ -368,15 +372,18 @@ const Footer = () => {
         <div className="border-t border-white border-opacity-10 pt-8 mt-8 text-center text-sm text-gray-400">
           <p className="mb-4">{getText(content.copyright)}</p>
           <div className="flex justify-center gap-4">
-            <a href="#" className="hover:text-white transition-colors">
+            <Link to="/terms" className="hover:text-white transition-colors">
               {isArabic ? "شروط الاستخدام" : "Terms of Use"}
-            </a>
-            <a href="#" className="hover:text-white transition-colors">
+            </Link>
+            <Link to="/privacy" className="hover:text-white transition-colors">
               {isArabic ? "سياسة الخصوصية" : "Privacy Policy"}
-            </a>
-            <a href="#" className="hover:text-white transition-colors">
-              {isArabic ? "سياسة ملفات الارتباط" : "Cookie Policy"}
-            </a>
+            </Link>
+            <Link to="/about" className="hover:text-white transition-colors">
+              {isArabic ? "من نحن" : "About Us"}
+            </Link>
+            <Link to="/contact" className="hover:text-white transition-colors">
+              {isArabic ? "اتصل بنا" : "Contact Us"}
+            </Link>
           </div>
           <div className="mt-4 flex items-center justify-center text-xs">
             <Heart size={12} className="mr-1 text-pink-500" />

@@ -10,8 +10,15 @@ const SimpleFooter = () => {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="text-center md:text-right mb-4 md:mb-0">
-            <h2 className="text-2xl font-bold mb-2">إديورا</h2>
-            <p className="text-sm">منصة تعليمية متكاملة تقدم دورات وامتحانات في مختلف المواد الدراسية بطريقة تفاعلية وحديثة</p>
+            <div className="flex items-center justify-center md:justify-end mb-2">
+              <img 
+                src="/Group 2.png" 
+                alt="LearnNova Logo" 
+                className="h-8 w-auto mr-2"
+              />
+              <h2 className="text-2xl font-bold">LearnNova</h2>
+            </div>
+            <p className="text-sm">منصة تعليمية متطورة تقدم دورات وامتحانات تفاعلية لجميع المراحل الدراسية</p>
           </div>
           
           <div className="flex space-x-4 space-x-reverse">
@@ -35,7 +42,7 @@ const SimpleFooter = () => {
 
         <div className="border-t border-[#7986CB] mt-6 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-center md:text-right mb-4 md:mb-0">© {year} إديورا. جميع الحقوق محفوظة.</p>
+            <p className="text-sm text-center md:text-right mb-4 md:mb-0">© {year} LearnNova. جميع الحقوق محفوظة.</p>
             <div className="flex flex-wrap justify-center md:justify-end space-x-4 space-x-reverse">
               <Link to="/terms" className="text-sm hover:text-[#FFC107] mb-2 md:mb-0">شروط الاستخدام</Link>
               <Link to="/privacy" className="text-sm hover:text-[#FFC107] mb-2 md:mb-0">سياسة الخصوصية</Link>

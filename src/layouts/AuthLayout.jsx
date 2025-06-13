@@ -71,27 +71,13 @@ const AuthLayout = ({ children, title, subtitle }) => {
         {/* Logo and language controls */}
         <div className="flex justify-between items-center mb-8">
           <Link ref={logoRef} to="/" className="flex items-center">
-            <div className={`${isDarkMode ? 'bg-neutral-800' : 'bg-white'} rounded-full h-10 w-10 flex items-center justify-center mr-2 rtl:ml-2 rtl:mr-0 shadow-md`}>
-              <svg 
-                width="24" 
-                height="24" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                xmlns="http://www.w3.org/2000/svg"
-                className="transform transition-transform duration-700 hover:rotate-180"
-              >
-                <path 
-                  d="M12 2L5 6V10C5 15.5 8.1 20.6 12 22C15.9 20.6 19 15.5 19 10V6L12 2ZM16 10C16 14.1 13.9 18 12 19.5C10.1 18 8 14.1 8 10V7.3L12 5L16 7.3V10Z" 
-                  fill={isDarkMode ? "#7986CB" : "#3949AB"} 
-                />
-                <path 
-                  d="M11 10H13V16H11V10ZM11 6H13V8H11V6Z" 
-                  fill={isDarkMode ? "#7986CB" : "#3949AB"} 
-                />
-              </svg>
-            </div>
+            <img 
+              src="/Group 2.png" 
+              alt="LearnNova Logo" 
+              className="h-10 w-auto"
+            />
             <span className={`font-bold text-xl`}>
-              Eduara
+              LearnNova
             </span>
           </Link>
           
@@ -133,7 +119,7 @@ const AuthLayout = ({ children, title, subtitle }) => {
         
         {/* Footer */}
         <div className={`text-center mt-8 py-4 text-sm ${isDarkMode ? 'text-neutral-500' : 'text-neutral-600'}`}>
-          &copy; {new Date().getFullYear()} Eduara. {isArabic ? 'جميع الحقوق محفوظة' : 'All rights reserved'}.
+          &copy; {new Date().getFullYear()} LearnNova. {isArabic ? 'جميع الحقوق محفوظة' : 'All rights reserved'}.
         </div>
       </div>
       

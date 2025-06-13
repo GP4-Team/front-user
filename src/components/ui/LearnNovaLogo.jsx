@@ -82,7 +82,7 @@ const LearnOvaLogo = ({
       <LogoIcon />
       {showText && (
         <span className={`font-bold ${currentSize.text} font-sans tracking-tight transition-all duration-300 group-hover:scale-105 ${getTextColor()}`}>
-          LearnOva
+          LearnNova
         </span>
       )}
     </div>

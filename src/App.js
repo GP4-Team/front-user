@@ -25,6 +25,8 @@ import AllCoursesPage from "./pages/courses/AllCoursesPage.jsx";
 import NotFound from "./pages/common/NotFound.jsx";
 import Unauthorized from "./pages/common/Unauthorized.jsx";
 import ServerError from "./pages/common/ServerError.jsx";
+import AboutUs from "./pages/common/AboutUs.jsx";
+import ContactUs from "./pages/common/ContactUs.jsx";
 import MyExamsPage from "./pages/exams/MyExamsPage.jsx";
 import ExamDetailsPage from "./pages/exams/ExamDetailsPage.jsx";
 import ExamQuestionsPage from "./pages/exams/ExamQuestionsPage.jsx";
@@ -254,6 +256,50 @@ const router = createBrowserRouter(
                 <AIWeaknessPortal />
               </MainLayout>
             </PrivateRoute>
+          ),
+        },
+
+        // Help Center Routes
+        {
+          path: "/about",
+          element: <AboutUs />,
+        },
+        {
+          path: "/contact",
+          element: <ContactUs />,
+        },
+        {
+          path: "/privacy",
+          element: (
+            <GuestLayout>
+              <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+                <div className="text-center p-8">
+                  <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                    Privacy Policy
+                  </h1>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Coming Soon...
+                  </p>
+                </div>
+              </div>
+            </GuestLayout>
+          ),
+        },
+        {
+          path: "/terms",
+          element: (
+            <GuestLayout>
+              <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+                <div className="text-center p-8">
+                  <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                    Terms of Service
+                  </h1>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Coming Soon...
+                  </p>
+                </div>
+              </div>
+            </GuestLayout>
           ),
         },
 
