@@ -8,7 +8,13 @@ import {
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { aiWeaknessService, recommendationService, quizService } from '../../services/api/index';
+import { 
+  aiWeaknessService, 
+  courseSearchService, 
+  aiQuizService, 
+  recommendationHistoryService 
+} from '../../services/api/aiPortalServices';
+import { useAIPortal, useWeaknessAnalysis, useRecommendationsHistory, useAIQuizGeneration, useQuizExplanation } from '../../hooks/api/useAIPortal';
 
 // Import components
 import Navbar from '../../components/navigation/Navbar';
@@ -21,7 +27,7 @@ import {
 } from '../../components/student/ai/LoadingStates';
 
 /**
- * AI Weakness Portal Page - Updated to match real APIs exactly
+ * AI Weakness Portal Page - Updated with new hooks and services
  */
 const AIWeaknessPortal = () => {
   const navigate = useNavigate();
@@ -30,26 +36,25 @@ const AIWeaknessPortal = () => {
   const { isAuthenticated, user } = useAuth();
   const isArabic = language === 'ar';
 
-  // State management
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [weaknessData, setWeaknessData] = useState(null);
-  const [recommendations, setRecommendations] = useState([]);
-  const [selectedRecommendation, setSelectedRecommendation] = useState(null);
-  const [recommendationExplanation, setRecommendationExplanation] = useState(null);
-  const [explanationLoading, setExplanationLoading] = useState(false);
+  // Use combined AI Portal hook
+  const {
+    weakness,
+    recommendations,
+    quizGeneration,
+    explanation,
+    initializePortal,
+    isLoading
+  } = useAIPortal();
 
-  // Quiz generation form state - Updated for real API
+  // Local state for UI
   const [showQuizForm, setShowQuizForm] = useState(false);
+  const [selectedRecommendation, setSelectedRecommendation] = useState(null);
   const [quizFormData, setQuizFormData] = useState({
     course_id: '',
     num_questions: 5,
     time_limit_minutes: 20,
     allow_stretch: true
   });
-  const [quizLoading, setQuizLoading] = useState(false);
-  const [quizError, setQuizError] = useState('');
-  const [quizSuccess, setQuizSuccess] = useState('');
 
   // Static course data - In real app, this should come from courses API
   const availableCourses = [
@@ -62,84 +67,22 @@ const AIWeaknessPortal = () => {
     { id: 7, name: isArabic ? 'اللغة العربية' : 'Arabic Language' }
   ];
 
-  // Fetch data using real APIs
+  // Initialize data when component mounts
   useEffect(() => {
-    const fetchData = async () => {
-      if (!isAuthenticated || !user?.id) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Fetch data from real APIs - no studentId needed as APIs use authenticated user
-        const [weaknessResult, recommendationResult] = await Promise.allSettled([
-          aiWeaknessService.getStudentWeaknesses(),
-          recommendationService.getStudentRecommendations()
-        ]);
-
-        // Handle weakness data
-        if (weaknessResult.status === 'fulfilled' && weaknessResult.value.success) {
-          setWeaknessData(weaknessResult.value.data);
-        } else {
-          console.error('Failed to fetch weakness data:', weaknessResult.reason);
-          setWeaknessData(null);
-        }
-
-        // Handle recommendations
-        if (recommendationResult.status === 'fulfilled' && recommendationResult.value.success) {
-          const recData = recommendationResult.value.data;
-          setRecommendations(recData.recommendations || []);
-        } else {
-          console.error('Failed to fetch recommendations:', recommendationResult.reason);
-          setRecommendations([]);
-        }
-
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError(isArabic ? 'حدث خطأ في تحميل البيانات' : 'Error loading data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [isAuthenticated, user?.id]);
+    if (isAuthenticated && user?.id) {
+      initializePortal();
+    }
+  }, [isAuthenticated, user?.id, initializePortal]);
 
   // Handle quiz form submission - Updated for real API
   const handleQuizSubmit = async (e) => {
     e.preventDefault();
-    setQuizLoading(true);
-    setQuizError('');
-    setQuizSuccess('');
-
+    
     try {
-      // Validate required fields for real API
-      if (!quizFormData.course_id) {
-        throw new Error(isArabic ? 'يرجى اختيار المادة' : 'Please select a course');
-      }
-
-      if (quizFormData.num_questions < 1 || quizFormData.num_questions > 20) {
-        throw new Error(isArabic ? 'عدد الأسئلة يجب أن يكون بين 1 و 20' : 'Number of questions must be between 1 and 20');
-      }
-
-      if (quizFormData.time_limit_minutes < 5 || quizFormData.time_limit_minutes > 120) {
-        throw new Error(isArabic ? 'وقت الامتحان يجب أن يكون بين 5 و 120 دقيقة' : 'Time limit must be between 5 and 120 minutes');
-      }
-
-      // Generate quiz using real API
-      const result = await quizService.generateQuiz(quizFormData);
-
-      if (result.success) {
-        setQuizSuccess(
-          isArabic 
-            ? `تم إنشاء الامتحان بنجاح! رقم الامتحان: ${result.data.passed_exam_id}` 
-            : `Quiz generated successfully! Exam ID: ${result.data.passed_exam_id}`
-        );
-        
-        // Reset form
+      const result = await quizGeneration.generateQuiz(quizFormData);
+      
+      if (result) {
+        // Reset form on success
         setQuizFormData({
           course_id: '',
           num_questions: 5,
@@ -148,72 +91,44 @@ const AIWeaknessPortal = () => {
         });
         setShowQuizForm(false);
         
-        // Refresh recommendations after creating quiz
-        setTimeout(async () => {
-          try {
-            const newRecommendations = await recommendationService.getStudentRecommendations();
-            if (newRecommendations.success) {
-              setRecommendations(newRecommendations.data.recommendations || []);
-            }
-          } catch (error) {
-            console.error('Error refreshing recommendations:', error);
+        // Navigate to the generated exam after 2 seconds
+        setTimeout(() => {
+          if (result.online_exam_id) {
+            navigate(`/exams/${result.online_exam_id}`);
           }
+        }, 2000);
+        
+        // Refresh recommendations after creating quiz
+        setTimeout(() => {
+          recommendations.fetchRecommendations();
         }, 1000);
-      } else {
-        // Handle validation errors from API
-        if (result.errors) {
-          const errorMessages = Object.values(result.errors).flat();
-          throw new Error(errorMessages.join(', '));
-        }
-        throw new Error(result.error || (isArabic ? 'فشل في إنشاء الامتحان' : 'Failed to generate quiz'));
       }
     } catch (error) {
       console.error('Error generating quiz:', error);
-      setQuizError(error.message || (isArabic ? 'حدث خطأ في إنشاء الامتحان' : 'Error generating quiz'));
-    } finally {
-      setQuizLoading(false);
     }
   };
 
   // Handle recommendation explanation
   const handleViewExplanation = async (recommendationId) => {
-    try {
-      setSelectedRecommendation(recommendationId);
-      setExplanationLoading(true);
-      
-      const result = await aiWeaknessService.getQuizExplanation(recommendationId);
-      
-      if (result.success) {
-        setRecommendationExplanation(result.data);
-      } else {
-        console.error('Failed to fetch explanation:', result.error);
-        setRecommendationExplanation(null);
-      }
-    } catch (error) {
-      console.error('Error fetching explanation:', error);
-      setRecommendationExplanation(null);
-    } finally {
-      setExplanationLoading(false);
-    }
+    setSelectedRecommendation(recommendationId);
+    await explanation.fetchExplanation(recommendationId);
   };
 
-  // Calculate stats from real data
+  // Calculate stats from hooks data
   const weaknessStats = {
-    averageScore: weaknessData?.weaknesses?.[0]?.average_score || 0,
-    totalAttempts: weaknessData?.weaknesses?.[0]?.attempts || 0,
-    overallScore: weaknessData?.overall_score || 0,
-    hasWeaknesses: weaknessData?.weaknesses?.length > 0,
-    weaknessCount: weaknessData?.weaknesses?.length || 0,
-    improvementAreas: weaknessData?.improvement_areas?.length || 0
+    averageScore: weakness.averageScore,
+    totalAttempts: weakness.totalAttempts,
+    overallScore: weakness.overallScore,
+    hasWeaknesses: weakness.hasWeaknesses,
+    weaknessCount: weakness.weaknessData?.weaknesses?.length || 0,
+    improvementAreas: weakness.improvementAreas.length
   };
 
   const recommendationStats = {
-    totalRecommendations: recommendations.length,
-    averageQuestions: recommendations.length > 0 
-      ? Math.round(recommendations.reduce((sum, r) => sum + (r.num_questions || 0), 0) / recommendations.length)
-      : 0,
-    hasRecommendations: recommendations.length > 0,
-    lastRecommendation: recommendations.length > 0 ? recommendations[0].created_at : null
+    totalRecommendations: recommendations.totalCount,
+    averageQuestions: recommendations.averageQuestions,
+    hasRecommendations: recommendations.hasRecommendations,
+    lastRecommendation: recommendations.recommendations.length > 0 ? recommendations.recommendations[0].created_at : null
   };
 
   // Page translations
@@ -278,7 +193,7 @@ const AIWeaknessPortal = () => {
   }
 
   // Show loading state
-  if (loading) {
+  if (isLoading) {
     return (
       <div className={`min-h-screen ${isDarkMode ? 'bg-[#121212]' : 'bg-[#F0F4F8]'} ${isRTL ? 'rtl font-tajawal' : 'ltr'}`}>
         <Navbar />
@@ -313,29 +228,31 @@ const AIWeaknessPortal = () => {
           </div>
 
           {/* Success/Error Messages */}
-          {quizSuccess && (
+          {quizGeneration.success && (
             <div className="mb-6 p-4 bg-green-100 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
               <div className="flex items-center">
                 <CheckCircle size={20} className="text-green-600 dark:text-green-400 mr-2" />
-                <span className="text-green-800 dark:text-green-300">{quizSuccess}</span>
+                <span className="text-green-800 dark:text-green-300">{quizGeneration.success}</span>
               </div>
             </div>
           )}
 
-          {quizError && (
+          {quizGeneration.error && (
             <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <div className="flex items-center">
                 <AlertCircle size={20} className="text-red-600 dark:text-red-400 mr-2" />
-                <span className="text-red-800 dark:text-red-300">{quizError}</span>
+                <span className="text-red-800 dark:text-red-300">{quizGeneration.error}</span>
               </div>
             </div>
           )}
 
-          {error && (
+          {(weakness.error || recommendations.error) && (
             <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <div className="flex items-center">
                 <AlertCircle size={20} className="text-red-600 dark:text-red-400 mr-2" />
-                <span className="text-red-800 dark:text-red-300">{error}</span>
+                <span className="text-red-800 dark:text-red-300">
+                  {weakness.error || recommendations.error}
+                </span>
               </div>
             </div>
           )}
@@ -484,9 +401,9 @@ const AIWeaknessPortal = () => {
                           : `Evaluated based on ${weaknessStats.totalAttempts} attempts`
                         }
                       </p>
-                      {weaknessData?.last_analysis && (
+                      {weakness.weaknessData?.last_analysis && (
                         <p className={`text-xs ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
-                          {isArabic ? 'آخر تحليل:' : 'Last analysis:'} {formatDate(weaknessData.last_analysis)}
+                          {isArabic ? 'آخر تحليل:' : 'Last analysis:'} {formatDate(weakness.weaknessData.last_analysis)}
                         </p>
                       )}
                     </div>
@@ -499,7 +416,7 @@ const AIWeaknessPortal = () => {
                     </h3>
                     
                     {/* Main Recommendation */}
-                    {weaknessData.weaknesses[0]?.recommendation && (
+                    {weakness.weaknessData?.weaknesses?.[0]?.recommendation && (
                       <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                         <div className="flex items-start gap-3">
                           <Info size={20} className="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
@@ -508,7 +425,7 @@ const AIWeaknessPortal = () => {
                               {isArabic ? 'التوصية الرئيسية' : 'Main Recommendation'}
                             </h4>
                             <p className="text-blue-700 dark:text-blue-300 text-sm">
-                              {weaknessData.weaknesses[0].recommendation}
+                              {weakness.weaknessData.weaknesses[0].recommendation}
                             </p>
                           </div>
                         </div>
@@ -516,13 +433,13 @@ const AIWeaknessPortal = () => {
                     )}
 
                     {/* Improvement Areas */}
-                    {weaknessData.improvement_areas && weaknessData.improvement_areas.length > 0 && (
+                    {weakness.improvementAreas && weakness.improvementAreas.length > 0 && (
                       <div>
                         <h4 className={`font-medium ${isDarkMode ? 'text-white' : 'text-[#37474F]'} mb-3`}>
                           {isArabic ? 'المناطق المطلوب تحسينها' : 'Areas for Improvement'}
                         </h4>
                         <div className="space-y-2">
-                          {weaknessData.improvement_areas.map((area, index) => (
+                          {weakness.improvementAreas.map((area, index) => (
                             <div key={index} className={`flex items-center gap-3 p-3 rounded-lg ${
                               isDarkMode ? 'bg-neutral-800' : 'bg-neutral-100'
                             }`}>
@@ -537,7 +454,7 @@ const AIWeaknessPortal = () => {
                     )}
 
                     {/* No improvement areas message */}
-                    {(!weaknessData.improvement_areas || weaknessData.improvement_areas.length === 0) && (
+                    {(!weakness.improvementAreas || weakness.improvementAreas.length === 0) && (
                       <div className="text-center py-6">
                         <Award size={48} className="mx-auto text-green-500 mb-3" />
                         <p className={`text-sm ${isDarkMode ? 'text-neutral-300' : 'text-neutral-600'}`}>
@@ -674,7 +591,7 @@ const AIWeaknessPortal = () => {
                       type="button"
                       onClick={() => {
                         setShowQuizForm(false);
-                        setQuizError('');
+                        quizGeneration.clearMessages();
                       }}
                       className={`px-6 py-3 border rounded-lg transition-colors ${
                         isDarkMode 
@@ -686,12 +603,12 @@ const AIWeaknessPortal = () => {
                     </button>
                     <button
                       type="submit"
-                      disabled={quizLoading}
+                      disabled={quizGeneration.loading}
                       className={`px-6 py-3 bg-gradient-to-r from-[#3949AB] to-[#5E35B1] text-white rounded-lg hover:from-[#2E3192] hover:to-[#4527A0] transition-all flex items-center gap-2 shadow-lg ${
-                        quizLoading ? 'opacity-50 cursor-not-allowed' : 'transform hover:scale-105'
+                        quizGeneration.loading ? 'opacity-50 cursor-not-allowed' : 'transform hover:scale-105'
                       }`}
                     >
-                      {quizLoading ? (
+                      {quizGeneration.loading ? (
                         <>
                           <Loader size={18} className="animate-spin" />
                           {translations.generating}
@@ -740,7 +657,7 @@ const AIWeaknessPortal = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {recommendations.map((recommendation, index) => (
+                  {recommendations.recommendations.map((recommendation, index) => (
                     <div key={recommendation.recommendation_id || index} className={`border rounded-xl p-5 transition-all hover:shadow-lg ${
                       isDarkMode ? 'border-neutral-700 hover:border-neutral-600' : 'border-neutral-200 hover:border-neutral-300'
                     }`}>
@@ -855,7 +772,7 @@ const AIWeaknessPortal = () => {
                   <button
                     onClick={() => {
                       setSelectedRecommendation(null);
-                      setRecommendationExplanation(null);
+                      explanation.clearExplanation();
                     }}
                     className={`p-2 rounded-lg transition-colors ${
                       isDarkMode ? 'hover:bg-neutral-800' : 'hover:bg-neutral-100'
@@ -867,14 +784,14 @@ const AIWeaknessPortal = () => {
                 
                 {/* Modal Content */}
                 <div className="p-6 overflow-y-auto max-h-[calc(85vh-80px)]">
-                  {explanationLoading ? (
+                  {explanation.loading ? (
                     <div className="flex items-center justify-center py-12">
                       <Loader size={32} className="animate-spin text-[#3949AB]" />
                       <span className={`ml-3 ${isDarkMode ? 'text-white' : 'text-[#37474F]'}`}>
                         {isArabic ? 'جاري تحميل الشرح...' : 'Loading explanation...'}
                       </span>
                     </div>
-                  ) : recommendationExplanation ? (
+                  ) : explanation.explanation ? (
                     <div className="space-y-6">
                       {/* Main Explanation */}
                       <div>
@@ -884,20 +801,20 @@ const AIWeaknessPortal = () => {
                         </h4>
                         <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-neutral-800' : 'bg-blue-50'} border border-blue-200 dark:border-blue-800`}>
                           <p className={`${isDarkMode ? 'text-neutral-300' : 'text-blue-800'}`}>
-                            {recommendationExplanation.explanation || (isArabic ? 'لا يتوفر شرح' : 'No explanation available')}
+                            {explanation.explanation.explanation || (isArabic ? 'لا يتوفر شرح' : 'No explanation available')}
                           </p>
                         </div>
                       </div>
                       
                       {/* Learning Objectives */}
-                      {recommendationExplanation.learning_objectives && recommendationExplanation.learning_objectives.length > 0 && (
+                      {explanation.explanation.learning_objectives && explanation.explanation.learning_objectives.length > 0 && (
                         <div>
                           <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#37474F]'} mb-3 flex items-center gap-2`}>
                             <Target size={20} className="text-green-500" />
                             {isArabic ? 'أهداف التعلم' : 'Learning Objectives'}
                           </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {recommendationExplanation.learning_objectives.map((objective, index) => (
+                            {explanation.explanation.learning_objectives.map((objective, index) => (
                               <div key={index} className={`p-3 rounded-lg ${isDarkMode ? 'bg-neutral-800' : 'bg-green-50'} border border-green-200 dark:border-green-800`}>
                                 <div className="flex items-start gap-2">
                                   <CheckCircle size={16} className="text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
@@ -912,7 +829,7 @@ const AIWeaknessPortal = () => {
                       )}
                       
                       {/* Time Management */}
-                      {recommendationExplanation.time_management && recommendationExplanation.time_management.length > 0 && (
+                      {explanation.explanation.time_management && explanation.explanation.time_management.length > 0 && (
                         <div>
                           <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#37474F]'} mb-3 flex items-center gap-2`}>
                             <Clock size={20} className="text-orange-500" />
@@ -920,7 +837,7 @@ const AIWeaknessPortal = () => {
                           </h4>
                           <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-neutral-800' : 'bg-orange-50'} border border-orange-200 dark:border-orange-800`}>
                             <ul className="space-y-2">
-                              {recommendationExplanation.time_management.map((time, index) => (
+                              {explanation.explanation.time_management.map((time, index) => (
                                 <li key={index} className="flex items-start gap-2">
                                   <Clock size={14} className="text-orange-600 dark:text-orange-400 mt-1 flex-shrink-0" />
                                   <span className={`text-sm ${isDarkMode ? 'text-neutral-300' : 'text-orange-800'}`}>
@@ -934,7 +851,7 @@ const AIWeaknessPortal = () => {
                       )}
 
                       {/* Reasoning Details */}
-                      {recommendationExplanation.reasoning_details && (
+                      {explanation.explanation.reasoning_details && (
                         <div>
                           <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#37474F]'} mb-3 flex items-center gap-2`}>
                             <Brain size={20} className="text-purple-500" />
@@ -942,13 +859,13 @@ const AIWeaknessPortal = () => {
                           </h4>
                           <div className="space-y-4">
                             {/* Personalization Factors */}
-                            {recommendationExplanation.reasoning_details.personalization_factors && recommendationExplanation.reasoning_details.personalization_factors.length > 0 && (
+                            {explanation.explanation.reasoning_details.personalization_factors && explanation.explanation.reasoning_details.personalization_factors.length > 0 && (
                               <div>
                                 <h5 className={`text-sm font-medium ${isDarkMode ? 'text-neutral-300' : 'text-neutral-700'} mb-2`}>
                                   {isArabic ? 'عوامل التخصيص:' : 'Personalization Factors:'}
                                 </h5>
                                 <div className="grid gap-2">
-                                  {recommendationExplanation.reasoning_details.personalization_factors.map((factor, index) => (
+                                  {explanation.explanation.reasoning_details.personalization_factors.map((factor, index) => (
                                     <div key={index} className={`text-xs p-2 rounded ${isDarkMode ? 'bg-purple-900/20 text-purple-300' : 'bg-purple-100 text-purple-800'}`}>
                                       • {factor}
                                     </div>
@@ -958,32 +875,32 @@ const AIWeaknessPortal = () => {
                             )}
 
                             {/* Difficulty Rationale */}
-                            {recommendationExplanation.reasoning_details.difficulty_rationale && (
+                            {explanation.explanation.reasoning_details.difficulty_rationale && (
                               <div>
                                 <h5 className={`text-sm font-medium ${isDarkMode ? 'text-neutral-300' : 'text-neutral-700'} mb-2`}>
                                   {isArabic ? 'مبرر مستوى الصعوبة:' : 'Difficulty Rationale:'}
                                 </h5>
                                 <div className={`text-xs p-3 rounded-lg ${isDarkMode ? 'bg-purple-900/20 text-purple-300' : 'bg-purple-100 text-purple-800'}`}>
-                                  {recommendationExplanation.reasoning_details.difficulty_rationale}
+                                  {explanation.explanation.reasoning_details.difficulty_rationale}
                                 </div>
                               </div>
                             )}
 
                             {/* AI Confidence Level */}
-                            {recommendationExplanation.reasoning_details.ai_confidence_level && (
+                            {explanation.explanation.reasoning_details.ai_confidence_level && (
                               <div>
                                 <h5 className={`text-sm font-medium ${isDarkMode ? 'text-neutral-300' : 'text-neutral-700'} mb-2`}>
                                   {isArabic ? 'مستوى ثقة الذكاء الاصطناعي:' : 'AI Confidence Level:'}
                                 </h5>
                                 <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                                  recommendationExplanation.reasoning_details.ai_confidence_level === 'high'
+                                  explanation.explanation.reasoning_details.ai_confidence_level === 'high'
                                     ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
-                                    : recommendationExplanation.reasoning_details.ai_confidence_level === 'medium'
+                                    : explanation.explanation.reasoning_details.ai_confidence_level === 'medium'
                                       ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300'
                                       : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300'
                                 }`}>
-                                  {recommendationExplanation.reasoning_details.ai_confidence_level === 'high' ? (isArabic ? 'عالية' : 'High') :
-                                   recommendationExplanation.reasoning_details.ai_confidence_level === 'medium' ? (isArabic ? 'متوسطة' : 'Medium') :
+                                  {explanation.explanation.reasoning_details.ai_confidence_level === 'high' ? (isArabic ? 'عالية' : 'High') :
+                                   explanation.explanation.reasoning_details.ai_confidence_level === 'medium' ? (isArabic ? 'متوسطة' : 'Medium') :
                                    (isArabic ? 'منخفضة' : 'Low')}
                                 </div>
                               </div>
@@ -993,14 +910,14 @@ const AIWeaknessPortal = () => {
                       )}
 
                       {/* Expected Outcomes */}
-                      {recommendationExplanation.expected_outcomes && recommendationExplanation.expected_outcomes.length > 0 && (
+                      {explanation.explanation.expected_outcomes && explanation.explanation.expected_outcomes.length > 0 && (
                         <div>
                           <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-[#37474F]'} mb-3 flex items-center gap-2`}>
                             <TrendingUp size={20} className="text-blue-500" />
                             {isArabic ? 'النتائج المتوقعة' : 'Expected Outcomes'}
                           </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {recommendationExplanation.expected_outcomes.map((outcome, index) => (
+                            {explanation.explanation.expected_outcomes.map((outcome, index) => (
                               <div key={index} className={`p-3 rounded-lg ${isDarkMode ? 'bg-neutral-800' : 'bg-blue-50'} border border-blue-200 dark:border-blue-800`}>
                                 <div className="flex items-start gap-2">
                                   <ArrowRight size={16} className="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
