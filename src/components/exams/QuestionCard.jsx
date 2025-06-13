@@ -1,7 +1,8 @@
-import React from 'react';
-import { Radio, Input, Image } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Radio, Input, Image, message } from 'antd';
 import { useTheme } from '../../contexts/ThemeContext';
-import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { CheckOutlined, CloseOutlined, LoadingOutlined } from '@ant-design/icons';
+import useOnlineExamQuestions from '../../hooks/api/useOnlineExamQuestions';
 
 const { TextArea } = Input;
 
@@ -24,82 +25,179 @@ const QuestionCard = ({
   },
   imageMaxWidth = 400
 }) => {
-  const handleMCQChange = (e) => {
-    onAnswerChange(e.target.value);
+  // استخدام submitAnswer من hook
+  const { submitAnswer } = useOnlineExamQuestions();
+  
+  // حالة لتتبع الإجابة المرسلة والفيدباك
+  const [submittedAnswer, setSubmittedAnswer] = useState(null);
+  const [answerFeedback, setAnswerFeedback] = useState(null); // { is_correct, awarded_mark, max_mark }
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Reset feedback when question changes
+  useEffect(() => {
+    setSubmittedAnswer(null);
+    setAnswerFeedback(null);
+    setIsSubmitting(false);
+  }, [question.id]);
+  
+  // Initialize answer feedback if answer already exists
+  useEffect(() => {
+    if (userAnswer && !submittedAnswer && !isReview) {
+      // If we have an answer but no submitted state, this might be a loaded answer
+      // For now, we'll just keep it as is - the feedback will come when user changes answer
+    }
+  }, [userAnswer, submittedAnswer, isReview]);
+
+  const handleMCQChange = async (e) => {
+    const answer = e.target.value;
+    
+    // تحديث الإجابة محلياً
+    onAnswerChange(answer);
+    
+    // إرسال الإجابة فورياً لل API
+    if (!isReview && question.student_answer_id) {
+      setIsSubmitting(true);
+      
+      try {
+        console.log(`📤 [QuestionCard] Submitting answer for question ${question.id}:`, answer);
+        
+        const result = await submitAnswer(question.student_answer_id, answer, question.type);
+        
+        if (result.success) {
+          setSubmittedAnswer(answer);
+          setAnswerFeedback(result.data);
+          
+          console.log('✅ [QuestionCard] Answer submitted successfully:', result.data);
+          
+          // عرض رسالة نجاح قصيرة مع أيقونة
+          if (result.data?.is_correct) {
+            message.success({
+              content: language === 'ar' ? '✅ إجابة صحيحة!' : '✅ Correct!',
+              duration: 2,
+              style: { marginTop: '10vh' }
+            });
+          } else {
+            message.error({
+              content: language === 'ar' ? '❌ إجابة خاطئة' : '❌ Incorrect',
+              duration: 2,
+              style: { marginTop: '10vh' }
+            });
+          }
+        } else {
+          console.error('❌ [QuestionCard] Failed to submit answer:', result.error);
+          message.error(language === 'ar' ? 'خطأ في إرسال الإجابة' : 'Error submitting answer');
+        }
+      } catch (error) {
+        console.error('❌ [QuestionCard] Error submitting answer:', error);
+        message.error(language === 'ar' ? 'خطأ في الاتصال' : 'Connection error');
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
   };
 
-  const handleEssayChange = (e) => {
-    onAnswerChange(e.target.value);
-  };
-
-  // Custom radio button style for the circular design with check/x mark
-  const radioStyle = (optionId) => {
-    const isSelected = optionId === userAnswer;
+  const handleEssayChange = async (e) => {
+    const answer = e.target.value;
+    onAnswerChange(answer);
     
-    if (!isReview) {
-      return {
-        display: 'flex',
-        alignItems: 'center',
-        cursor: 'pointer',
-      };
+    // Auto-submit essay answers after 2 seconds of no typing
+    if (!isReview && question.student_answer_id && answer.trim()) {
+      // Clear existing timeout
+      if (window.essaySubmitTimeout) {
+        clearTimeout(window.essaySubmitTimeout);
+      }
+      
+      // Set new timeout
+      window.essaySubmitTimeout = setTimeout(async () => {
+        setIsSubmitting(true);
+        
+        try {
+          console.log(`📤 [QuestionCard] Auto-submitting essay answer for question ${question.id}`);
+          
+          const result = await submitAnswer(question.student_answer_id, answer, question.type);
+          
+          if (result.success) {
+            setSubmittedAnswer(answer);
+            setAnswerFeedback(result.data);
+            
+            console.log('✅ [QuestionCard] Essay answer submitted successfully:', result.data);
+          }
+        } catch (error) {
+          console.error('❌ [QuestionCard] Error submitting essay answer:', error);
+        } finally {
+          setIsSubmitting(false);
+        }
+      }, 2000);
     }
-
-    // For review mode
-    const isCorrect = optionId === correctAnswer;
-    
-    if (isSelected && isCorrect) {
-      return {
-        display: 'flex',
-        alignItems: 'center',
-        color: '#52c41a',
-      };
-    }
-    
-    if (isSelected && !isCorrect) {
-      return {
-        display: 'flex',
-        alignItems: 'center',
-        color: '#f5222d',
-      };
-    }
-    
-    if (!isSelected && isCorrect) {
-      return {
-        display: 'flex',
-        alignItems: 'center',
-        color: '#52c41a',
-        opacity: 0.7,
-      };
-    }
-    
-    return {
-      display: 'flex',
-      alignItems: 'center',
-    };
   };
 
   // Custom checkbox component to match the design
   const CustomRadio = ({ children, value, onChange, checked, disabled }) => {
+    // تحديد اللون بناءً على الفيدباك
+    let borderColor = 'border-gray-300';
+    let bgColor = 'bg-white';
+    let iconColor = 'text-blue-500';
+    let icon = <CheckOutlined className="text-blue-500 text-xs" />;
+    
+    if (!isReview && answerFeedback && submittedAnswer !== null) {
+      // في وضع الامتحان مع فيدباك فوري
+      if (value === submittedAnswer) {
+        if (answerFeedback.is_correct) {
+          borderColor = 'border-green-500';
+          bgColor = 'bg-green-50';
+          iconColor = 'text-green-500';
+          icon = <CheckOutlined className="text-green-500 text-xs" />;
+        } else {
+          borderColor = 'border-red-500';
+          bgColor = 'bg-red-50';
+          iconColor = 'text-red-500';
+          icon = <CloseOutlined className="text-red-500 text-xs" />;
+        }
+      } else if (answerFeedback.correct_answer_id && value === answerFeedback.correct_answer_id) {
+        // عرض الإجابة الصحيحة من الفيدباك
+        borderColor = 'border-green-400';
+        bgColor = 'bg-green-50';
+        iconColor = 'text-green-400';
+        icon = <CheckOutlined className="text-green-400 text-xs" />;
+      }
+    } else if (isReview && checked) {
+      // في وضع المراجعة
+      if (value !== correctAnswer) {
+        borderColor = 'border-red-500';
+        bgColor = 'bg-red-50';
+        iconColor = 'text-red-500';
+        icon = <CloseOutlined className="text-red-500 text-xs" />;
+      } else {
+        borderColor = 'border-green-500';
+        bgColor = 'bg-green-50';
+        iconColor = 'text-green-500';
+        icon = <CheckOutlined className="text-green-500 text-xs" />;
+      }
+    } else if (checked) {
+      borderColor = 'border-blue-500';
+      bgColor = 'bg-blue-50';
+    }
+    
     return (
       <label 
-        className={`flex items-center cursor-pointer ${disabled && 'cursor-default'}`}
-        onClick={() => !disabled && onChange && onChange({ target: { value } })}
+        className={`flex items-center cursor-pointer ${disabled && 'cursor-default'} ${isSubmitting && value === userAnswer && 'opacity-50'} transition-all duration-200`}
+        onClick={() => !disabled && !isSubmitting && onChange && onChange({ target: { value } })}
       >
         <div 
-          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-3
-          ${checked 
-            ? (isReview && value !== correctAnswer) 
-              ? 'border-red-500 bg-red-50' 
-              : 'border-blue-500 bg-blue-50' 
-            : 'border-gray-300 bg-white'}`}
+          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-3 transition-all duration-200 ${borderColor} ${bgColor}`}
         >
-          {checked && (
-            (isReview && value !== correctAnswer) 
-              ? <CloseOutlined className="text-red-500 text-xs" />
-              : <CheckOutlined className="text-blue-500 text-xs" />
+          {checked && !isSubmitting && icon}
+          {isSubmitting && value === userAnswer && (
+            <LoadingOutlined className="text-blue-500 text-xs animate-spin" />
           )}
         </div>
         <span className="text-base">{children}</span>
+        {isSubmitting && value === userAnswer && (
+          <div className="ml-2 text-xs text-gray-500 flex items-center">
+            <LoadingOutlined className="mr-1" />
+            {language === 'ar' ? 'جاري الإرسال...' : 'Submitting...'}
+          </div>
+        )}
       </label>
     );
   };
@@ -145,7 +243,22 @@ const QuestionCard = ({
               
               let optionClass = "p-4 rounded-lg transition-colors duration-200 shadow-sm border";
               
-              if (isReview) {
+              // ألوان مختلفة حسب الوضع
+              if (!isReview && answerFeedback && submittedAnswer !== null) {
+                // في وضع الامتحان مع فيدباك فوري
+                if (option.id === submittedAnswer) {
+                  if (answerFeedback.is_correct) {
+                    optionClass += " border-green-500 bg-green-50 shadow-md";
+                  } else {
+                    optionClass += " border-red-500 bg-red-50 shadow-md";
+                  }
+                } else if (answerFeedback.correct_answer_id && option.id === answerFeedback.correct_answer_id) {
+                  optionClass += " border-green-400 bg-green-50 opacity-75 shadow-sm";
+                } else {
+                  optionClass += " border-gray-200 opacity-60";
+                }
+              } else if (isReview) {
+                // في وضع المراجعة
                 if (option.id === correctAnswer) {
                   optionClass += " border-green-500 bg-green-50";
                 } else if (option.id === userAnswer && option.id !== correctAnswer) {
@@ -154,6 +267,7 @@ const QuestionCard = ({
                   optionClass += " border-gray-200";
                 }
               } else {
+                // وضع عادي بدون فيدباك
                 optionClass += isChecked 
                   ? " border-blue-500 bg-blue-50" 
                   : " border-gray-200 hover:border-blue-300";
@@ -192,7 +306,22 @@ const QuestionCard = ({
               
               let optionClass = "p-4 rounded-lg transition-colors duration-200 shadow-sm border";
               
-              if (isReview) {
+              // ألوان مختلفة حسب الوضع
+              if (!isReview && answerFeedback && submittedAnswer !== null) {
+                // في وضع الامتحان مع فيدباك فوري
+                if (option.id === submittedAnswer) {
+                  if (answerFeedback.is_correct) {
+                    optionClass += " border-green-500 bg-green-50";
+                  } else {
+                    optionClass += " border-red-500 bg-red-50";
+                  }
+                } else if (answerFeedback.correct_answer_id && option.id === answerFeedback.correct_answer_id) {
+                  optionClass += " border-green-400 bg-green-50 opacity-80";
+                } else {
+                  optionClass += " border-gray-200";
+                }
+              } else if (isReview) {
+                // في وضع المراجعة
                 if (option.id === correctAnswer) {
                   optionClass += " border-green-500 bg-green-50";
                 } else if (option.id === userAnswer && option.id !== correctAnswer) {
@@ -201,6 +330,7 @@ const QuestionCard = ({
                   optionClass += " border-gray-200";
                 }
               } else {
+                // وضع عادي بدون فيدباك
                 optionClass += isChecked 
                   ? " border-blue-500 bg-blue-50" 
                   : " border-gray-200 hover:border-blue-300";
@@ -239,9 +369,10 @@ const QuestionCard = ({
               value={userAnswer}
               onChange={handleEssayChange}
               rows={6}
-              disabled={isReview}
-              className={`${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-50 text-gray-800'} rounded-lg p-4 text-base`}
+              disabled={isReview || isSubmitting}
+              className={`${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-50 text-gray-800'} rounded-lg p-4 text-base transition-all duration-200 ${isSubmitting ? 'opacity-50' : ''}`}
               style={{ resize: 'vertical' }}
+              suffix={isSubmitting && <LoadingOutlined />}
             />
             {isReview && correctAnswer && (
               <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -346,56 +477,123 @@ const QuestionCard = ({
       <div className="question-options">
         {renderOptions()}
         
-        {/* نظام الفيدباك الفوري - disabled until examSettings is properly passed */}
-        {/* {!isReview && examSettings && (
-          <InstantFeedback
-            questionType={questionType}
-            userAnswer={userAnswer}
-            correctAnswer={correctAnswer}
-            choices={questionChoices}
-            showCorrectAnswers={examSettings.show_correct_answers_directly || false}
-            className="mt-4"
-          />
-        )} */}
-      </div>
-      
-      {/* Question status and explanation */}
-      <div className="mt-6 space-y-3">
-        {/* Answer status */}
-        <div className="text-sm text-gray-500 flex justify-between items-center">
-          <div>
-            {!userAnswer ? (
-              <span className="inline-flex items-center">
-                <span className="w-3 h-3 bg-gray-300 rounded-full mr-2"></span>
-                {language === 'ar' ? 'لم تتم الإجابة' : 'Not answered yet'}
-              </span>
-            ) : (
-              <span className="inline-flex items-center">
-                <span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
-                {language === 'ar' ? 'تمت الإجابة' : 'Answered'}
-              </span>
+        {/* عرض فيدباك فوري عند استقبال النتائج */}
+        {!isReview && answerFeedback && submittedAnswer !== null && (
+          <div className={`mt-4 p-4 rounded-lg border-2 transition-all duration-500 shadow-lg ${
+            answerFeedback.is_correct 
+              ? 'border-green-500 bg-gradient-to-r from-green-50 to-green-100' 
+              : 'border-red-500 bg-gradient-to-r from-red-50 to-red-100'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                {answerFeedback.is_correct ? (
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-500 shadow-lg">
+                    <CheckOutlined className="text-white text-lg" />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-500 shadow-lg">
+                    <CloseOutlined className="text-white text-lg" />
+                  </div>
+                )}
+                <span className={`font-bold text-xl ${
+                  answerFeedback.is_correct ? 'text-green-700' : 'text-red-700'
+                }`}>
+                  {answerFeedback.is_correct 
+                    ? (language === 'ar' ? '🎉 إجابة صحيحة!' : '🎉 Correct!')
+                    : (language === 'ar' ? '❌ إجابة خاطئة' : '❌ Incorrect')
+                  }
+                </span>
+              </div>
+              <div className={`text-sm font-bold px-4 py-2 rounded-full shadow-md ${
+                answerFeedback.is_correct 
+                  ? 'bg-green-500 text-white' 
+                  : 'bg-red-500 text-white'
+              }`}>
+                {language === 'ar' 
+                  ? `${answerFeedback.awarded_mark || 0}/${answerFeedback.max_mark || 0}`
+                  : `${answerFeedback.awarded_mark || 0}/${answerFeedback.max_mark || 0}`
+                }
+              </div>
+            </div>
+            
+            {/* عرض feedback message إذا كان متوفراً */}
+            {answerFeedback.feedback && (
+              <div className={`mt-4 p-4 rounded-lg text-sm font-medium border ${
+                answerFeedback.is_correct 
+                  ? 'bg-green-100 text-green-800 border-green-300' 
+                  : 'bg-red-100 text-red-800 border-red-300'
+              }`}>
+                <div className="flex items-center">
+                  <span className="text-lg mr-2">💡</span>
+                  <span>{answerFeedback.feedback}</span>
+                </div>
+              </div>
+            )}
+            
+            {/* عرض معلومات الإجابة الصحيحة إذا كانت متوفرة */}
+            {!answerFeedback.is_correct && answerFeedback.correct_answer_id && questionChoices && (
+              <div className="mt-4 p-4 rounded-lg bg-green-50 border-2 border-green-300 shadow-sm">
+                <div className="flex items-center mb-2">
+                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-green-500 mr-2">
+                    <CheckOutlined className="text-white text-xs" />
+                  </div>
+                  <span className="text-sm font-bold text-green-800">
+                    {language === 'ar' ? 'الإجابة الصحيحة:' : 'Correct Answer:'}
+                  </span>
+                </div>
+                <div className="text-sm font-medium text-green-700 bg-white p-3 rounded border border-green-200">
+                  {questionChoices.find(choice => choice.id === answerFeedback.correct_answer_id)?.text || 'N/A'}
+                </div>
+              </div>
+            )}
+            
+            {/* عرض الوقت المستغرق إذا كان متوفراً */}
+            {answerFeedback.time_taken && (
+              <div className="mt-2 text-xs text-gray-600 text-center">
+                {language === 'ar' 
+                  ? `زمن الإجابة: ${answerFeedback.time_taken} ثانية`
+                  : `Time taken: ${answerFeedback.time_taken} seconds`
+                }
+              </div>
             )}
           </div>
-          
-          {/* إزالة Debug info للإنتاج */}
-          {/* Debug معطل للإنتاج */}
-        </div>
-        
-        {/* Show explanation if in review mode or if explanation should be shown */}
-        {(isReview || question.show_explanation) && question.explanation_text && (
-          <div className={`p-4 rounded-lg border ${
-            isDarkMode 
-              ? 'bg-yellow-900/20 border-yellow-800 text-yellow-300' 
-              : 'bg-yellow-50 border-yellow-200 text-yellow-700'
-          }`}>
-            <h4 className={`font-semibold mb-2 ${
-              isDarkMode ? 'text-yellow-400' : 'text-yellow-800'
-            }`}>
-              {language === 'ar' ? 'التوضيح:' : 'Explanation:'}
-            </h4>
-            <p className="text-sm">{question.explanation_text}</p>
-          </div>
         )}
+        
+        {/* الباقي من المحتوى */}
+        <div className="mt-6 space-y-3">
+          {/* Answer status */}
+          <div className="text-sm text-gray-500 flex justify-between items-center">
+            <div>
+              {!userAnswer ? (
+                <span className="inline-flex items-center">
+                  <span className="w-3 h-3 bg-gray-300 rounded-full mr-2"></span>
+                  {language === 'ar' ? 'لم تتم الإجابة' : 'Not answered yet'}
+                </span>
+              ) : (
+                <span className="inline-flex items-center">
+                  <span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
+                  {language === 'ar' ? 'تمت الإجابة' : 'Answered'}
+                </span>
+              )}
+            </div>
+          </div>
+          
+          {/* Show explanation if in review mode or if explanation should be shown */}
+          {(isReview || question.show_explanation) && question.explanation_text && (
+            <div className={`p-4 rounded-lg border ${
+              isDarkMode 
+                ? 'bg-yellow-900/20 border-yellow-800 text-yellow-300' 
+                : 'bg-yellow-50 border-yellow-200 text-yellow-700'
+            }`}>
+              <h4 className={`font-semibold mb-2 ${
+                isDarkMode ? 'text-yellow-400' : 'text-yellow-800'
+              }`}>
+                {language === 'ar' ? 'التوضيح:' : 'Explanation:'}
+              </h4>
+              <p className="text-sm">{question.explanation_text}</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

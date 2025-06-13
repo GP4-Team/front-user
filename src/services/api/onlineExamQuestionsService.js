@@ -8,6 +8,48 @@ import apiClient from './apiClient';
 export const onlineExamQuestionsService = {
   
   /**
+   * Get detailed exam information with current status
+   * @param {number|string} examId - The exam ID
+   * @returns {Promise<Object>} Exam details with current status
+   */
+  async getExamDetails(examId) {
+    try {
+      // Convert examId to integer
+      const examIdInt = parseInt(examId);
+      
+      console.log(`📊 Fetching exam details for exam ${examIdInt}`);
+      console.log('📊 API endpoint:', `/examination/online-exams/${examIdInt}`);
+      
+      // Use the correct API endpoint that gets exam details with current status
+      const response = await apiClient.get(`/examination/online-exams/${examIdInt}`);
+      
+      console.log('✅ Exam details response:', response);
+      console.log('✅ Exam details data structure:', JSON.stringify(response.data || response, null, 2));
+      
+      return {
+        success: true,
+        data: response.data || response,
+        examId: examIdInt
+      };
+    } catch (error) {
+      console.error('❌ Error fetching exam details:', error);
+      console.error('❌ Error response:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error headers:', error.response?.headers);
+      
+      const errorResponse = error.response?.data;
+      
+      return {
+        success: false,
+        error: errorResponse?.message || error.message || 'Failed to get exam details',
+        examId: parseInt(examId),
+        data: errorResponse?.data || null,
+        httpStatus: error.response?.status
+      };
+    }
+  },
+  
+  /**
    * Get questions for an online exam based on student's current exam status
    * @param {number|string} examId - The exam ID
    * @param {string} action - The action type ('start', 'retry', 'continue', 'revision')
@@ -152,20 +194,41 @@ export const onlineExamQuestionsService = {
    */
   async submitAnswer(studentAnswerId, answerData) {
     try {
-      console.log(`📤 Submitting answer for student answer ID ${studentAnswerId}:`, answerData);
+      console.log(`📤 [submitAnswer] Submitting answer for student answer ID ${studentAnswerId}:`, answerData);
+      console.log(`📤 [submitAnswer] API endpoint: /examination/submit-answer/${studentAnswerId}`);
       
       const response = await apiClient.post(`/examination/submit-answer/${studentAnswerId}`, answerData);
       
-      console.log('✅ Submit answer response:', response);
+      console.log('✅ [submitAnswer] Raw API response:', response);
+      console.log('✅ [submitAnswer] Response data structure:', JSON.stringify(response.data || response, null, 2));
+      
+      // Extract the response data - the API might return data in different structures
+      const responseData = response.data || response;
       
       return {
         success: true,
-        data: response.data || response,
-        message: response.message || 'Answer submitted successfully',
+        data: {
+          // Main feedback data
+          is_correct: responseData.is_correct || false,
+          awarded_mark: responseData.awarded_mark || 0,
+          max_mark: responseData.max_mark || 0,
+          time_taken: responseData.time_taken || 0,
+          
+          // Additional feedback information
+          feedback: responseData.feedback || null,
+          correct_answer_id: responseData.correct_answer_id || null,
+          correct_answer: responseData.correct_answer || null,
+          
+          // Raw response for debugging
+          ...responseData
+        },
+        message: responseData.message || 'Answer submitted successfully',
         studentAnswerId: studentAnswerId
       };
     } catch (error) {
-      console.error('❌ Error submitting answer:', error);
+      console.error('❌ [submitAnswer] Error submitting answer:', error);
+      console.error('❌ [submitAnswer] Error response:', error.response?.data);
+      console.error('❌ [submitAnswer] Error status:', error.response?.status);
       
       const errorResponse = error.response?.data;
       
@@ -248,92 +311,53 @@ export const onlineExamQuestionsService = {
   },
 
   /**
-   * Get exam results
+   * Get exam results - DEPRECATED
+   * This function is no longer available as results page has been removed
    * @param {number|string} examId - The exam ID
-   * @param {number|string} attemptId - The attempt ID
-   * @returns {Promise<Object>} Exam results
+   * @param {number|string} attemptId - The attempt ID (not used with new API)
+   * @returns {Promise<Object>} Deprecated response
    */
   async getExamResults(examId, attemptId) {
-    try {
-      // Convert examId to integer
-      const examIdInt = parseInt(examId);
-      
-      // Handle attemptId - if 'latest', keep as string, otherwise convert to integer
-      const attemptIdParam = attemptId === 'latest' ? 'latest' : parseInt(attemptId);
-      
-      console.log(`📊 Fetching results for exam ${examIdInt}, attempt ${attemptIdParam}`);
-      console.log('📊 API endpoint:', `/examination/exam-results/${examIdInt}/${attemptIdParam}`);
-      console.log('📊 Parameter types:', { examId: typeof examIdInt, attemptId: typeof attemptIdParam });
-      console.log('📊 Original vs converted:', { 
-        original: { examId, attemptId }, 
-        converted: { examId: examIdInt, attemptId: attemptIdParam } 
-      });
-      
-      const response = await apiClient.get(`/examination/exam-results/${examIdInt}/${attemptIdParam}`);
-      
-      console.log('✅ Results response:', response);
-      console.log('✅ Results data structure:', JSON.stringify(response.data || response, null, 2));
-      
-      return {
-        success: true,
-        data: response.data || response,
-        examId: examIdInt,
-        attemptId: attemptIdParam
-      };
-    } catch (error) {
-      console.error('❌ Error fetching results:', error);
-      console.error('❌ Error response:', error.response?.data);
-      console.error('❌ Error status:', error.response?.status);
-      console.error('❌ Error headers:', error.response?.headers);
-      
-      const errorResponse = error.response?.data;
-      
-      return {
-        success: false,
-        error: errorResponse?.message || error.message || 'Failed to get exam results',
-        examId: parseInt(examId),
-        attemptId: attemptId === 'latest' ? 'latest' : parseInt(attemptId),
-        data: errorResponse?.data || null,
-        httpStatus: error.response?.status
-      };
-    }
+    console.warn('getExamResults is deprecated. Results page has been removed. Use review functionality instead.');
+    return {
+      success: false,
+      error: 'Results functionality has been removed. Please use review page instead.',
+      examId: parseInt(examId),
+      attemptId: attemptId,
+      data: null
+    };
   },
 
   /**
-   * Get exam answers
+   * Get exam answers for review
    * @param {number|string} examId - The exam ID
-   * @param {number|string} attemptId - The attempt ID
-   * @returns {Promise<Object>} Exam answers
+   * @param {number|string} attemptId - The attempt ID (not used with current API)
+   * @returns {Promise<Object>} Exam answers for review
    */
   async getExamAnswers(examId, attemptId) {
     try {
       // Convert examId to integer
       const examIdInt = parseInt(examId);
       
-      // Handle attemptId - if 'latest', keep as string, otherwise convert to integer
-      const attemptIdParam = attemptId === 'latest' ? 'latest' : parseInt(attemptId);
+      console.log(`📋 Fetching exam for review: exam ${examIdInt}`);
+      console.log('📋 API endpoint:', `/examination/online-exams/${examIdInt}/questions`);
       
-      console.log(`📋 Fetching answers for exam ${examIdInt}, attempt ${attemptIdParam}`);
-      console.log('📋 API endpoint:', `/examination/exam-answers/${examIdInt}/${attemptIdParam}`);
-      console.log('📋 Parameter types:', { examId: typeof examIdInt, attemptId: typeof attemptIdParam });
-      console.log('📋 Original vs converted:', { 
-        original: { examId, attemptId }, 
-        converted: { examId: examIdInt, attemptId: attemptIdParam } 
+      // Use the questions API with revision action to get exam for review
+      const response = await apiClient.post(`/examination/online-exams/${examIdInt}/questions`, {
+        action: 'revision'
       });
       
-      const response = await apiClient.get(`/examination/exam-answers/${examIdInt}/${attemptIdParam}`);
-      
-      console.log('✅ Answers response:', response);
-      console.log('✅ Answers data structure:', JSON.stringify(response.data || response, null, 2));
+      console.log('✅ Exam review response:', response);
+      console.log('✅ Exam review data structure:', JSON.stringify(response.data || response, null, 2));
       
       return {
         success: true,
         data: response.data || response,
         examId: examIdInt,
-        attemptId: attemptIdParam
+        attemptId: attemptId
       };
     } catch (error) {
-      console.error('❌ Error fetching answers:', error);
+      console.error('❌ Error fetching exam for review:', error);
       console.error('❌ Error response:', error.response?.data);
       console.error('❌ Error status:', error.response?.status);
       console.error('❌ Error headers:', error.response?.headers);
@@ -342,9 +366,9 @@ export const onlineExamQuestionsService = {
       
       return {
         success: false,
-        error: errorResponse?.message || error.message || 'Failed to get exam answers',
+        error: errorResponse?.message || error.message || 'Failed to get exam for review',
         examId: parseInt(examId),
-        attemptId: attemptId === 'latest' ? 'latest' : parseInt(attemptId),
+        attemptId: attemptId,
         data: errorResponse?.data || null,
         httpStatus: error.response?.status
       };
@@ -358,21 +382,32 @@ export const onlineExamQuestionsService = {
    * @returns {Object} Formatted answer data
    */
   formatAnswerData(questionType, answer) {
-    switch (questionType) {
-      case 'MultipleChoice':
-      case 'TrueFalse':
+    console.log(`📋 [formatAnswerData] Formatting answer:`, { questionType, answer });
+    
+    // Normalize question type names
+    const normalizedType = questionType?.toLowerCase();
+    
+    switch (normalizedType) {
+      case 'multiplechoice':
+      case 'mcq':
+      case 'truefalse':
+      case 'true-false':
+        const choiceId = parseInt(answer);
+        console.log(`📋 [formatAnswerData] Formatted choice answer:`, { choice_id: choiceId });
         return {
-          choice_id: parseInt(answer)
+          choice_id: choiceId
         };
       
-      case 'KeywordsEssay':
-      case 'Essay':
+      case 'keywordsessay':
+      case 'essay':
+        const textAnswer = answer ? answer.toString().trim() : '';
+        console.log(`📋 [formatAnswerData] Formatted essay answer:`, { text: textAnswer });
         return {
-          text: answer.toString()
+          text: textAnswer
         };
       
       default:
-        console.warn(`Unknown question type: ${questionType}`);
+        console.warn(`⚠️ [formatAnswerData] Unknown question type: ${questionType}, defaulting to choice_id`);
         return {
           choice_id: parseInt(answer)
         };

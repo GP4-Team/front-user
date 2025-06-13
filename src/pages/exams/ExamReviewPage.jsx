@@ -422,14 +422,6 @@ const ExamReviewPage = () => {
 
                   <div className="flex space-x-4">
                     <button
-                      onClick={() => navigate(`/exams/${examId}/results/${attemptId || 'latest'}`)}
-                      className="flex items-center space-x-2 px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors"
-                    >
-                      <Award className="w-5 h-5" />
-                      <span>{getText('عرض النتائج', 'View Results')}</span>
-                    </button>
-                    
-                    <button
                       onClick={() => navigate(`/exams/${examId}`)}
                       className="flex items-center space-x-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors"
                     >

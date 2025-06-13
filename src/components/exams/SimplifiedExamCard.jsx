@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Clock, Users, Award, BookOpen } from 'lucide-react';
+import useOnlineExamQuestions from '../../hooks/api/useOnlineExamQuestions';
 
 /**
  * مكون بطاقة الامتحان المبسط
@@ -12,6 +13,7 @@ import { Clock, Users, Award, BookOpen } from 'lucide-react';
 const SimplifiedExamCard = ({ exam }) => {
   const { language, isRTL } = useLanguage();
   const { isDarkMode } = useTheme();
+  const { getExamDetails } = useOnlineExamQuestions();
   
   // Helper function to get text based on language
   const getText = (ar, en) => language === 'ar' ? ar : en;
@@ -95,32 +97,33 @@ const SimplifiedExamCard = ({ exam }) => {
     }
   };
 
-  // Handle button click based on exam status
-  const handleButtonClick = (e, action) => {
+  // Handle button click - always navigate to exam details page
+  const handleButtonClick = async (e, action) => {
     e.preventDefault();
     e.stopPropagation();
     
-    switch (action) {
-      case 'start':
-      case 'continue':
-      case 'retry':
-        // Navigate to exam questions page
-        window.location.href = `/exams/${exam.id}/questions`;
-        break;
-      case 'review':
-        // Navigate to review page
-        window.location.href = `/exams/${exam.id}/review`;
-        break;
-      case 'results':
-        // Navigate to results page without attempt ID - let backend handle latest attempt
-        window.location.href = `/exams/${exam.id}/results`;
-        break;
-      case 'ended':
-        // No action for ended exams
-        return;
-      default:
-        // Default to exam details page
+    // أولاً: استدعاء API بيانات الامتحان
+    console.log(`📎 [SimplifiedExamCard] Button clicked for exam ${exam.id}, action: ${action}`);
+    console.log('📎 [SimplifiedExamCard] Fetching exam details before navigation...');
+    
+    try {
+      const response = await getExamDetails(exam.id);
+      
+      if (response.success) {
+        console.log('✅ [SimplifiedExamCard] Exam details loaded successfully:', response.data);
+        
+        // دائماً الذهاب لصفحة تفاصيل الامتحان
+        console.log('📋 [SimplifiedExamCard] Navigating to exam details page...');
         window.location.href = `/exams/${exam.id}`;
+      } else {
+        console.error('❌ [SimplifiedExamCard] Failed to get exam details:', response.error);
+        // حتى في حالة فشل الاستدعاء، الذهاب لصفحة تفاصيل الامتحان
+        window.location.href = `/exams/${exam.id}`;
+      }
+    } catch (error) {
+      console.error('❌ [SimplifiedExamCard] Error calling exam details API:', error);
+      // في حالة حدوث خطأ، الذهاب لصفحة تفاصيل الامتحان
+      window.location.href = `/exams/${exam.id}`;
     }
   };
 

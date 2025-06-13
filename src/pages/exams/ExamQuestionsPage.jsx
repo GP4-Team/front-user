@@ -251,11 +251,15 @@ const ExamQuestionsPage = () => {
     const question = questions.find(q => q.id === questionId);
     if (!question || !question.choices) return null;
     
-    // البحث عن الإجابة الصحيحة في الـ choices
-    // يمكن أن تكون محددة في الـ API أو نحتاج لتحديدها حسب البيانات المتوفرة
-    // هذا مثال - قد نحتاج لتعديله حسب بنية البيانات الفعلية
-    const correctChoice = question.choices.find(choice => choice.is_correct);
-    return correctChoice ? correctChoice.id : null;
+    // في وضع المراجعة، البحث عن الإجابة الصحيحة في الـ choices
+    if (examStatus === 'revision') {
+      const correctChoice = question.choices.find(choice => choice.is_correct);
+      return correctChoice ? correctChoice.id : null;
+    }
+    
+    // في وضع الامتحان العادي، لا نعرض الإجابة الصحيحة مسبقاً
+    // ستأتي من الفيدباك عند إرسال الإجابة
+    return null;
   };
 
   // Handle loading state
@@ -481,10 +485,9 @@ const ExamQuestionsPage = () => {
                 isDarkMode={isDarkMode}
                 colors={colors}
                 imageMaxWidth={400}
-                isReviewMode={examStatus === 'revision'}
+                isReview={examStatus === 'revision'}
                 examSettings={examData?.exam_settings}
-                correctAnswer={examData?.exam_settings?.show_correct_answers_directly ? 
-                  getCorrectAnswerForQuestion(currentQuestion.id) : null}
+                correctAnswer={getCorrectAnswerForQuestion(currentQuestion.id)}
               />
 
               <div className="mt-8">

@@ -14,6 +14,7 @@ import {
   getCardExamTitle, 
   getExamSubtitle 
 } from "../../utils/examTitleFormatter";
+import useOnlineExamQuestions from '../../hooks/api/useOnlineExamQuestions';
 
 // Icon components
 const CalendarIcon = () => (
@@ -140,6 +141,7 @@ const ChevronRightIcon = () => (
 const ExamCard = ({ exam, index, toggleFavorite, handleSelectExam, favoriteExams, translations, isOnlineExam = false }) => {
   const { isDarkMode } = useTheme();
   const { isRTL, language } = useLanguage();
+  const { getExamDetails } = useOnlineExamQuestions();
   
   const isFavorite = favoriteExams?.includes(exam.id) || false;
   
@@ -180,28 +182,32 @@ const ExamCard = ({ exam, index, toggleFavorite, handleSelectExam, favoriteExams
   
   const isActionEnabled = examData.canTakeExam;
   
-  // دالة للتنقل حسب حالة الامتحان
-  const handleExamAction = (e) => {
+  // دالة للتنقل - دائماً لصفحة تفاصيل الامتحان
+  const handleExamAction = async (e) => {
     e.stopPropagation();
     
-    const status = examData.status;
-    const actionButton = examData.actionButton;
+    // أولاً: استدعاء API بيانات الامتحان
+    console.log(`📎 [ExamCard] Action button clicked for exam ${examData.id}`);
+    console.log('📎 [ExamCard] Fetching exam details before navigation...');
     
-    if (actionButton === 'عرض النتائج' || actionButton === 'View Results') {
-      // الذهاب لصفحة النتائج - let backend handle latest attempt
-      window.location.href = `/exams/${examData.id}/results`;
-    } else if (actionButton === 'مراجعة الإجابات' || actionButton === 'Review Answers') {
-      // الذهاب لصفحة مراجعة الإجابات - let backend handle latest attempt
-      window.location.href = `/exams/${examData.id}/review`;
-    } else if (actionButton === 'بدء الامتحان' || actionButton === 'Start Exam') {
-      // بدء الامتحان
-      window.location.href = `/exams/${examData.id}/questions`;
-    } else if (actionButton === 'متابعة الامتحان' || actionButton === 'Continue Exam') {
-      // متابعة الامتحان
-      window.location.href = `/exams/${examData.id}/questions`;
-    } else if (examData.canTakeExam) {
-      // في حالة عدم وجود action_button واضح، استخدم الحالة العامة
-      window.location.href = `/exams/${examData.id}/questions`;
+    try {
+      const response = await getExamDetails(examData.id);
+      
+      if (response.success) {
+        console.log('✅ [ExamCard] Exam details loaded successfully:', response.data);
+        
+        // دائماً الذهاب لصفحة تفاصيل الامتحان
+        console.log('📋 [ExamCard] Navigating to exam details page...');
+        window.location.href = `/exams/${examData.id}`;
+      } else {
+        console.error('❌ [ExamCard] Failed to get exam details:', response.error);
+        // حتى في حالة فشل الاستدعاء، الذهاب لصفحة تفاصيل الامتحان
+        window.location.href = `/exams/${examData.id}`;
+      }
+    } catch (error) {
+      console.error('❌ [ExamCard] Error calling exam details API:', error);
+      // في حالة حدوث خطأ، الذهاب لصفحة تفاصيل الامتحان
+      window.location.href = `/exams/${examData.id}`;
     }
   };
   
@@ -218,7 +224,22 @@ const ExamCard = ({ exam, index, toggleFavorite, handleSelectExam, favoriteExams
       } mb-4 
         transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 hover:shadow-xl
         ${index % 2 === 0 ? "animate-float-slow" : "animate-float"}`}
-      onClick={() => handleSelectExam(examData)}
+      onClick={async () => {
+        // استدعاء API عند الضغط على البطاقة - دائماً لصفحة تفاصيل الامتحان
+        console.log(`📎 [ExamCard] Card clicked for exam ${examData.id}`);
+        try {
+          const response = await getExamDetails(examData.id);
+          if (response.success) {
+            console.log('✅ [ExamCard] Exam details loaded for card click:', response.data);
+          } else {
+            console.error('❌ [ExamCard] Failed to get exam details on card click:', response.error);
+          }
+        } catch (error) {
+          console.error('❌ [ExamCard] Error calling exam details API on card click:', error);
+        }
+        // دائماً الذهاب لصفحة تفاصيل الامتحان
+        window.location.href = `/exams/${examData.id}`;
+      }}
     >
       {/* Header strip with gradient */}
       <div
