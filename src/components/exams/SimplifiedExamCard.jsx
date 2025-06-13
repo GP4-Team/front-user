@@ -45,46 +45,82 @@ const SimplifiedExamCard = ({ exam }) => {
     return getText(`${minutes} دقيقة`, `${minutes} min`);
   };
 
-  // Get status color and text
+  // Get status color and text based on API response
   const getStatusStyle = (exam) => {
     const buttonText = exam.action_button || exam.availability_status || exam.status || getText('غير محدد', 'Unknown');
     
-    // تحديد اللون بناءً على نص الزر أو الحالة
+    // تحديد اللون والإجراء بناءً على نص الزر من API
     if (buttonText.includes('بدء') || buttonText.includes('Start') || buttonText.includes('start')) {
       return {
         text: buttonText,
-        className: 'bg-green-500 hover:bg-green-600 text-white'
+        className: 'bg-green-500 hover:bg-green-600 text-white',
+        action: 'start'
       };
     } else if (buttonText.includes('متابعة') || buttonText.includes('Continue') || buttonText.includes('continue')) {
       return {
         text: buttonText,
-        className: 'bg-blue-500 hover:bg-blue-600 text-white'
+        className: 'bg-blue-500 hover:bg-blue-600 text-white',
+        action: 'continue'
       };
     } else if (buttonText.includes('إعادة') || buttonText.includes('Retry') || buttonText.includes('retry')) {
       return {
         text: buttonText,
-        className: 'bg-orange-500 hover:bg-orange-600 text-white'
+        className: 'bg-orange-500 hover:bg-orange-600 text-white',
+        action: 'retry'
       };
     } else if (buttonText.includes('مراجعة') || buttonText.includes('Review') || buttonText.includes('revision')) {
       return {
         text: buttonText,
-        className: 'bg-purple-500 hover:bg-purple-600 text-white'
+        className: 'bg-purple-500 hover:bg-purple-600 text-white',
+        action: 'review'
       };
     } else if (buttonText.includes('منتهي') || buttonText.includes('انتهى') || buttonText.includes('Ended') || buttonText.includes('ended')) {
       return {
         text: buttonText,
-        className: 'bg-red-500 hover:bg-red-600 text-white'
+        className: 'bg-red-500 hover:bg-red-600 text-white cursor-not-allowed',
+        action: 'ended'
       };
     } else if (buttonText.includes('النتائج') || buttonText.includes('Results') || buttonText.includes('results')) {
       return {
         text: buttonText,
-        className: 'bg-indigo-500 hover:bg-indigo-600 text-white'
+        className: 'bg-indigo-500 hover:bg-indigo-600 text-white',
+        action: 'results'
       };
     } else {
       return {
         text: buttonText,
-        className: 'bg-gray-500 hover:bg-gray-600 text-white'
+        className: 'bg-gray-500 hover:bg-gray-600 text-white',
+        action: 'unknown'
       };
+    }
+  };
+
+  // Handle button click based on exam status
+  const handleButtonClick = (e, action) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    switch (action) {
+      case 'start':
+      case 'continue':
+      case 'retry':
+        // Navigate to exam questions page
+        window.location.href = `/exams/${exam.id}/questions`;
+        break;
+      case 'review':
+        // Navigate to review page
+        window.location.href = `/exams/${exam.id}/review`;
+        break;
+      case 'results':
+        // Navigate to results page without attempt ID - let backend handle latest attempt
+        window.location.href = `/exams/${exam.id}/results`;
+        break;
+      case 'ended':
+        // No action for ended exams
+        return;
+      default:
+        // Default to exam details page
+        window.location.href = `/exams/${exam.id}`;
     }
   };
 
@@ -161,11 +197,9 @@ const SimplifiedExamCard = ({ exam }) => {
 
           {/* زر الحالة */}
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              window.location.href = `/exams/${exam.id}`;
-            }}
-            className={`w-full py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${statusStyle.className}`}
+            onClick={(e) => handleButtonClick(e, statusStyle.action)}
+            disabled={statusStyle.action === 'ended'}
+            className={`w-full py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${statusStyle.className} ${statusStyle.action === 'ended' ? 'opacity-60' : ''}`}
           >
             {statusStyle.text}
           </button>

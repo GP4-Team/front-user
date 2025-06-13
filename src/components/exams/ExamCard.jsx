@@ -147,7 +147,7 @@ const ExamCard = ({ exam, index, toggleFavorite, handleSelectExam, favoriteExams
   const examData = {
     id: exam.id,
     title: exam.name,
-    subject: exam.course?.name,
+    subject: exam.course?.name || exam.course_name,
     status: exam.status, // pending, active, ended
     availabilityStatus: exam.availability_status, // متاح، منتهي، etc
     actionButton: exam.action_button, // عرض النتائج، بدء الامتحان، etc
@@ -166,19 +166,12 @@ const ExamCard = ({ exam, index, toggleFavorite, handleSelectExam, favoriteExams
   };
   
   // استخدام المُنسق الجديد للأسماء
-  const formattedTitle = getCardExamTitle(examData.title, language);
-  const examSubtitle = getExamSubtitle(examData.title, language);
+  const formattedTitle = examData.title || exam.name || 'اسم الامتحان غير متوفر';
   
   // تحديد لون الهيدر بناءً على المادة
-  const headerColor = examData.subject === "الجبر الأساسي"
-    ? isDarkMode ? "bg-blue-700" : "bg-[#3949AB]"
-    : examData.subject === "الأدب العربي"
-    ? isDarkMode ? "bg-green-700" : "bg-[#4CAF50]"
-    : examData.subject === "أساسيات التشريح"
-    ? isDarkMode ? "bg-purple-700" : "bg-[#9C27B0]"
-    : isDarkMode ? "bg-indigo-700" : "bg-[#7986CB]";
+  const headerColor = isDarkMode ? "bg-indigo-700" : "bg-[#7986CB]";
 
-  // استخدام بيانات الحالة من API مباشرة
+  // استخدام بيانات الحالة من API مباشرة - هنا المهم!
   const actionText = examData.actionButton || (
     examData.canTakeExam 
       ? (language === 'ar' ? 'بدء الامتحان' : 'Start Exam')
@@ -186,6 +179,31 @@ const ExamCard = ({ exam, index, toggleFavorite, handleSelectExam, favoriteExams
   );
   
   const isActionEnabled = examData.canTakeExam;
+  
+  // دالة للتنقل حسب حالة الامتحان
+  const handleExamAction = (e) => {
+    e.stopPropagation();
+    
+    const status = examData.status;
+    const actionButton = examData.actionButton;
+    
+    if (actionButton === 'عرض النتائج' || actionButton === 'View Results') {
+      // الذهاب لصفحة النتائج - let backend handle latest attempt
+      window.location.href = `/exams/${examData.id}/results`;
+    } else if (actionButton === 'مراجعة الإجابات' || actionButton === 'Review Answers') {
+      // الذهاب لصفحة مراجعة الإجابات - let backend handle latest attempt
+      window.location.href = `/exams/${examData.id}/review`;
+    } else if (actionButton === 'بدء الامتحان' || actionButton === 'Start Exam') {
+      // بدء الامتحان
+      window.location.href = `/exams/${examData.id}/questions`;
+    } else if (actionButton === 'متابعة الامتحان' || actionButton === 'Continue Exam') {
+      // متابعة الامتحان
+      window.location.href = `/exams/${examData.id}/questions`;
+    } else if (examData.canTakeExam) {
+      // في حالة عدم وجود action_button واضح، استخدم الحالة العامة
+      window.location.href = `/exams/${examData.id}/questions`;
+    }
+  };
   
   // استخدام المدة مباشرة من API
   const formattedDuration = examData.duration;
@@ -244,17 +262,8 @@ const ExamCard = ({ exam, index, toggleFavorite, handleSelectExam, favoriteExams
             isDarkMode ? "text-text-light" : "text-[#37474F]"
           } ${isRTL ? "text-right" : "text-left"}`}
         >
-          {formattedTitle || examData.title || exam.name || 'اسم الامتحان غير متوفر'}
+          {formattedTitle}
         </h3>
-        
-        {/* Exam subtitle - نوع الامتحان */}
-        {examSubtitle && (
-          <p className={`text-sm mb-3 ${
-            isDarkMode ? "text-gray-400" : "text-gray-600"
-          } ${isRTL ? "text-right" : "text-left"}`}>
-            {examSubtitle}
-          </p>
-        )}
         
         {/* Status badge - استخدام حالة الامتحان من API */}
         <div className="inline-block px-3 py-1 rounded-full text-sm mb-3 transition-all duration-300 hover:scale-105">
@@ -335,6 +344,7 @@ const ExamCard = ({ exam, index, toggleFavorite, handleSelectExam, favoriteExams
         <div className="text-center mt-4">
           <button
             disabled={!isActionEnabled}
+            onClick={handleExamAction}
             className={`${
               isActionEnabled
                 ? isDarkMode

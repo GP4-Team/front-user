@@ -382,13 +382,13 @@ const ExamQuestionsPage = () => {
       <Content className="container mx-auto px-4 pt-32 pb-6">
         <div className="flex flex-col md:flex-row gap-6">
           {/* Side panel with question navigation */}
-          <div className="w-full md:w-56">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+          <div className={`w-full md:w-56 ${language === 'ar' ? 'md:order-2' : 'md:order-1'}`}>
+            <div className={`flex items-center justify-between mb-4 ${language === 'ar' ? 'flex-row-reverse' : 'flex-row'}`} style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}>
+              <h2 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} ${language === 'ar' ? 'text-right font-arabic' : 'text-left'}`}>
                 {language === 'ar' ? 'الأسئلة' : 'Questions'}
               </h2>
             </div>
-            <div className={`sticky top-32 rounded-lg shadow-md p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className={`sticky top-32 rounded-lg shadow-md p-4 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border`}>
               <QuestionNavigation 
                 questions={questions}
                 currentIndex={currentQuestionIndex}
@@ -398,36 +398,47 @@ const ExamQuestionsPage = () => {
               />
               
               {/* End Exam Button - Fixed at the bottom of the navigation */}
-              <div className="mt-6 pt-3 border-t border-gray-200">
+              <div className="mt-6 pt-3 border-t border-gray-200 dark:border-gray-600">
                 {examStatus !== 'revision' ? (
                   <Button 
                     type="primary"
                     loading={submitLoading}
                     onClick={handleEndExam}
-                    className="flex items-center justify-center"
+                    className={`flex items-center justify-center w-full h-12 text-base font-bold rounded-lg transition-all duration-200 hover:scale-105 ${language === 'ar' ? 'font-arabic' : ''}`}
                     icon={<SendOutlined />}
-                    style={endExamButtonStyle}
+                    style={{
+                      backgroundColor: colors.purple,
+                      borderColor: colors.purple,
+                      color: 'white',
+                      direction: language === 'ar' ? 'rtl' : 'ltr'
+                    }}
                     disabled={isExamEnded}
                   >
-                    {submitLoading 
-                      ? (language === 'ar' ? 'جاري الإرسال...' : 'Submitting...') 
-                      : (language === 'ar' ? 'سبميت' : 'Submit')
-                    }
+                    <span className={language === 'ar' ? 'text-right' : 'text-left'}>
+                      {submitLoading 
+                        ? (language === 'ar' ? 'جاري الإرسال...' : 'Submitting...') 
+                        : (language === 'ar' ? 'سبميت' : 'Submit')
+                      }
+                    </span>
                   </Button>
                 ) : (
                   <Button 
                     type="default"
                     onClick={() => navigate(`/exams/${examId}`)}
-                    className="flex items-center justify-center"
-                    style={endExamButtonStyle}
+                    className={`flex items-center justify-center w-full h-12 text-base font-bold rounded-lg ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'} ${language === 'ar' ? 'font-arabic' : ''}`}
+                    style={{
+                      direction: language === 'ar' ? 'rtl' : 'ltr'
+                    }}
                   >
-                    {language === 'ar' ? 'العودة للامتحان' : 'Back to Exam'}
+                    <span className={language === 'ar' ? 'text-right' : 'text-left'}>
+                      {language === 'ar' ? 'العودة للامتحان' : 'Back to Exam'}
+                    </span>
                   </Button>
                 )}
                 
                 {/* Show extra indicator if all questions are answered */}
                 {allQuestionsAnswered && examStatus !== 'revision' && (
-                  <div className="mt-2 text-center text-green-500 text-xs font-semibold">
+                  <div className={`mt-2 text-center text-green-500 text-xs font-semibold ${language === 'ar' ? 'text-right' : 'text-left'}`} style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}>
                     {language === 'ar' 
                       ? 'تمت الإجابة على جميع الأسئلة!' 
                       : 'All questions answered!'}
@@ -438,12 +449,12 @@ const ExamQuestionsPage = () => {
           </div>
 
           {/* Main question area */}
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-4">
-              <h1 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+          <div className={`flex-1 ${language === 'ar' ? 'md:order-1' : 'md:order-2'}`}>
+            <div className={`flex items-center justify-between mb-4 ${language === 'ar' ? 'flex-row-reverse' : 'flex-row'}`} style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}>
+              <h1 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} ${language === 'ar' ? 'text-right font-arabic' : 'text-left'}`}>
                 {language === 'ar' ? `السؤال ${currentQuestionIndex + 1}` : `Question ${currentQuestionIndex + 1}`}
               </h1>
-              <div className="flex items-center space-x-4">
+              <div className={`flex items-center space-x-4 ${language === 'ar' ? 'space-x-reverse' : ''}`}>
                 {/* Timer ومعلومات الامتحان */}
                 {saveLoading && (
                   <Tooltip title={language === 'ar' ? 'جاري الحفظ...' : 'Saving...'}>
@@ -460,7 +471,7 @@ const ExamQuestionsPage = () => {
               </div>
             </div>
             
-            <div className={`rounded-lg shadow-md p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className={`rounded-lg shadow-md p-6 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border`} style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}>
               {/* Question */}
               <QuestionCard 
                 question={currentQuestion}
@@ -488,20 +499,28 @@ const ExamQuestionsPage = () => {
                 
                 {/* Extra Submit button for better visibility */}
                 {(currentQuestionIndex === questions.length - 1 || allQuestionsAnswered) && examStatus !== 'revision' && (
-                  <div className="flex justify-center mt-6">
+                  <div className={`flex justify-center mt-6 ${language === 'ar' ? 'text-right' : 'text-left'}`} style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}>
                     <Button 
                       type="primary"
                       loading={submitLoading}
                       onClick={handleEndExam}
-                      className="flex items-center"
+                      className={`flex items-center px-6 py-3 text-base font-bold rounded-lg transition-all duration-200 hover:scale-105 ${language === 'ar' ? 'font-arabic' : ''}`}
                       icon={<SendOutlined />}
-                      style={floatingEndExamButtonStyle}
+                      style={{
+                        backgroundColor: colors.purple,
+                        borderColor: colors.purple,
+                        color: 'white',
+                        height: '48px',
+                        direction: language === 'ar' ? 'rtl' : 'ltr'
+                      }}
                       disabled={isExamEnded}
                     >
-                      {submitLoading 
-                        ? (language === 'ar' ? 'جاري الإرسال...' : 'Submitting...') 
-                        : (language === 'ar' ? 'سبميت' : 'Submit')
-                      }
+                      <span className={language === 'ar' ? 'text-right mr-2' : 'text-left ml-2'}>
+                        {submitLoading 
+                          ? (language === 'ar' ? 'جاري الإرسال...' : 'Submitting...') 
+                          : (language === 'ar' ? 'سبميت' : 'Submit')
+                        }
+                      </span>
                     </Button>
                   </div>
                 )}

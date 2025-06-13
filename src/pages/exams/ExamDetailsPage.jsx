@@ -108,8 +108,23 @@ const ExamDetailsPage = () => {
   }, [examId, fetchExamDetails]);
 
   const handleStartExam = () => {
-    // Only show modal if exam action is enabled
+    console.log('🔍 [ExamDetailsPage] handleStartExam - exam status:', examDetails?.status);
+    console.log('🔍 [ExamDetailsPage] action_button:', examDetails?.action_button);
+    console.log('🔍 [ExamDetailsPage] availability_status:', examDetails?.availability_status);
+    
+    // For revision status, go directly to review page
+    if (examDetails?.status === EXAM_STATUS.REVISION || 
+        examDetails?.status === 'review' ||
+        examDetails?.action_button?.includes('مراجعة') || 
+        examDetails?.action_button?.includes('Review')) {
+      console.log('🔍 [ExamDetailsPage] Going directly to review page');
+      navigate(`/exams/${examId}/review`);
+      return;
+    }
+    
+    // Only show modal if exam action is enabled and not revision
     if (examDetails && isExamActionEnabled(examDetails.status)) {
+      console.log('🔍 [ExamDetailsPage] Showing start modal');
       setShowStartModal(true);
     }
   };
@@ -129,7 +144,7 @@ const ExamDetailsPage = () => {
         navigate(`/exams/${examId}/questions?continue=true`);
         break;
       case EXAM_STATUS.REVISION:
-        navigate(`/exams/${examId}/questions/review`);
+        navigate(`/exams/${examId}/review`);
         break;
       default:
         break;

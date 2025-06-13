@@ -31,6 +31,7 @@ import MyExamsPage from "./pages/exams/MyExamsPage.jsx";
 import ExamDetailsPage from "./pages/exams/ExamDetailsPage.jsx";
 import ExamQuestionsPage from "./pages/exams/ExamQuestionsPage.jsx";
 import ExamResultsPage from "./pages/exams/ExamResultsPage.jsx";
+import ExamReviewPage from "./pages/exams/ExamReviewPage.jsx";
 import ExamPage from "./pages/exam/ExamPage.jsx";
 import AIWeaknessPortal from "./pages/student/AIWeaknessPortal.jsx";
 import PrivateRoute from "./middleware/PrivateRoute.jsx";
@@ -214,6 +215,30 @@ const router = createBrowserRouter(
               <MainLayout>
                 <div className="exam-page-background">
                   <ExamResultsPage />
+                </div>
+              </MainLayout>
+            </PrivateRoute>
+          ),
+        },
+        {
+          path: "/exams/:examId/review",
+          element: (
+            <PrivateRoute>
+              <MainLayout>
+                <div className="exam-page-background">
+                  <ExamReviewPage />
+                </div>
+              </MainLayout>
+            </PrivateRoute>
+          ),
+        },
+        {
+          path: "/exams/:examId/review/:attemptId",
+          element: (
+            <PrivateRoute>
+              <MainLayout>
+                <div className="exam-page-background">
+                  <ExamReviewPage />
                 </div>
               </MainLayout>
             </PrivateRoute>

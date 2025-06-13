@@ -1,21 +1,101 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Button, Card, Row, Col, Progress, Statistic, Divider, Tag, List, Typography, Spin, message } from 'antd';
 import { 
-  TrophyOutlined, 
-  ClockCircleOutlined, 
-  CheckCircleOutlined, 
-  CloseCircleOutlined,
-  ReloadOutlined,
-  EyeOutlined,
-  HomeOutlined 
-} from '@ant-design/icons';
+  Trophy, 
+  Clock, 
+  CheckCircle, 
+  XCircle,
+  RotateCcw,
+  Eye,
+  Home 
+} from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import useOnlineExamQuestions from '../../hooks/api/useOnlineExamQuestions';
 
-const { Title, Text, Paragraph } = Typography;
+// Custom components to replace Ant Design
+const CustomButton = ({ children, disabled, onClick, className, loading, ...props }) => (
+  <button
+    disabled={disabled || loading}
+    onClick={onClick}
+    className={`${className} ${disabled || loading ? 'opacity-50 cursor-not-allowed' : ''} ${loading ? 'animate-pulse' : ''}`}
+    {...props}
+  >
+    {loading ? (
+      <div className="flex items-center space-x-2">
+        <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-current"></div>
+        <span>{children}</span>
+      </div>
+    ) : (
+      children
+    )}
+  </button>
+);
+
+const CustomCard = ({ children, className, title }) => (
+  <div className={className}>
+    {title && <div className="text-lg font-semibold mb-4">{title}</div>}
+    {children}
+  </div>
+);
+
+const ProgressCircle = ({ percent, size = 120, strokeColor = '#3B82F6' }) => {
+  const radius = (size - 8) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDasharray = circumference;
+  const strokeDashoffset = circumference - (percent / 100) * circumference;
+  
+  return (
+    <div className="relative inline-flex items-center justify-center">
+      <svg width={size} height={size} className="transform -rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="#E5E7EB"
+          strokeWidth="8"
+          fill="transparent"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={strokeColor}
+          strokeWidth="8"
+          fill="transparent"
+          strokeDasharray={strokeDasharray}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          className="transition-all duration-300 ease-in-out"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <div className="text-2xl font-bold">{percent}%</div>
+        <div className="text-xs text-gray-500">النتيجة</div>
+      </div>
+    </div>
+  );
+};
+
+const ProgressBar = ({ percent, strokeColor = '#3B82F6', showInfo = true }) => (
+  <div className="w-full">
+    <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+      <div 
+        className="h-2.5 rounded-full transition-all duration-300" 
+        style={{ 
+          width: `${percent}%`, 
+          backgroundColor: strokeColor 
+        }}
+      ></div>
+    </div>
+    {showInfo && (
+      <div className="text-right mt-1 text-sm text-gray-600 dark:text-gray-400">
+        {percent}%
+      </div>
+    )}
+  </div>
+);
 
 const ExamResultsPage = () => {
   const { examId, attemptId } = useParams();
@@ -57,36 +137,35 @@ const ExamResultsPage = () => {
   // Load exam results on component mount
   useEffect(() => {
     if (!isAuthenticated || !user) {
-      message.error(language === 'ar' ? 'يجب تسجيل الدخول أولاً' : 'Please login first');
+      console.error(language === 'ar' ? 'يجب تسجيل الدخول أولاً' : 'Please login first');
       navigate('/auth?mode=login');
       return;
     }
 
     if (!examId) {
-      message.error(language === 'ar' ? 'معرف الامتحان مطلوب' : 'Exam ID is required');
+      console.error(language === 'ar' ? 'معرف الامتحان مطلوب' : 'Exam ID is required');
       navigate('/exams');
       return;
     }
 
-    if (!attemptId) {
-      message.error(language === 'ar' ? 'معرف المحاولة مطلوب' : 'Attempt ID is required');
-      navigate(`/exams/${examId}`);
-      return;
-    }
+    // إذا لم يتم تمرير attemptId، استخدم 'latest'
+    const targetAttemptId = attemptId || 'latest';
+    
+    console.log('📊 [ExamResultsPage] Using attempt ID:', targetAttemptId);
 
     const loadResults = async () => {
       try {
         clearError();
-        console.log(`📊 Loading results for exam ${examId}, attempt ${attemptId}`);
+        console.log(`📊 Loading results for exam ${examId}, attempt ${targetAttemptId}`);
         
-        const result = await getResults(examId, attemptId);
+        const result = await getResults(examId, targetAttemptId);
         
         if (!result.success) {
-          message.error(result.error || (language === 'ar' ? 'خطأ في تحميل النتائج' : 'Error loading results'));
+          console.error(result.error || (language === 'ar' ? 'خطأ في تحميل النتائج' : 'Error loading results'));
         }
       } catch (error) {
         console.error('Error loading results:', error);
-        message.error(language === 'ar' ? 'خطأ في الاتصال بالخادم' : 'Server connection error');
+        console.error(language === 'ar' ? 'خطأ في الاتصال بالخادم' : 'Server connection error');
       }
     };
 
@@ -101,7 +180,7 @@ const ExamResultsPage = () => {
 
   const handleReviewExam = () => {
     // Navigate to review mode
-    navigate(`/exams/${examId}/questions/review`);
+    navigate(`/exams/${examId}/review/${attemptId || 'latest'}`);
   };
 
   const handleBackToExams = () => {
@@ -113,7 +192,7 @@ const ExamResultsPage = () => {
     return (
       <div className={`flex items-center justify-center h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
         <div className="text-center">
-          <Spin size="large" />
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto mb-4"></div>
           <p className="mt-4 text-lg">
             {language === 'ar' ? 'جاري تحميل النتائج...' : 'Loading results...'}
           </p>
@@ -133,12 +212,18 @@ const ExamResultsPage = () => {
           </h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <div className="space-x-4">
-            <Button type="primary" onClick={() => navigate(`/exams/${examId}`)}>
+            <CustomButton 
+              onClick={() => navigate(`/exams/${examId}`)}
+              className="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-lg transition-colors"
+            >
               {language === 'ar' ? 'العودة للامتحان' : 'Back to Exam'}
-            </Button>
-            <Button onClick={handleBackToExams}>
+            </CustomButton>
+            <CustomButton 
+              onClick={handleBackToExams}
+              className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors"
+            >
               {language === 'ar' ? 'العودة للامتحانات' : 'Back to Exams'}
-            </Button>
+            </CustomButton>
           </div>
         </div>
       </div>
@@ -159,9 +244,12 @@ const ExamResultsPage = () => {
           <p className="text-gray-600 mb-4">
             {language === 'ar' ? 'لم نتمكن من العثور على نتائج هذا الامتحان' : 'We could not find results for this exam'}
           </p>
-          <Button type="primary" onClick={handleBackToExams}>
+          <CustomButton 
+            onClick={handleBackToExams}
+            className="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-lg transition-colors"
+          >
             {language === 'ar' ? 'العودة للامتحانات' : 'Back to Exams'}
-          </Button>
+          </CustomButton>
         </div>
       </div>
     );
@@ -196,229 +284,190 @@ const ExamResultsPage = () => {
                 ? 'bg-green-100 text-green-600' 
                 : 'bg-red-100 text-red-600'
             }`}>
-              {passed ? <TrophyOutlined className="text-3xl" /> : <CloseCircleOutlined className="text-3xl" />}
+              {passed ? <Trophy className="text-3xl" /> : <XCircle className="text-3xl" />}
             </div>
             
-            <Title level={2} className={`mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+            <h2 className={`mb-2 text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
               {passed 
                 ? (language === 'ar' ? 'تهانينا! لقد نجحت' : 'Congratulations! You Passed') 
                 : (language === 'ar' ? 'للأسف، لم تنجح هذه المرة' : 'Sorry, You Did Not Pass This Time')
               }
-            </Title>
+            </h2>
             
-            <Text className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
               {examTitle}
-            </Text>
+            </p>
           </div>
 
           {/* Score Overview */}
-          <Card 
-            className={`mb-6 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}
-            bordered={!isDarkMode}
+          <CustomCard 
+            className={`mb-6 p-6 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}
           >
-            <Row gutter={[24, 24]} align="middle">
-              <Col xs={24} sm={12} md={8} className="text-center">
-                <Progress
-                  type="circle"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+              <div className="text-center">
+                <ProgressCircle
                   percent={score}
                   size={120}
                   strokeColor={passed ? colors.success : colors.error}
-                  format={(percent) => (
-                    <div>
-                      <div className="text-2xl font-bold">{percent}%</div>
-                      <div className="text-xs text-gray-500">
-                        {language === 'ar' ? 'النتيجة' : 'Score'}
-                      </div>
-                    </div>
-                  )}
                 />
-              </Col>
+              </div>
               
-              <Col xs={24} sm={12} md={16}>
-                <Row gutter={[16, 16]}>
-                  <Col xs={12} sm={6}>
-                    <Statistic
-                      title={language === 'ar' ? 'الإجابات الصحيحة' : 'Correct Answers'}
-                      value={correctAnswers}
-                      suffix={`/ ${totalQuestions}`}
-                      valueStyle={{ color: colors.success }}
-                      prefix={<CheckCircleOutlined />}
-                    />
-                  </Col>
-                  
-                  <Col xs={12} sm={6}>
-                    <Statistic
-                      title={language === 'ar' ? 'الإجابات الخاطئة' : 'Incorrect Answers'}
-                      value={incorrectAnswers}
-                      suffix={`/ ${totalQuestions}`}
-                      valueStyle={{ color: colors.error }}
-                      prefix={<CloseCircleOutlined />}
-                    />
-                  </Col>
-                  
-                  <Col xs={12} sm={6}>
-                    <Statistic
-                      title={language === 'ar' ? 'الوقت المستغرق' : 'Time Spent'}
-                      value={formatTime(timeSpent)}
-                      prefix={<ClockCircleOutlined />}
-                    />
-                  </Col>
-                  
-                  <Col xs={12} sm={6}>
-                    <Statistic
-                      title={language === 'ar' ? 'النسبة المطلوبة' : 'Passing Score'}
-                      value={passingScore}
-                      suffix="%"
-                      valueStyle={{ color: colors.warning }}
-                    />
-                  </Col>
-                </Row>
-              </Col>
-            </Row>
-          </Card>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-2 text-green-600">
+                    <CheckCircle className="w-6 h-6 mr-2" />
+                    <span className="text-2xl font-bold">{correctAnswers}</span>
+                    <span className="text-sm text-gray-500 ml-1">/ {totalQuestions}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {language === 'ar' ? 'الإجابات الصحيحة' : 'Correct Answers'}
+                  </p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-2 text-red-600">
+                    <XCircle className="w-6 h-6 mr-2" />
+                    <span className="text-2xl font-bold">{incorrectAnswers}</span>
+                    <span className="text-sm text-gray-500 ml-1">/ {totalQuestions}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {language === 'ar' ? 'الإجابات الخاطئة' : 'Incorrect Answers'}
+                  </p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-2 text-blue-600">
+                    <Clock className="w-6 h-6 mr-2" />
+                    <span className="text-lg font-bold">{formatTime(timeSpent)}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {language === 'ar' ? 'الوقت المستغرق' : 'Time Spent'}
+                  </p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-2 text-yellow-600">
+                    <Trophy className="w-6 h-6 mr-2" />
+                    <span className="text-lg font-bold">{passingScore}%</span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {language === 'ar' ? 'النسبة المطلوبة' : 'Passing Score'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CustomCard>
 
           {/* Performance Analysis */}
-          <Card 
-            title={
-              <span className={isDarkMode ? 'text-white' : 'text-gray-800'}>
-                {language === 'ar' ? 'تحليل الأداء' : 'Performance Analysis'}
-              </span>
-            }
-            className={`mb-6 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}
-            bordered={!isDarkMode}
+          <CustomCard 
+            title={language === 'ar' ? 'تحليل الأداء' : 'Performance Analysis'}
+            className={`mb-6 p-6 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}
           >
-            <Row gutter={[24, 24]}>
-              <Col xs={24} md={12}>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <Text>{language === 'ar' ? 'معدل الإجابات الصحيحة' : 'Accuracy Rate'}</Text>
-                      <Text strong>{Math.round((correctAnswers / totalQuestions) * 100)}%</Text>
-                    </div>
-                    <Progress 
-                      percent={Math.round((correctAnswers / totalQuestions) * 100)} 
-                      strokeColor={colors.success}
-                      showInfo={false}
-                    />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {language === 'ar' ? 'معدل الإجابات الصحيحة' : 'Accuracy Rate'}
+                    </span>
+                    <span className="font-bold">{Math.round((correctAnswers / totalQuestions) * 100)}%</span>
                   </div>
-                  
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <Text>{language === 'ar' ? 'التقدم نحو الهدف' : 'Progress to Target'}</Text>
-                      <Text strong>{Math.min(Math.round((score / passingScore) * 100), 100)}%</Text>
-                    </div>
-                    <Progress 
-                      percent={Math.min(Math.round((score / passingScore) * 100), 100)} 
-                      strokeColor={passed ? colors.success : colors.warning}
-                      showInfo={false}
-                    />
-                  </div>
+                  <ProgressBar 
+                    percent={Math.round((correctAnswers / totalQuestions) * 100)} 
+                    strokeColor={colors.success}
+                    showInfo={false}
+                  />
                 </div>
-              </Col>
+                
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {language === 'ar' ? 'التقدم نحو الهدف' : 'Progress to Target'}
+                    </span>
+                    <span className="font-bold">{Math.min(Math.round((score / passingScore) * 100), 100)}%</span>
+                  </div>
+                  <ProgressBar 
+                    percent={Math.min(Math.round((score / passingScore) * 100), 100)} 
+                    strokeColor={passed ? colors.success : colors.warning}
+                    showInfo={false}
+                  />
+                </div>
+              </div>
               
-              <Col xs={24} md={12}>
-                <div className="text-center">
-                  <Tag 
-                    color={passed ? 'success' : 'error'} 
-                    className="text-lg py-2 px-4 rounded-lg"
-                  >
-                    {passed 
-                      ? (language === 'ar' ? '✅ نجح' : '✅ Passed')
-                      : (language === 'ar' ? '❌ لم ينجح' : '❌ Failed')
-                    }
-                  </Tag>
-                  
-                  <div className="mt-4">
-                    <Text className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
-                      {passed 
-                        ? (language === 'ar' 
-                          ? 'أحسنت! لقد تجاوزت النسبة المطلوبة بنجاح'
-                          : 'Well done! You have successfully exceeded the required score')
-                        : (language === 'ar'
-                          ? `تحتاج إلى ${passingScore - score}% إضافية للنجاح`
-                          : `You need ${passingScore - score}% more to pass`)
-                      }
-                    </Text>
-                  </div>
+              <div className="text-center">
+                <div className={`inline-block px-4 py-2 rounded-lg text-lg font-medium ${
+                  passed 
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                }`}>
+                  {passed 
+                    ? (language === 'ar' ? '✅ نجح' : '✅ Passed')
+                    : (language === 'ar' ? '❌ لم ينجح' : '❌ Failed')
+                  }
                 </div>
-              </Col>
-            </Row>
-          </Card>
+                
+                <div className="mt-4">
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {passed 
+                      ? (language === 'ar' 
+                        ? 'أحسنت! لقد تجاوزت النسبة المطلوبة بنجاح'
+                        : 'Well done! You have successfully exceeded the required score')
+                      : (language === 'ar'
+                        ? `تحتاج إلى ${passingScore - score}% إضافية للنجاح`
+                        : `You need ${passingScore - score}% more to pass`)
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CustomCard>
 
           {/* Actions */}
-          <Card 
-            className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}
-            bordered={!isDarkMode}
+          <CustomCard 
+            className={`p-6 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'}`}
           >
             <div className="text-center space-y-4">
-              <Title level={4} className={isDarkMode ? 'text-white' : 'text-gray-800'}>
+              <h4 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                 {language === 'ar' ? 'ماذا تريد أن تفعل الآن؟' : 'What would you like to do next?'}
-              </Title>
+              </h4>
               
-              <Row gutter={[16, 16]} justify="center">
-                <Col xs={24} sm={8}>
-                  <Button 
-                    type="primary" 
-                    size="large" 
-                    block
-                    icon={<EyeOutlined />}
-                    onClick={handleReviewExam}
-                    style={{
-                      backgroundColor: colors.primaryBase,
-                      borderColor: colors.primaryBase,
-                      height: '48px'
-                    }}
-                  >
-                    {language === 'ar' ? 'مراجعة الإجابات' : 'Review Answers'}
-                  </Button>
-                </Col>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <CustomButton 
+                  onClick={handleReviewExam}
+                  className="flex items-center justify-center space-x-2 h-12 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  <Eye className="w-5 h-5" />
+                  <span>{language === 'ar' ? 'مراجعة الإجابات' : 'Review Answers'}</span>
+                </CustomButton>
                 
-                <Col xs={24} sm={8}>
-                  <Button 
-                    type="default" 
-                    size="large" 
-                    block
-                    icon={<ReloadOutlined />}
-                    loading={retryLoading}
-                    onClick={handleRetryExam}
-                    style={{
-                      backgroundColor: colors.purple,
-                      borderColor: colors.purple,
-                      color: 'white',
-                      height: '48px'
-                    }}
-                  >
-                    {language === 'ar' ? 'إعادة المحاولة' : 'Try Again'}
-                  </Button>
-                </Col>
+                <CustomButton 
+                  loading={retryLoading}
+                  onClick={handleRetryExam}
+                  className="flex items-center justify-center space-x-2 h-12 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                  <span>{language === 'ar' ? 'إعادة المحاولة' : 'Try Again'}</span>
+                </CustomButton>
                 
-                <Col xs={24} sm={8}>
-                  <Button 
-                    type="default" 
-                    size="large" 
-                    block
-                    icon={<HomeOutlined />}
-                    onClick={handleBackToExams}
-                    style={{ height: '48px' }}
-                  >
-                    {language === 'ar' ? 'العودة للامتحانات' : 'Back to Exams'}
-                  </Button>
-                </Col>
-              </Row>
+                <CustomButton 
+                  onClick={handleBackToExams}
+                  className="flex items-center justify-center space-x-2 h-12 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  <Home className="w-5 h-5" />
+                  <span>{language === 'ar' ? 'العودة للامتحانات' : 'Back to Exams'}</span>
+                </CustomButton>
+              </div>
             </div>
-          </Card>
+          </CustomCard>
 
           {/* Show navigation state in development */}
           {process.env.NODE_ENV === 'development' && navigationState && (
-            <Card 
-              title="Debug - Navigation State" 
-              className="mt-6 bg-gray-100"
-              size="small"
-            >
-              <pre className="text-xs overflow-auto">
+            <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <h5 className="text-sm font-medium mb-2">Debug - Navigation State</h5>
+              <pre className="text-xs overflow-auto bg-gray-50 dark:bg-gray-900 p-2 rounded">
                 {JSON.stringify(navigationState, null, 2)}
               </pre>
-            </Card>
+            </div>
           )}
         </div>
       </div>

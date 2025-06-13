@@ -119,35 +119,104 @@ const MyExamsPage = () => {
             {getText("امتحاناتي", "My Exams")}
           </h1>
 
-          {/* الإحصائيات */}
+          {/* الإحصائيات المحسنة */}
           {statistics && (
-            <div className="max-w-4xl mx-auto">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 text-center backdrop-blur-sm`}>
+            <div className="max-w-6xl mx-auto">
+              {/* الإحصائيات الرئيسية */}
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+                <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 text-center backdrop-blur-sm transition-all duration-300 hover:scale-105`}>
+                  <div className="text-2xl font-bold mb-2">{statistics.total_exams || 0}</div>
+                  <div className="text-sm opacity-90">{getText("إجمالي الامتحانات", "Total Exams")}</div>
+                </div>
+                <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 text-center backdrop-blur-sm transition-all duration-300 hover:scale-105`}>
                   <div className="text-2xl font-bold mb-2">{statistics.total_available_exams || 0}</div>
                   <div className="text-sm opacity-90">{getText("امتحانات متاحة", "Available Exams")}</div>
                 </div>
-                <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 text-center backdrop-blur-sm`}>
+                <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 text-center backdrop-blur-sm transition-all duration-300 hover:scale-105`}>
+                  <div className="text-2xl font-bold mb-2">{statistics.completed_exams || 0}</div>
+                  <div className="text-sm opacity-90">{getText("امتحانات مكتملة", "Completed Exams")}</div>
+                </div>
+                <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 text-center backdrop-blur-sm transition-all duration-300 hover:scale-105`}>
                   <div className="text-2xl font-bold mb-2">{statistics.active_exams || 0}</div>
                   <div className="text-sm opacity-90">{getText("امتحانات نشطة", "Active Exams")}</div>
                 </div>
-                <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 text-center backdrop-blur-sm`}>
-                  <div className="text-2xl font-bold mb-2">{statistics.upcoming_exams || 0}</div>
-                  <div className="text-sm opacity-90">{getText("امتحانات قادمة", "Upcoming Exams")}</div>
-                </div>
-                <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 text-center backdrop-blur-sm`}>
+                <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 text-center backdrop-blur-sm transition-all duration-300 hover:scale-105`}>
                   <div className="text-2xl font-bold mb-2">{statistics.ended_exams || 0}</div>
                   <div className="text-sm opacity-90">{getText("امتحانات منتهية", "Ended Exams")}</div>
                 </div>
+                <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 text-center backdrop-blur-sm transition-all duration-300 hover:scale-105`}>
+                  <div className="text-2xl font-bold mb-2">{statistics.registered_courses || 0}</div>
+                  <div className="text-sm opacity-90">{getText("كورسات مسجلة", "Enrolled Courses")}</div>
+                </div>
               </div>
               
-              {(Array.isArray(availableExams) ? availableExams.length : 0) + 
-               (Array.isArray(completedExams) ? completedExams.length : 0) > 0 && (
-                <div className="text-center mt-6 text-sm opacity-90">
-                  {getText(
-                    `إجمالي ${(Array.isArray(availableExams) ? availableExams.length : 0) + (Array.isArray(completedExams) ? completedExams.length : 0)} امتحان`,
-                    `Total ${(Array.isArray(availableExams) ? availableExams.length : 0) + (Array.isArray(completedExams) ? completedExams.length : 0)} exams`
-                  )}
+              {/* الأداء والنتائج */}
+              {(statistics.summary?.performance || statistics.highest_score !== undefined) && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 backdrop-blur-sm`}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-lg font-bold">{statistics.summary?.performance?.average_score || statistics.average_results || 0}%</div>
+                        <div className="text-sm opacity-90">{getText("متوسط النتائج", "Average Score")}</div>
+                      </div>
+                      <div className="text-2xl">📊</div>
+                    </div>
+                  </div>
+                  <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 backdrop-blur-sm`}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-lg font-bold">{statistics.summary?.performance?.highest_score || statistics.highest_score || 0}%</div>
+                        <div className="text-sm opacity-90">{getText("أعلى نتيجة", "Highest Score")}</div>
+                      </div>
+                      <div className="text-2xl">🏆</div>
+                    </div>
+                  </div>
+                  <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 backdrop-blur-sm`}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-lg font-bold">{statistics.summary?.performance?.total_attempts || statistics.completed_exams || 0}</div>
+                        <div className="text-sm opacity-90">{getText("إجمالي المحاولات", "Total Attempts")}</div>
+                      </div>
+                      <div className="text-2xl">🎯</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* تفصيل الامتحانات المكتملة */}
+              {statistics.breakdown && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 backdrop-blur-sm`}>
+                    <h4 className="font-semibold text-sm mb-3 opacity-90">{getText("الامتحانات المكتملة", "Completed Exams")}</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm opacity-80">{getText("امتحانات أونلاين", "Online Exams")}</span>
+                        <span className="font-bold">{statistics.breakdown.completed_online_exams || 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm opacity-80">{getText("امتحانات أوفلاين", "Offline Exams")}</span>
+                        <span className="font-bold">{statistics.breakdown.completed_offline_exams || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 backdrop-blur-sm`}>
+                    <h4 className="font-semibold text-sm mb-3 opacity-90">{getText("حالة الامتحانات المتاحة", "Available Exams Status")}</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm opacity-80">{getText("قادمة", "Upcoming")}</span>
+                        <span className="font-bold text-blue-300">{statistics.upcoming_exams || 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm opacity-80">{getText("نشطة", "Active")}</span>
+                        <span className="font-bold text-green-300">{statistics.active_exams || 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm opacity-80">{getText("منتهية", "Ended")}</span>
+                        <span className="font-bold text-red-300">{statistics.ended_exams || 0}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

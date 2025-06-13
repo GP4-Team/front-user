@@ -255,28 +255,44 @@ export const onlineExamQuestionsService = {
    */
   async getExamResults(examId, attemptId) {
     try {
-      console.log(`📊 Fetching results for exam ${examId}, attempt ${attemptId}`);
+      // Convert examId to integer
+      const examIdInt = parseInt(examId);
       
-      const response = await apiClient.get(`/examination/exam-results/${examId}/${attemptId}`);
+      // Handle attemptId - if 'latest', keep as string, otherwise convert to integer
+      const attemptIdParam = attemptId === 'latest' ? 'latest' : parseInt(attemptId);
+      
+      console.log(`📊 Fetching results for exam ${examIdInt}, attempt ${attemptIdParam}`);
+      console.log('📊 API endpoint:', `/examination/exam-results/${examIdInt}/${attemptIdParam}`);
+      console.log('📊 Parameter types:', { examId: typeof examIdInt, attemptId: typeof attemptIdParam });
+      console.log('📊 Original vs converted:', { 
+        original: { examId, attemptId }, 
+        converted: { examId: examIdInt, attemptId: attemptIdParam } 
+      });
+      
+      const response = await apiClient.get(`/examination/exam-results/${examIdInt}/${attemptIdParam}`);
       
       console.log('✅ Results response:', response);
+      console.log('✅ Results data structure:', JSON.stringify(response.data || response, null, 2));
       
       return {
         success: true,
         data: response.data || response,
-        examId: examId,
-        attemptId: attemptId
+        examId: examIdInt,
+        attemptId: attemptIdParam
       };
     } catch (error) {
       console.error('❌ Error fetching results:', error);
+      console.error('❌ Error response:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error headers:', error.response?.headers);
       
       const errorResponse = error.response?.data;
       
       return {
         success: false,
         error: errorResponse?.message || error.message || 'Failed to get exam results',
-        examId: examId,
-        attemptId: attemptId,
+        examId: parseInt(examId),
+        attemptId: attemptId === 'latest' ? 'latest' : parseInt(attemptId),
         data: errorResponse?.data || null,
         httpStatus: error.response?.status
       };
@@ -291,28 +307,44 @@ export const onlineExamQuestionsService = {
    */
   async getExamAnswers(examId, attemptId) {
     try {
-      console.log(`📋 Fetching answers for exam ${examId}, attempt ${attemptId}`);
+      // Convert examId to integer
+      const examIdInt = parseInt(examId);
       
-      const response = await apiClient.get(`/examination/exam-answers/${examId}/${attemptId}`);
+      // Handle attemptId - if 'latest', keep as string, otherwise convert to integer
+      const attemptIdParam = attemptId === 'latest' ? 'latest' : parseInt(attemptId);
+      
+      console.log(`📋 Fetching answers for exam ${examIdInt}, attempt ${attemptIdParam}`);
+      console.log('📋 API endpoint:', `/examination/exam-answers/${examIdInt}/${attemptIdParam}`);
+      console.log('📋 Parameter types:', { examId: typeof examIdInt, attemptId: typeof attemptIdParam });
+      console.log('📋 Original vs converted:', { 
+        original: { examId, attemptId }, 
+        converted: { examId: examIdInt, attemptId: attemptIdParam } 
+      });
+      
+      const response = await apiClient.get(`/examination/exam-answers/${examIdInt}/${attemptIdParam}`);
       
       console.log('✅ Answers response:', response);
+      console.log('✅ Answers data structure:', JSON.stringify(response.data || response, null, 2));
       
       return {
         success: true,
         data: response.data || response,
-        examId: examId,
-        attemptId: attemptId
+        examId: examIdInt,
+        attemptId: attemptIdParam
       };
     } catch (error) {
       console.error('❌ Error fetching answers:', error);
+      console.error('❌ Error response:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error headers:', error.response?.headers);
       
       const errorResponse = error.response?.data;
       
       return {
         success: false,
         error: errorResponse?.message || error.message || 'Failed to get exam answers',
-        examId: examId,
-        attemptId: attemptId,
+        examId: parseInt(examId),
+        attemptId: attemptId === 'latest' ? 'latest' : parseInt(attemptId),
         data: errorResponse?.data || null,
         httpStatus: error.response?.status
       };

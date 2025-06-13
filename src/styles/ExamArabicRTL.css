@@ -1,0 +1,112 @@
+/* RTL Support for Exam Pages */
+.font-arabic {
+  font-family: 'Tajawal', 'Cairo', 'Amiri', 'Noto Sans Arabic', Arial, sans-serif;
+  font-weight: 500;
+}
+
+/* Dark mode improvements for Ant Design components */
+.ant-btn-primary {
+  transition: all 0.2s ease-in-out;
+}
+
+.ant-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(107, 61, 210, 0.3);
+}
+
+/* RTL spacing for Arabic */
+.space-x-reverse > * + * {
+  margin-right: 1rem;
+  margin-left: 0;
+}
+
+/* Dark mode borders */
+.dark-border {
+  border-color: #374151 !important;
+}
+
+/* Arabic text alignment */
+.ar-text-right {
+  text-align: right;
+  direction: rtl;
+}
+
+.ar-text-left {
+  text-align: left;
+  direction: ltr;
+}
+
+/* Button RTL support */
+.rtl-button {
+  direction: rtl;
+  text-align: center;
+}
+
+.rtl-button .ant-btn-icon {
+  margin-left: 0;
+  margin-right: 8px;
+}
+
+/* Progress bar RTL */
+.rtl-progress {
+  direction: ltr; /* Progress bars should always go left to right */
+}
+
+/* Question navigation in RTL */
+.question-nav-rtl {
+  direction: rtl;
+}
+
+.question-nav-rtl .question-number {
+  text-align: center;
+}
+
+/* Dark mode specific styles */
+[data-theme="dark"] .ant-layout {
+  background: #111827 !important;
+}
+
+[data-theme="dark"] .ant-btn-default {
+  background-color: #374151;
+  border-color: #4B5563;
+  color: #F3F4F6;
+}
+
+[data-theme="dark"] .ant-btn-default:hover {
+  background-color: #4B5563;
+  border-color: #6B7280;
+  color: #FFFFFF;
+}
+
+/* Improved dark mode text visibility */
+.dark-text {
+  color: #F3F4F6;
+}
+
+.dark-text-secondary {
+  color: #D1D5DB;
+}
+
+/* Enhanced purple button styling */
+.submit-button {
+  background: linear-gradient(135deg, #6B3DD2 0%, #8B5CF6 100%);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.submit-button:hover {
+  background: linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(107, 61, 210, 0.4);
+}
+
+.submit-button:focus {
+  background: linear-gradient(135deg, #6B3DD2 0%, #8B5CF6 100%);
+  box-shadow: 0 0 0 2px rgba(107, 61, 210, 0.2);
+}
+
+/* Arabic number styling */
+.arabic-numbers {
+  font-family: 'Cairo', 'Tajawal', sans-serif;
+  font-feature-settings: "tnum" 1;
+}
