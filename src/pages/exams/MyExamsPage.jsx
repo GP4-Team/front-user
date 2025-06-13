@@ -1,246 +1,89 @@
-// pages/exams/MyExamsPage.jsx - Updated for Real APIs with Clean Design
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { useTheme } from "../../contexts/ThemeContext";
+import React, { useState, useEffect } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { useRealExamination } from "../../hooks/api/useRealExamination";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import translations from "../../utils/translations";
+import { useNavigate } from "react-router-dom";
 
-// Import Navbar
+// Components
 import Navbar from "../../components/navigation/Navbar";
+import SimplifiedExamCard from "../../components/exams/SimplifiedExamCard";
 
-// Import custom components
-import ExamsHeader from "../../components/exams/ExamsHeader";
-import PerformanceSummary from "../../components/exams/PerformanceSummary";
-import ExamList from "../../components/exams/ExamList";
-import MotivationalMessage from "../../components/exams/MotivationalMessage";
-import ExamTitlePreview from "../../components/admin/ExamTitlePreview";
-
-// Register GSAP plugins
-gsap.registerPlugin(ScrollTrigger);
+// API Service
+import { useRealExamination } from "../../hooks/api/useRealExamination";
 
 const MyExamsPage = () => {
-  const { isDarkMode } = useTheme();
   const { language, isRTL } = useLanguage();
+  const { isDarkMode } = useTheme();
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [statistics, setStatistics] = useState(null);
 
-  // Use the new real examination hook
+  // Use the real examination hook
   const { 
     loading,
-    error,
-    statistics,
-    statisticsLoading,
-    statisticsError,
     availableExams,
-    availableExamsLoading,
-    availableExamsError,
     completedExams,
-    completedExamsLoading,
-    completedExamsError,
-    pagination,
-    summary,
     fetchAllExamData,
-    refreshData,
+    statistics: examStatistics,
+    statisticsError,
+    availableExamsError,
+    completedExamsError,
     clearErrors
   } = useRealExamination();
 
-  // State for UI controls
-  const [favoriteExams, setFavoriteExams] = useState([]);
-  const [statsVisible, setStatsVisible] = useState(true);
-  const [showMotivationalMessage, setShowMotivationalMessage] = useState(false);
-  const [currentMessage, setCurrentMessage] = useState("");
-  
-  // Refs for animations
-  const pageRef = useRef(null);
-  const statsSectionRef = useRef(null);
-  const availableExamsRef = useRef(null);
-  const completedExamsRef = useRef(null);
-  const examCardRefs = useRef([]);
-  const motivationalMessageRef = useRef(null);
+  const getText = (ar, en) => (language === "ar" ? ar : en);
 
-  // Motivational messages
-  const motivationalMessages = {
-    ar: [
-      "النجاح رحلة وليس وجهة!",
-      "التعلم هو الكنز الذي يتبعك أينما ذهبت!",
-      "الاختبارات فرصة لإظهار ما تعلمته!",
-      "مع كل تحدي تصبح أقوى!",
-      "جهد اليوم هو نجاح الغد!",
-      "أنت على بعد خطوة من تحقيق أهدافك!",
-    ],
-    en: [
-      "Success is a journey, not a destination!",
-      "Learning is the treasure that will follow you everywhere!",
-      "Tests are opportunities to show what you've learned!",
-      "With every challenge, you become stronger!",
-      "Today's effort is tomorrow's success!",
-      "You're just one step away from achieving your goals!",
-    ],
-  };
-
-  // Load exam data when component mounts
+  // جلب الامتحانات عند تحميل الصفحة أول مرة
   useEffect(() => {
-    if (isAuthenticated && user) {
-      console.log('🎯 Loading exam data for user:', user.id);
+    const fetchInitialData = async () => {
+      if (!isAuthenticated || !user) return;
       
-      // تهيئة ترجمات أسماء الامتحانات
-      import('../../utils/examTitleSetup').then(({ initializeExamTitleTranslations }) => {
-        initializeExamTitleTranslations();
-      });
-      
-      fetchAllExamData();
-    }
+      setIsInitialLoading(true);
+      setError(null);
+
+      try {
+        console.log('📋 Loading initial exam data');
+        await fetchAllExamData();
+      } catch (err) {
+        console.error("Error fetching initial exam data:", err);
+        setError("حدث خطأ أثناء تحميل الامتحانات");
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+
+    fetchInitialData();
   }, [isAuthenticated, user, fetchAllExamData]);
 
-  // تحديث الترجمات عند تحميل البيانات الجديدة
+  // تحديث الإحصائيات عند تحميل البيانات
   useEffect(() => {
-    if (Array.isArray(availableExams) && availableExams.length > 0) {
-      import('../../utils/examTitleSetup').then(({ addCustomSubjectsFromData }) => {
-        addCustomSubjectsFromData(availableExams);
-      });
+    if (!loading && examStatistics) {
+      setStatistics(examStatistics);
     }
-  }, [availableExams]);
-
-  useEffect(() => {
-    if (Array.isArray(completedExams) && completedExams.length > 0) {
-      import('../../utils/examTitleSetup').then(({ addCustomSubjectsFromData }) => {
-        addCustomSubjectsFromData(completedExams);
-      });
-    }
-  }, [completedExams]);
-
-  // Load favorites from localStorage
-  useEffect(() => {
-    try {
-      const savedFavorites = localStorage.getItem("favoriteExams");
-      if (savedFavorites) {
-        setFavoriteExams(JSON.parse(savedFavorites));
-      }
-    } catch (error) {
-      console.error("Error loading favorites:", error);
-    }
-  }, []);
-
-  // Save favorites when they change
-  useEffect(() => {
-    try {
-      localStorage.setItem("favoriteExams", JSON.stringify(favoriteExams));
-    } catch (error) {
-      console.error("Error saving favorites:", error);
-    }
-  }, [favoriteExams]);
-
-  // Show motivational message
-  useEffect(() => {
-    const messageTimeout = setTimeout(() => {
-      const randomMessage = motivationalMessages[language][
-        Math.floor(Math.random() * motivationalMessages[language].length)
-      ];
-      setCurrentMessage(randomMessage);
-      setShowMotivationalMessage(true);
-
-      const hideTimeout = setTimeout(() => {
-        setShowMotivationalMessage(false);
-      }, 5000);
-
-      return () => clearTimeout(hideTimeout);
-    }, 3000);
-
-    return () => clearTimeout(messageTimeout);
-  }, [language]);
-
-  // GSAP animations
-  useEffect(() => {
-    let isMounted = true;
-
-    if (isMounted && pageRef.current) {
-      try {
-        gsap.fromTo(
-          pageRef.current,
-          { opacity: 0 },
-          { opacity: 1, duration: 0.5, ease: "power2.out" }
-        );
-
-        if (statsSectionRef.current) {
-          gsap.fromTo(
-            statsSectionRef.current,
-            { y: 20, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.6, delay: 0.2, ease: "power3.out" }
-          );
-        }
-
-        [availableExamsRef.current, completedExamsRef.current].forEach((section, index) => {
-          if (section) {
-            gsap.fromTo(
-              section,
-              { x: isRTL ? 30 : -30, opacity: 0 },
-              { x: 0, opacity: 1, duration: 0.5, delay: 0.3 + index * 0.1, ease: "power2.out" }
-            );
-          }
-        });
-      } catch (error) {
-        console.error("Animation setup error:", error);
-      }
-    }
-
-    return () => {
-      isMounted = false;
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-    };
-  }, [isDarkMode, isRTL]);
-
-  // Helper functions
-  const toggleFavorite = (examId) => {
-    setFavoriteExams(prev =>
-      prev.includes(examId)
-        ? prev.filter(id => id !== examId)
-        : [...prev, examId]
-    );
-  };
-
-  const handleSelectExam = (exam) => {
-    if (exam.status === "completed" || exam.status === "revision" || exam.status === "ended") {
-      navigate(`/exams/${exam.id}/review`);
-    } else if (exam.status === "unavailable" || exam.status === "none" || !exam.canTakeExam) {
-      return;
-    } else {
-      // توجيه لصفحة الامتحان الجديدة
-      navigate(`/exams/${exam.id}/take`);
-    }
-  };
-
-  const handleRetry = () => {
-    clearErrors();
-    fetchAllExamData();
-  };
-
-  // Access translations
-  const t = translations[language];
+  }, [examStatistics, loading]);
 
   // Auth required state
   if (!isAuthenticated) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div className={`min-h-screen ${isDarkMode ? "bg-[#121212] text-[#E0E0E0]" : "bg-[#F0F4F8] text-[#37474F]"}`}>
         <Navbar />
         <div className="pt-20"></div>
         <div className="flex items-center justify-center h-96">
           <div className="text-center max-w-md mx-auto p-6">
-            <div className="text-blue-500 text-6xl mb-4">🔐</div>
+            <div className="text-6xl mb-4">🔐</div>
             <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-              {language === 'ar' ? 'تسجيل الدخول مطلوب' : 'Login Required'}
+              {getText('تسجيل الدخول مطلوب', 'Login Required')}
             </h2>
             <p className={`text-lg mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              {language === 'ar' ? 'يجب تسجيل الدخول لعرض الامتحانات الخاصة بك' : 'Please login to view your exams'}
+              {getText('يجب تسجيل الدخول لعرض الامتحانات', 'Please login to view your exams')}
             </p>
             <button 
               onClick={() => navigate('/auth?mode=login')}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
+              className="bg-[#3949AB] hover:bg-[#1A237E] text-white px-6 py-2 rounded-lg transition-colors"
             >
-              {language === 'ar' ? 'تسجيل الدخول' : 'Login'}
+              {getText('تسجيل الدخول', 'Login')}
             </button>
           </div>
         </div>
@@ -248,58 +91,16 @@ const MyExamsPage = () => {
     );
   }
 
-  // Loading state
-  if (loading) {
+  // عرض شاشة تحميل بسيطة للتحميل الأولي فقط
+  if (isInitialLoading || loading) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div className={`min-h-screen ${isDarkMode ? "bg-[#121212] text-[#E0E0E0]" : "bg-[#F0F4F8] text-[#37474F]"}`}>
         <Navbar />
         <div className="pt-20"></div>
-        <div className="flex items-center justify-center h-96">
+        <div className="flex justify-center items-center h-96">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className={`text-lg ${isDarkMode ? 'text-white' : 'text-gray-600'}`}>
-              {language === 'ar' ? 'جاري تحميل الامتحانات...' : 'Loading exams...'}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Critical error state
-  if (error && !statistics && (!Array.isArray(availableExams) || availableExams.length === 0) && (!Array.isArray(completedExams) || completedExams.length === 0)) {
-    return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <Navbar />
-        <div className="pt-20"></div>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center max-w-2xl mx-auto p-6">
-            <div className="text-red-500 text-6xl mb-4">⚠️</div>
-            <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-              {language === 'ar' ? 'خطأ في الاتصال بالخادم' : 'Server Connection Error'}
-            </h2>
-            <p className={`text-lg mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              {language === 'ar' ? 'لا يمكن الوصول إلى بيانات الامتحانات حالياً. يرجى المحاولة مرة أخرى أو الاتصال بالدعم الفني.' : 'Unable to load exam data from server. Please try again or contact technical support.'}
-            </p>
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
-              <p className="text-sm text-red-700 dark:text-red-300 font-mono">
-                {error}
-              </p>
-            </div>
-            <div className="space-x-4">
-              <button 
-                onClick={handleRetry}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
-              >
-                {language === 'ar' ? 'إعادة المحاولة' : 'Try Again'}
-              </button>
-              <button 
-                onClick={() => window.open('/exams-api-test', '_blank')}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
-              >
-                {language === 'ar' ? 'اختبار الاتصال' : 'Test Connection'}
-              </button>
-            </div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#3949AB] mx-auto mb-4"></div>
+            <p className="text-lg">{getText("جاري تحميل الامتحانات...", "Loading exams...")}</p>
           </div>
         </div>
       </div>
@@ -307,123 +108,140 @@ const MyExamsPage = () => {
   }
 
   return (
-    <div
-      ref={pageRef}
-      className={`min-h-screen relative ${isRTL ? "rtl" : "ltr"} ${
-        isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"
-      }`}
-    >
+    <div className={`min-h-screen ${isDarkMode ? "bg-[#121212] text-[#E0E0E0]" : "bg-[#F0F4F8] text-[#37474F]"}`}>
       <Navbar />
       <div className="pt-20"></div>
 
-      {/* Motivational message */}
-      <MotivationalMessage 
-        showMotivationalMessage={showMotivationalMessage}
-        setShowMotivationalMessage={setShowMotivationalMessage}
-        currentMessage={currentMessage}
-        motivationalMessageRef={motivationalMessageRef}
-      />
+      {/* رأس الصفحة */}
+      <div className={`${isDarkMode ? "bg-[#1E1E1E]" : "bg-[#3949AB]"} py-12 text-white`}>
+        <div className="container mx-auto px-4">
+          <h1 className="text-3xl font-bold text-center mb-8">
+            {getText("امتحاناتي", "My Exams")}
+          </h1>
 
-      {/* Main content */}
-      <div className="relative z-10">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          {/* Page header */}
-          <ExamsHeader title={t.pageTitle || (language === 'ar' ? 'الامتحانات' : 'Exams')} />
-
-          {/* Title Preview - for development */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mb-6">
-              <ExamTitlePreview 
-                examNames={[
-                  ...Array.isArray(availableExams) ? availableExams.map(exam => exam.name).filter(Boolean) : [],
-                  ...Array.isArray(completedExams) ? completedExams.map(exam => exam.name).filter(Boolean) : []
-                ]}
-              />
-            </div>
-          )}
-
-          {/* Performance summary */}
-          <div ref={statsSectionRef}>
-            <PerformanceSummary 
-              examStats={statistics}
-              statsVisible={statsVisible}
-              setStatsVisible={setStatsVisible}
-              statsLoading={statisticsLoading}
-              statsError={statisticsError}
-              translations={t}
-            />
-          </div>
-
-          {/* Error notifications */}
-          {(statisticsError || availableExamsError || completedExamsError) && (
-            <div className="mb-6">
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                <div className="flex items-center mb-2">
-                  <div className="text-yellow-600 dark:text-yellow-400 mr-3">⚠️</div>
-                  <h3 className="font-medium text-yellow-800 dark:text-yellow-200">
-                    {language === 'ar' ? 'مشاكل في تحميل بعض البيانات' : 'Some Data Loading Issues'}
-                  </h3>
+          {/* الإحصائيات */}
+          {statistics && (
+            <div className="max-w-4xl mx-auto">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 text-center backdrop-blur-sm`}>
+                  <div className="text-2xl font-bold mb-2">{statistics.total_available_exams || 0}</div>
+                  <div className="text-sm opacity-90">{getText("امتحانات متاحة", "Available Exams")}</div>
                 </div>
-                <div className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
-                  {statisticsError && (
-                    <p>• {language === 'ar' ? 'الإحصائيات:' : 'Statistics:'} {statisticsError}</p>
-                  )}
-                  {availableExamsError && (
-                    <p>• {language === 'ar' ? 'الامتحانات المتاحة:' : 'Available Exams:'} {availableExamsError}</p>
-                  )}
-                  {completedExamsError && (
-                    <p>• {language === 'ar' ? 'الامتحانات المكتملة:' : 'Completed Exams:'} {completedExamsError}</p>
-                  )}
+                <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 text-center backdrop-blur-sm`}>
+                  <div className="text-2xl font-bold mb-2">{statistics.active_exams || 0}</div>
+                  <div className="text-sm opacity-90">{getText("امتحانات نشطة", "Active Exams")}</div>
                 </div>
-                <div className="mt-3 pt-3 border-t border-yellow-200 dark:border-yellow-700">
-                  <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                    {language === 'ar' 
-                      ? 'هذه مشاكل في الخادم يجب حلها من فريق التطوير. يرجى الانتظار أو الاتصال بالدعم الفني.' 
-                      : 'These are server-side issues that need to be fixed by the development team. Please wait or contact technical support.'}
-                  </p>
+                <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 text-center backdrop-blur-sm`}>
+                  <div className="text-2xl font-bold mb-2">{statistics.upcoming_exams || 0}</div>
+                  <div className="text-sm opacity-90">{getText("امتحانات قادمة", "Upcoming Exams")}</div>
+                </div>
+                <div className={`${isDarkMode ? 'bg-[#333333]' : 'bg-white/20'} rounded-lg p-4 text-center backdrop-blur-sm`}>
+                  <div className="text-2xl font-bold mb-2">{statistics.ended_exams || 0}</div>
+                  <div className="text-sm opacity-90">{getText("امتحانات منتهية", "Ended Exams")}</div>
                 </div>
               </div>
+              
+              {(Array.isArray(availableExams) ? availableExams.length : 0) + 
+               (Array.isArray(completedExams) ? completedExams.length : 0) > 0 && (
+                <div className="text-center mt-6 text-sm opacity-90">
+                  {getText(
+                    `إجمالي ${(Array.isArray(availableExams) ? availableExams.length : 0) + (Array.isArray(completedExams) ? completedExams.length : 0)} امتحان`,
+                    `Total ${(Array.isArray(availableExams) ? availableExams.length : 0) + (Array.isArray(completedExams) ? completedExams.length : 0)} exams`
+                  )}
+                </div>
+              )}
             </div>
           )}
-
-          {/* Available exams */}
-          <div ref={availableExamsRef}>
-            <ExamList 
-              title={language === 'ar' ? 'الامتحانات المتاحة' : 'Available Exams'}
-              exams={Array.isArray(availableExams) ? availableExams : []}
-              viewMode="grid"
-              toggleFavorite={toggleFavorite}
-              handleSelectExam={handleSelectExam}
-              favoriteExams={favoriteExams}
-              translations={t}
-              cardRefs={examCardRefs}
-              loading={availableExamsLoading}
-              error={availableExamsError}
-              isOnlineExam={true}
-            />
-          </div>
-
-          {/* Completed exams */}
-          <div ref={completedExamsRef}>
-            <ExamList 
-              title={language === 'ar' ? 'الامتحانات المكتملة' : 'Completed Exams'}
-              exams={Array.isArray(completedExams) ? completedExams : []}
-              viewMode="grid"
-              toggleFavorite={toggleFavorite}
-              handleSelectExam={handleSelectExam}
-              favoriteExams={favoriteExams}
-              translations={t}
-              cardRefs={examCardRefs}
-              loading={completedExamsLoading}
-              error={completedExamsError}
-              pagination={pagination}
-              summary={summary}
-              isOnlineExam={true}
-            />
-          </div>
-
-          {/* Debug info - معلومات التطوير - محذوفة */}
         </div>
+      </div>
+
+      {/* رسالة خطأ */}
+      {(error || statisticsError || availableExamsError || completedExamsError) && (
+        <div className="container mx-auto px-4 py-4">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className={`font-bold ${isRTL ? 'ml-1' : 'mr-1'}`}>خطأ:</strong>
+            <span className="block sm:inline">
+              {error || statisticsError || availableExamsError || completedExamsError}
+            </span>
+            <button
+              onClick={() => {
+                clearErrors();
+                fetchAllExamData();
+              }}
+              className="mt-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
+            >
+              {getText("إعادة المحاولة", "Retry")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* محتوى الامتحانات */}
+      <div className="container mx-auto px-4 py-12">
+        {/* الامتحانات المتاحة */}
+        {Array.isArray(availableExams) && availableExams.length > 0 && (
+          <div className="mb-12">
+            <div className="mb-8">
+              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-[#37474F]'} ${isRTL ? 'text-right' : 'text-left'}`}>
+                {getText("الامتحانات المتاحة", "Available Exams")}
+              </h2>
+              <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} ${isRTL ? 'text-right' : 'text-left'}`}>
+                {getText(
+                  `عرض ${availableExams.length} امتحان متاح`,
+                  `Showing ${availableExams.length} available exams`
+                )}
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {availableExams.map((exam) => (
+                <SimplifiedExamCard key={exam.id} exam={exam} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* الامتحانات المكتملة */}
+        {Array.isArray(completedExams) && completedExams.length > 0 && (
+          <div className="mb-12">
+            <div className="mb-8">
+              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-[#37474F]'} ${isRTL ? 'text-right' : 'text-left'}`}>
+                {getText("الامتحانات المكتملة", "Completed Exams")}
+              </h2>
+              <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} ${isRTL ? 'text-right' : 'text-left'}`}>
+                {getText(
+                  `عرض ${completedExams.length} امتحان مكتمل`,
+                  `Showing ${completedExams.length} completed exams`
+                )}
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {completedExams.map((exam) => (
+                <SimplifiedExamCard key={exam.id} exam={exam} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* حالة عدم وجود امتحانات */}
+        {(!Array.isArray(availableExams) || availableExams.length === 0) && 
+         (!Array.isArray(completedExams) || completedExams.length === 0) && (
+          <div className={`${
+            isDarkMode ? "bg-[#1E1E1E] text-[#E0E0E0]" : "bg-white text-[#37474F]"
+          } rounded-lg shadow-md p-8 text-center max-w-md mx-auto`}>
+            <div className="text-6xl mb-4">📝</div>
+            <h3 className="text-xl font-bold mb-2">
+              {getText("لا توجد امتحانات متاحة", "No exams available")}
+            </h3>
+            <p>
+              {getText(
+                "لم يتم العثور على امتحانات. يرجى المحاولة مرة أخرى لاحقاً.",
+                "No exams found. Please try again later."
+              )}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
