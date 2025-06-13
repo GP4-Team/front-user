@@ -23,11 +23,15 @@ const Footer = () => {
           {/* الشعار والحقوق */}
           <div className="flex flex-col items-center md:items-start">
             <div className="flex items-center mb-2">
-              <span className="text-3xl font-bold text-blue-500">ط</span>
-              <span className="text-2xl font-bold text-gray-800 dark:text-white">فرة</span>
+              <img 
+                src="/Group 2.png" 
+                alt="LearnNova Logo" 
+                className="h-8 w-auto mr-2"
+              />
+              <span className="text-2xl font-bold text-blue-500">LearnNova</span>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center md:text-left">
-              {getText('© 2025 طفرة تعليمية. جميع الحقوق محفوظة.', '© 2025 Educational Leap. All rights reserved.')}
+              {getText('© 2025 ليرننوفا. جميع الحقوق محفوظة.', '© 2025 LearnNova. All rights reserved.')}
             </p>
           </div>
           
@@ -69,7 +73,7 @@ const Footer = () => {
         {/* الروابط المفيدة */}
         <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-6 text-sm">
           <Link 
-            to="/privacy-policy" 
+            to="/privacy" 
             className="text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"
           >
             {getText('سياسة الخصوصية', 'Privacy Policy')}
@@ -81,10 +85,16 @@ const Footer = () => {
             {getText('شروط الاستخدام', 'Terms of Use')}
           </Link>
           <Link 
-            to="/instructions" 
+            to="/about" 
             className="text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"
           >
-            {getText('التعليمات', 'Instructions')}
+            {getText('من نحن', 'About Us')}
+          </Link>
+          <Link 
+            to="/contact" 
+            className="text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"
+          >
+            {getText('اتصل بنا', 'Contact Us')}
           </Link>
           <button 
             onClick={toggleLanguage}

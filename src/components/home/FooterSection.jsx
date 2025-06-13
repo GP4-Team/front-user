@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Instagram, Twitter, Facebook } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -22,8 +23,13 @@ const FooterSection = () => {
           {/* Logo and social */}
           <div className="mb-8 md:mb-0 text-center md:text-right">
             <div className="flex items-center justify-center md:justify-end mb-4">
+              <img 
+                src="/Group 2.png" 
+                alt="LearnNova Logo" 
+                className="h-8 w-auto mr-2"
+              />
               <h2 className="text-2xl font-bold text-blue-500">
-                {getText("طفرة", "Tafra")}
+                {getText("ليرننوفا", "LearnNova")}
               </h2>
             </div>
             
@@ -45,15 +51,18 @@ const FooterSection = () => {
           
           {/* Footer links */}
           <div className="flex flex-wrap justify-center gap-6">
-            <a href="#" className="text-gray-600 hover:text-blue-500 transition-colors text-sm">
+            <Link to="/privacy" className="text-gray-600 hover:text-blue-500 transition-colors text-sm">
               {getText("سياسة الخصوصية", "Privacy Policy")}
-            </a>
-            <a href="#" className="text-gray-600 hover:text-blue-500 transition-colors text-sm">
+            </Link>
+            <Link to="/terms" className="text-gray-600 hover:text-blue-500 transition-colors text-sm">
               {getText("شروط الاستخدام", "Terms of Use")}
-            </a>
-            <a href="#" className="text-gray-600 hover:text-blue-500 transition-colors text-sm">
-              {getText("التعليمات", "Instructions")}
-            </a>
+            </Link>
+            <Link to="/about" className="text-gray-600 hover:text-blue-500 transition-colors text-sm">
+              {getText("من نحن", "About Us")}
+            </Link>
+            <Link to="/contact" className="text-gray-600 hover:text-blue-500 transition-colors text-sm">
+              {getText("اتصل بنا", "Contact Us")}
+            </Link>
             <div className="relative">
               <select 
                 className="appearance-none bg-blue-900 text-white px-3 py-1 rounded text-sm font-medium pr-8"
@@ -74,7 +83,7 @@ const FooterSection = () => {
         {/* Copyright */}
         <div className="text-center pt-6 border-t border-gray-200">
           <p className="text-gray-500 text-sm">
-            {getText("© 2025 طفرة تعليمية. جميع الحقوق محفوظة", "© 2025 Tafra Educational. All rights reserved")}
+            {getText("© 2025 ليرننوفا. جميع الحقوق محفوظة", "© 2025 LearnNova. All rights reserved")}
           </p>
         </div>
       </div>

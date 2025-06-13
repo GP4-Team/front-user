@@ -172,30 +172,18 @@ const Navbar = () => {
           {/* Logo */}
           <Link ref={logoRef} to="/" className="flex items-center">
             <div className={`${isDarkMode ? 'bg-neutral-800' : 'bg-background-card-light'} rounded-full h-10 w-10 flex items-center justify-center mr-2 rtl:ml-2 rtl:mr-0 shadow-md`}>
-              <svg 
-                width="24" 
-                height="24" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                xmlns="http://www.w3.org/2000/svg"
-                className="transform transition-transform duration-700 hover:rotate-180"
-              >
-                <path 
-                  d="M12 2L5 6V10C5 15.5 8.1 20.6 12 22C15.9 20.6 19 15.5 19 10V6L12 2ZM16 10C16 14.1 13.9 18 12 19.5C10.1 18 8 14.1 8 10V7.3L12 5L16 7.3V10Z" 
-                  fill={isDarkMode ? "rgb(121, 134, 203)" : "#3949AB"} 
-                />
-                <path 
-                  d="M11 10H13V16H11V10ZM11 6H13V8H11V6Z" 
-                  fill={isDarkMode ? "rgb(121, 134, 203)" : "#3949AB"} 
-                />
-              </svg>
+              <img 
+                src="/Group 2.png" 
+                alt="LearnNova Logo" 
+                className="w-6 h-6 object-contain"
+              />
             </div>
             <span className={`font-bold text-xl ${
               isDarkMode 
                 ? 'text-text-light' 
                 : (isScrolled ? 'text-primary-base' : 'text-text-light')
             }`}>
-              Eduara
+              LearnNova
             </span>
           </Link>
           

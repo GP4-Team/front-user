@@ -28,14 +28,15 @@ const SimpleFooter = () => {
         <div className="flex flex-col md:flex-row justify-between items-center">
           {/* Logo and Branding */}
           <div className="flex items-center mb-4 md:mb-0">
-            <svg className="w-8 h-8 mr-2" viewBox="0 0 36 36">
-              <path d="M10 18 L18 12 L26 18 L18 24 Z" fill={isDarkMode ? colors.primaryLight : colors.primaryBase} />
-              <line x1="18" y1="24" x2="18" y2="28" stroke={isDarkMode ? colors.primaryLight : colors.primaryBase} strokeWidth="2" />
-            </svg>
+            <img 
+              src="/Group 2.png" 
+              alt="LearnNova Logo" 
+              className="w-8 h-8 mr-2 object-contain"
+            />
             <span className={`text-xl font-bold font-cairo ${
               isDarkMode ? 'text-[#7986CB]' : 'text-[#37474F]'
             }`}>
-              Eduara
+              LearnNova
             </span>
           </div>
           
@@ -81,8 +82,8 @@ const SimpleFooter = () => {
             isDarkMode ? 'text-[#AAAAAA]' : 'text-gray-500'
           }`}>
             {getText(
-              `© ${currentYear} إديورا. جميع الحقوق محفوظة`,
-              `© ${currentYear} Eduara. All rights reserved`
+              `© ${currentYear} ليرننوفا. جميع الحقوق محفوظة`,
+              `© ${currentYear} LearnNova. All rights reserved`
             )}
           </div>
         </div>

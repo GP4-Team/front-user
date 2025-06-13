@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 
 // Custom SVG Logo component
-const EduaraLogo = () => {
+const LearnNovaLogo = () => {
   const { isDarkMode } = useTheme();
   
   return (
@@ -15,8 +15,8 @@ const EduaraLogo = () => {
       <circle cx="150" cy="220" r="7" fill={isDarkMode ? "#3949AB" : "#1A237E"} />
       <circle cx="150" cy="140" r="5" fill={isDarkMode ? "#FFC107" : "#FFC107"} opacity="0.9" />
       
-      {/* Simple yet modern wordmark - Eduara only with modern color */}
-      <text x="245" y="155" fontFamily="Arial, sans-serif" fontSize="70" fontWeight="bold" fill={isDarkMode ? "#FFFFFF" : "#37474F"}>Eduara</text>
+      {/* Simple yet modern wordmark - LearnNova only with modern color */}
+      <text x="245" y="155" fontFamily="Arial, sans-serif" fontSize="70" fontWeight="bold" fill={isDarkMode ? "#FFFFFF" : "#37474F"}>LearnNova</text>
       
       {/* Enhanced accent line - subtle complementary color */}
       <line x1="245" y1="175" x2="340" y2="175" stroke={isDarkMode ? "#FFC107" : "#FFC107"} strokeWidth="5" strokeLinecap="round" />
@@ -45,7 +45,7 @@ const Navbar = () => {
         {/* Logo Area */}
         <div className="flex items-center">
           <Link to="/" className="flex items-center">
-            <EduaraLogo />
+            <LearnNovaLogo />
           </Link>
         </div>
         
