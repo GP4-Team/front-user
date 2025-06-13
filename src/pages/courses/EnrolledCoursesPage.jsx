@@ -443,7 +443,7 @@ const EnrolledCoursesPage = () => {
                   </div>
                   
                   <Link 
-                    to={`/courses/${course.id}/info`}
+                    to={`/courses/${course.id}/content`}
                     className={`mt-4 w-full py-2 flex items-center justify-center rounded-lg font-medium text-sm transition-colors ${
                       course.passed
                         ? 'bg-green-500 hover:bg-green-600 text-white'
