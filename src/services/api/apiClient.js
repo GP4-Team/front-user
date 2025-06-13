@@ -1,12 +1,13 @@
-// Base API configuration for AI Portal services
+// Base API configuration for services
 import axios from 'axios';
+import { getBaseApiUrl } from '../../config/api.config';
 
 // Debug flag for API client
 const DEBUG_API = true;
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL || 'https://academy1.gp-app.tafra-tech.com/api',
+  baseURL: getBaseApiUrl(),
   timeout: 30000, // 30 seconds timeout
   headers: {
     'Content-Type': 'application/json',

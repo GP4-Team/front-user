@@ -1,70 +1,140 @@
-# Getting Started with Create React App
+# LearnNova - Educational Platform
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern, interactive educational platform built with React, providing comprehensive learning solutions for students and educators.
 
-## Available Scripts
+## 🌟 Features
 
-In the project directory, you can run:
+- **Authentication System**: Secure login/register with JWT tokens
+- **Course Management**: Browse, enroll, and track course progress  
+- **Examination System**: Interactive exams with timer and results
+- **Student Profile**: Comprehensive dashboard with academic progress
+- **Multi-language Support**: Arabic and English interface
+- **Dark Mode**: Toggle between light and dark themes
+- **Responsive Design**: Optimized for all devices
+- **Environment Configuration**: Easy deployment across different environments
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v14 or higher)
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd front-user
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Configure environment variables:
+```bash
+# Copy .env.example to .env and update the API URL
+REACT_APP_API_BASE_URL=https://your-api-server.com/api
+```
+
+4. Start the development server:
+```bash
+npm start
+```
+
+The application will be available at [http://localhost:3000](http://localhost:3000)
+
+## 🛠️ Available Scripts
 
 ### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Runs the app in development mode with hot reloading.
 
 ### `npm run build`
+Builds the app for production. The build is optimized and ready for deployment.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### `npm test`
+Launches the test runner in interactive watch mode.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🏗️ Project Structure
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```
+src/
+├── components/          # Reusable UI components
+├── pages/              # Page components
+├── contexts/           # React contexts for state management
+├── hooks/              # Custom React hooks
+├── services/           # API services and utilities
+├── config/             # Configuration files
+├── layouts/            # Layout components
+├── middleware/         # Route protection and middleware
+└── styles/             # Global styles and CSS
+```
 
-### `npm run eject`
+## 🌍 Environment Configuration
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+The app supports multiple environments through environment variables:
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- **Development**: `http://localhost:8000/api`
+- **Staging**: `https://staging.learnnova.com/api`
+- **Production**: `https://api.learnnova.com/api`
+- **Docker**: `http://backend-container:8000/api`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 🎨 Tech Stack
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- **Frontend**: React 18, React Router v6
+- **Styling**: Tailwind CSS, GSAP animations
+- **State Management**: React Context API
+- **HTTP Client**: Axios
+- **Icons**: Lucide React
+- **Build Tool**: Create React App
 
-## Learn More
+## 📱 Features Overview
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Authentication
+- Secure JWT-based authentication
+- Login/Register forms with validation
+- Protected routes and session management
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Courses
+- Browse all available courses
+- View detailed course information
+- Enroll in courses
+- Track learning progress
 
-### Code Splitting
+### Examinations
+- Take interactive online exams
+- Timer functionality
+- Multiple question types
+- Instant results and feedback
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Profile Management
+- View academic progress
+- Manage enrolled courses
+- Course registration system
+- Performance analytics
 
-### Analyzing the Bundle Size
+## 🚀 Deployment
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Production Build
+```bash
+npm run build
+```
 
-### Making a Progressive Web App
+### Docker Deployment
+```bash
+docker build -t learnnova-frontend .
+docker run -p 3000:80 learnnova-frontend
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 🤝 Contributing
 
-### Advanced Configuration
+Please read our contributing guidelines before submitting pull requests.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 📄 License
 
-### Deployment
+This project is licensed under the MIT License.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+---
 
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+**LearnNova** - Empowering education through technology 🎓

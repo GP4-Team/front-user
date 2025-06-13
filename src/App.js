@@ -32,10 +32,7 @@ import ExamDetailsPage from "./pages/exams/ExamDetailsPage.jsx";
 import ExamQuestionsPage from "./pages/exams/ExamQuestionsPage.jsx";
 import ExamResultsPage from "./pages/exams/ExamResultsPage.jsx";
 import ExamPage from "./pages/exam/ExamPage.jsx";
-import ExamsApiTestPage from "./pages/testing/ExamsApiTestPage.jsx";
-import AIPortalTestPage from "./pages/testing/AIPortalTestPage.jsx";
 import AIWeaknessPortal from "./pages/student/AIWeaknessPortal.jsx";
-import TestApiPage from "./pages/TestApiPage.jsx";
 import PrivateRoute from "./middleware/PrivateRoute.jsx";
 import "./App.css";
 import "./styles/ExamStyles.css";
@@ -121,32 +118,6 @@ const router = createBrowserRouter(
               <div className="exam-page-background">
                 <MyExamsPage />
               </div>
-            </GuestLayout>
-          ),
-        },
-
-        // Testing Routes (Make it accessible to everyone for testing)
-        {
-          path: "/test-apis",
-          element: (
-            <GuestLayout>
-              <TestApiPage />
-            </GuestLayout>
-          ),
-        },
-        {
-          path: "/exams-api-test",
-          element: (
-            <GuestLayout>
-              <ExamsApiTestPage />
-            </GuestLayout>
-          ),
-        },
-        {
-          path: "/ai-portal-test",
-          element: (
-            <GuestLayout>
-              <AIPortalTestPage />
             </GuestLayout>
           ),
         },

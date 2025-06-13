@@ -1,9 +1,10 @@
 // src/services/api.js
 import axios from 'axios';
 import { getToken, isTokenExpired, removeToken } from '../utils/tokenHelpers';
+import { getBaseApiUrl } from '../config/api.config';
 
-// Use the correct API base URL
-const API_BASE_URL = 'https://academy1.gp-app.tafra-tech.com/api';
+// Get API base URL from configuration (supports environment variables)
+const API_BASE_URL = getBaseApiUrl();
 
 // CSRF token management
 let csrfToken = null;

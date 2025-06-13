@@ -1,6 +1,16 @@
 // src/services/api/courses.service.js
 import api from '../api';
 import { handleApiError } from '../utils/errorHandler';
+import { getBaseApiUrl } from '../../config/api.config';
+
+/**
+ * Function to get image fallback from environment
+ */
+const getDefaultImage = () => {
+  const baseUrl = getBaseApiUrl();
+  const domain = baseUrl.replace('/api', ''); // Remove /api from the end
+  return `${domain}/images/material-holder.webp`;
+};
 
 /**
  * Courses Service - Handle all course operations
@@ -84,7 +94,7 @@ class CoursesService {
             ar: this.getLevelNameAr(course.educational_level_id),
             en: this.getLevelNameEn(course.educational_level_id)
           },
-          image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+          image: course.image || getDefaultImage(),
           color: course.color || '#4285F4',
           code: course.code,
           rating: 4.5, // Default rating since not provided by API
@@ -146,7 +156,7 @@ class CoursesService {
             ar: this.getLevelNameAr(course.educational_level_id),
             en: this.getLevelNameEn(course.educational_level_id)
           },
-          image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+          image: course.image || getDefaultImage(),
           color: course.color || '#4285F4',
           code: course.code,
           rating: 4.5, // Default rating since not provided by API
@@ -279,7 +289,7 @@ class CoursesService {
             ar: this.getLevelNameAr(course.educational_level_id),
             en: this.getLevelNameEn(course.educational_level_id)
           },
-          image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+          image: course.image || getDefaultImage(),
           color: course.color || '#4285F4',
           code: course.code,
           rating: 4.5, // Default rating since not provided by API
@@ -346,7 +356,7 @@ class CoursesService {
             name: course.name,
             code: course.code,
             color: course.color || '#4285F4',
-            image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+            image: course.image || getDefaultImage(),
             educational_level_id: course.educational_level_id,
             educational_department_id: course.educational_department_id,
             description: course.description,
@@ -486,7 +496,7 @@ class CoursesService {
             ar: this.getLevelNameAr(course.educational_level_id),
             en: this.getLevelNameEn(course.educational_level_id)
           },
-          image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+          image: course.image || getDefaultImage(),
           color: course.color || '#4285F4',
           code: course.code,
           rating: 4.5,
@@ -551,7 +561,7 @@ class CoursesService {
             ar: this.getLevelNameAr(course.educational_level_id),
             en: this.getLevelNameEn(course.educational_level_id)
           },
-          image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+          image: course.image || getDefaultImage(),
           color: course.color || '#4285F4',
           code: course.code,
           rating: 4.5, // Default rating since not provided by API
@@ -735,7 +745,7 @@ class CoursesService {
             ar: this.getLevelNameAr(course.educational_level_id),
             en: this.getLevelNameEn(course.educational_level_id)
           },
-          image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+          image: course.image || getDefaultImage(),
           color: course.color || '#4285F4',
           code: course.code,
           rating: 4.5, // Default rating since not provided by API
@@ -937,7 +947,7 @@ class CoursesService {
             ar: this.getLevelNameAr(course.educational_level_id),
             en: this.getLevelNameEn(course.educational_level_id)
           },
-          image: course.image || 'https://academy1.gp-app.tafra-tech.com/images/material-holder.webp',
+          image: course.image || getDefaultImage(),
           color: course.color || '#4285F4',
           code: course.code,
           rating: 4.5, // Default rating since not provided by API

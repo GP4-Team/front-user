@@ -1,6 +1,6 @@
 {
-  "name": "ess-user",
-  "version": "0.1.0",
+  "name": "learnnova",
+  "version": "1.0.0",
   "private": true,
   "dependencies": {
     "@heroicons/react": "^2.2.0",
