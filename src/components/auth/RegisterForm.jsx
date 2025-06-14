@@ -52,16 +52,56 @@ const RegisterForm = ({ returnTo = '/' }) => {
   }, []);
   
   /**
-   * Handle input changes
+   * Check if text contains Arabic characters
+   * @param {string} text - Text to check
+   * @returns {boolean} - True if contains Arabic
+   */
+  const containsArabic = (text) => {
+    const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+    return arabicRegex.test(text);
+  };
+
+  /**
+   * Filter phone number to allow only digits and limit to 11 characters
+   * @param {string} value - Input value
+   * @returns {string} - Filtered value
+   */
+  const filterPhoneNumber = (value) => {
+    // Remove all non-digit characters and limit to 11 digits
+    return value.replace(/\D/g, '').slice(0, 11);
+  };
+
+  /**
+   * Filter text to remove Arabic characters
+   * @param {string} value - Input value
+   * @returns {string} - Filtered value
+   */
+  const filterArabicCharacters = (value) => {
+    // Remove Arabic characters
+    return value.replace(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g, '');
+  };
+
+  /**
+   * Handle input changes with validation and filtering
    * 
    * @param {Event} e - Input change event
    */
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let filteredValue = value;
+    
+    // Apply specific filters based on field type
+    if (name === 'phone') {
+      // For phone: only digits, max 11 characters
+      filteredValue = filterPhoneNumber(value);
+    } else {
+      // For all other fields: remove Arabic characters
+      filteredValue = filterArabicCharacters(value);
+    }
     
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: filteredValue
     }));
     
     // Clear error when user types
@@ -70,6 +110,30 @@ const RegisterForm = ({ returnTo = '/' }) => {
         ...prev,
         [name]: null
       }));
+    }
+  };
+
+  /**
+   * Handle key press to prevent Arabic characters and invalid input
+   * @param {Event} e - Key press event
+   */
+  const handleKeyPress = (e, fieldType = 'text') => {
+    const char = e.key;
+    
+    if (fieldType === 'phone') {
+      // For phone: only allow digits
+      if (!/[0-9]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(char)) {
+        e.preventDefault();
+      }
+      // Prevent input if already 11 characters
+      if (e.target.value.length >= 11 && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(char)) {
+        e.preventDefault();
+      }
+    } else {
+      // For other fields: prevent Arabic characters
+      if (containsArabic(char)) {
+        e.preventDefault();
+      }
     }
   };
   
@@ -231,6 +295,8 @@ const RegisterForm = ({ returnTo = '/' }) => {
     if (formData.phone && formData.phone.trim() !== '') {
       if (!/^[0-9]+$/.test(formData.phone)) {
         errors.phone = language === 'ar' ? 'يجب أن يحتوي رقم الهاتف على أرقام فقط' : 'Phone number must contain only numbers';
+      } else if (formData.phone.length !== 11) {
+        errors.phone = language === 'ar' ? 'يجب أن يكون رقم الهاتف 11 رقم بالضبط' : 'Phone number must be exactly 11 digits';
       }
     }
     
@@ -365,6 +431,7 @@ const RegisterForm = ({ returnTo = '/' }) => {
             required
             value={formData.name}
             onChange={handleChange}
+            onKeyPress={(e) => handleKeyPress(e, 'text')}
             className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
               errors.name 
                 ? 'border-red-300 dark:border-red-500' 
@@ -391,6 +458,7 @@ const RegisterForm = ({ returnTo = '/' }) => {
             required
             value={formData.email}
             onChange={handleChange}
+            onKeyPress={(e) => handleKeyPress(e, 'text')}
             className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
               errors.email 
                 ? 'border-red-300 dark:border-red-500' 
@@ -417,6 +485,8 @@ const RegisterForm = ({ returnTo = '/' }) => {
             type="tel"
             value={formData.phone}
             onChange={handleChange}
+            onKeyPress={(e) => handleKeyPress(e, 'phone')}
+            maxLength={11}
             className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
               errors.phone 
                 ? 'border-red-300 dark:border-red-500' 
@@ -444,6 +514,7 @@ const RegisterForm = ({ returnTo = '/' }) => {
             required
             value={formData.password}
             onChange={handleChange}
+            onKeyPress={(e) => handleKeyPress(e, 'text')}
             className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
               errors.password 
                 ? 'border-red-300 dark:border-red-500' 
@@ -474,6 +545,7 @@ const RegisterForm = ({ returnTo = '/' }) => {
             required
             value={formData.password_confirmation}
             onChange={handleChange}
+            onKeyPress={(e) => handleKeyPress(e, 'text')}
             className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
               errors.password_confirmation 
                 ? 'border-red-300 dark:border-red-500' 
