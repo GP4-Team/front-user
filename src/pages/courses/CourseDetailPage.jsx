@@ -46,7 +46,7 @@ const formatDuration = (seconds, language) => {
 };
 
 // Helper function to transform API materials to lesson format
-const transformMaterialsToLessons = (materials) => {
+const transformMaterialsToLessons = (materials, language) => {
   console.log("🔄 Transforming materials to lessons:", materials);
 
   return materials.map((material, index) => {
@@ -57,7 +57,7 @@ const transformMaterialsToLessons = (materials) => {
         ar: material.name || `مادة ${index + 1}`,
         en: material.name || `Material ${index + 1}`,
       },
-      status: index === 0 ? "current" : "unlocked", // الدرس الأول current والباقي unlocked
+      status: index === 0 ? "current" : "unlocked", // First lesson is current, rest are unlocked
       duration: {
         ar: formatDuration(material.duration_in_seconds, "ar"),
         en: formatDuration(material.duration_in_seconds, "en"),
@@ -66,49 +66,49 @@ const transformMaterialsToLessons = (materials) => {
         ar: material.description || `وصف المادة: ${material.name}`,
         en: material.description || `Material description: ${material.name}`,
       },
-      // إضافة جميع البيانات من الـ API
+      // Add all data from API
       url: material.media_url,
-      videoUrl: material.media_url, // للفيديوهات
-      audioUrl: material.media_url, // للصوتيات
-      imageUrl: material.media_url, // للصور
-      pdfUrl: material.media_url, // للـ PDFs
-      downloadUrl: material.media_url, // للتحميل
-      instructor: material.user?.name || "مدرس متخصص",
-      materialData: material, // الاحتفاظ بجميع البيانات الأصلية
+      videoUrl: material.media_url, // For videos
+      audioUrl: material.media_url, // For audio
+      imageUrl: material.media_url, // For images
+      pdfUrl: material.media_url, // For PDFs
+      downloadUrl: material.media_url, // For downloads
+      instructor: material.user?.name || (language === 'ar' ? 'مدرس متخصص' : 'Specialized Instructor'),
+      materialData: material, // Keep all original data
 
-      // بيانات المدرس
+      // Instructor data
       instructorAvatar: material.user?.profile_image,
       instructorEmail: material.user?.email,
 
-      // بيانات المادة التفصيلية
+      // Detailed material data
       materialId: material.id,
       courseId: material.course_id,
       userId: material.user_id,
       createdAt: material.created_at,
       updatedAt: material.updated_at,
 
-      // بيانات إضافية
+      // Additional data
       fileSize: material.file_size,
       mimeType: material.mime_type,
       pages: material.number_of_pages,
 
-      // فكرة الكورس
+      // Course idea
       courseIdea: material.course_idea,
       courseIdeaId: material.course_idea_id,
 
-      // بيانات الكورس من nested object
+      // Course data from nested object
       courseInfo: material.course,
 
-      // إعدادات الفيديو
-      maxViews: 999, // عدد مشاهدات غير محدود
+      // Video settings
+      maxViews: 999, // Unlimited views
       viewsRemaining: 999,
 
-      // حالة المادة
+      // Material status
       isActive: true,
       isAccessible: true,
       canDownload: true,
 
-      // معلومات إضافية للعرض
+      // Additional info for display
       originalType: material.type,
       apiData: {
         ...material,
@@ -127,6 +127,17 @@ const CourseDetailPage = () => {
   const { isDarkMode } = useTheme();
   const { isAuthenticated } = useAuth();
 
+  // Translation function
+  const getText = (arText, enText) => {
+    return language === "ar" ? arText : enText;
+  };
+
+  // Enhanced text getter for objects
+  const getTextFromObj = (obj) => {
+    if (!obj) return "";
+    return obj[language] || obj.en || obj.ar || "";
+  };
+
   // State for the course data
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -139,12 +150,6 @@ const CourseDetailPage = () => {
   const [materialError, setMaterialError] = useState(null);
   // State for expanded sections
   const [expandedSections, setExpandedSections] = useState({});
-
-  // Helper function to get text based on language
-  const getText = (obj) => {
-    if (!obj) return "";
-    return obj[language] || obj.en || "";
-  };
 
   // Function to load material details by ID
   const loadMaterialDetails = async (materialId) => {
@@ -163,11 +168,11 @@ const CourseDetailPage = () => {
       if (materialResponse.success && materialResponse.data) {
         setSelectedMaterial(materialResponse.data);
       } else {
-        setMaterialError("فشل في تحميل تفاصيل المادة");
+        setMaterialError(getText("فشل في تحميل تفاصيل المادة", "Failed to load material details"));
       }
     } catch (err) {
       console.error("❌ Error loading material details:", err);
-      setMaterialError(err.message || "فشل في تحميل تفاصيل المادة");
+      setMaterialError(err.message || getText("فشل في تحميل تفاصيل المادة", "Failed to load material details"));
     } finally {
       setMaterialLoading(false);
     }
@@ -215,23 +220,11 @@ const CourseDetailPage = () => {
           const courseInfo = materials[0]?.course;
 
           // Transform materials to lessons
-          const lessons = transformMaterialsToLessons(materials);
+          const lessons = transformMaterialsToLessons(materials, language);
 
           console.log("📚 All transformed lessons:", lessons);
 
-          // Group materials by type for better organization
-          const groupedMaterials = lessons.reduce((groups, lesson) => {
-            const type = lesson.type;
-            if (!groups[type]) {
-              groups[type] = [];
-            }
-            groups[type].push(lesson);
-            return groups;
-          }, {});
-
-          console.log("🗂️ Grouped materials by type:", groupedMaterials);
-
-          // Create sections for each material type
+          // Create sections - only main section with all materials
           const sections = [];
 
           // Main section with all materials
@@ -247,28 +240,6 @@ const CourseDetailPage = () => {
             lessons: lessons,
           });
 
-          // Add type-specific sections if there are multiple types
-          if (Object.keys(groupedMaterials).length > 1) {
-            Object.entries(groupedMaterials).forEach(([type, typeLessons]) => {
-              const typeNames = {
-                video: { ar: "الفيديوهات", en: "Videos" },
-                audio: { ar: "الملفات الصوتية", en: "Audio Files" },
-                image: { ar: "الصور", en: "Images" },
-                pdf: { ar: "ملفات PDF", en: "PDF Files" },
-                document: { ar: "المستندات", en: "Documents" },
-              };
-
-              sections.push({
-                id: `${type}-section`,
-                title: typeNames[type] || { ar: type, en: type },
-                lessonsCount: typeLessons.length,
-                completed: 0,
-                expanded: false,
-                lessons: typeLessons,
-              });
-            });
-          }
-
           // Create course data structure
           const courseData = {
             id: courseId,
@@ -279,14 +250,17 @@ const CourseDetailPage = () => {
             progress: 15,
             courseData: {
               id: courseId,
-              name: courseInfo?.name || "معسكر تجريبي",
+              name: courseInfo?.name || getText("معسكر تجريبي", "Experimental Camp"),
               code: courseInfo?.code || "COURSE-001",
               color: courseInfo?.color || "#4285F4",
               image: courseInfo?.image || "/api/placeholder/800/400",
               description:
                 courseInfo?.description ||
-                `مواد تعليمية شاملة في ${courseInfo?.name || "المادة"}`,
-              instructor_name: materials[0]?.user?.name || "مدرس متخصص",
+                getText(
+                  `مواد تعليمية شاملة في ${courseInfo?.name || "المادة"}`,
+                  `Comprehensive educational materials in ${courseInfo?.name || "the subject"}`
+                ),
+              instructor_name: materials[0]?.user?.name || getText("مدرس متخصص", "Specialized Instructor"),
               instructor_avatar: materials[0]?.user?.profile_image,
               materials_count: materials.length,
               stats: {
@@ -300,11 +274,11 @@ const CourseDetailPage = () => {
                   ) / 3600
                 ),
               },
-              // إضافة معلومات الكورس الكاملة
+              // Add complete course info
               ...courseInfo,
             },
             sections: sections,
-            // إضافة البيانات الخام للـ debugging
+            // Add raw data for debugging
             rawMaterials: materials,
             apiResponse: materialsResponse,
           };
@@ -344,7 +318,7 @@ const CourseDetailPage = () => {
             progress: 0,
             courseData: {
               id: courseId,
-              name: "لا توجد مواد",
+              name: getText("لا توجد مواد", "No Materials"),
               materials_count: 0,
               stats: {
                 totalLessons: 0,
@@ -359,7 +333,7 @@ const CourseDetailPage = () => {
         }
       } catch (err) {
         console.error("❌ Error loading course materials:", err);
-        setError(err.message || "Failed to load course materials");
+        setError(err.message || getText("فشل في تحميل مواد الكورس", "Failed to load course materials"));
       } finally {
         setLoading(false);
       }
@@ -368,7 +342,7 @@ const CourseDetailPage = () => {
     if (courseId) {
       loadCourseData();
     }
-  }, [courseId]);
+  }, [courseId, language]); // Add language dependency to reload when language changes
 
   // Function to toggle a section
   const toggleSection = (sectionId) => {
@@ -413,9 +387,7 @@ const CourseDetailPage = () => {
           <div className="text-center">
             <Loader className="animate-spin h-12 w-12 text-blue-500 mx-auto mb-4" />
             <p className="text-lg">
-              {language === "ar"
-                ? "جاري تحميل تفاصيل الكورس..."
-                : "Loading course details..."}
+              {getText("جاري تحميل تفاصيل الكورس...", "Loading course details...")}
             </p>
           </div>
         </div>
@@ -435,16 +407,14 @@ const CourseDetailPage = () => {
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-medium mb-2">
-              {language === "ar"
-                ? "خطأ في تحميل الكورس"
-                : "Error Loading Course"}
+              {getText("خطأ في تحميل الكورس", "Error Loading Course")}
             </h2>
             <p className="text-gray-500 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors"
             >
-              {language === "ar" ? "إعادة المحاولة" : "Try Again"}
+              {getText("إعادة المحاولة", "Try Again")}
             </button>
           </div>
         </div>
@@ -464,7 +434,7 @@ const CourseDetailPage = () => {
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h2 className="text-xl font-medium">
-              {language === "ar" ? "الكورس غير موجود" : "Course Not Found"}
+              {getText("الكورس غير موجود", "Course Not Found")}
             </h2>
           </div>
         </div>
@@ -481,7 +451,7 @@ const CourseDetailPage = () => {
       {/* Navbar */}
       <Navbar />
 
-      {/* Main Content - إزالة padding من فوق */}
+      {/* Main Content - Remove padding from top */}
       <div>
         {/* Progress bar */}
         <div className="relative h-1 bg-gray-200 dark:bg-gray-700">
@@ -505,7 +475,7 @@ const CourseDetailPage = () => {
 
                 {/* Course title */}
                 <h1 className="text-xl font-bold mt-1">
-                  {getText(course.title)}
+                  {getTextFromObj(course.title)}
                 </h1>
               </div>
 
@@ -521,7 +491,7 @@ const CourseDetailPage = () => {
                     ) : (
                       <ChevronDown size={14} className="mr-1" />
                     )}
-                    {language === "ar" ? "التفاصيل" : "Details"}
+                    {getText("التفاصيل", "Details")}
                   </Link>
                   <Link
                     to="#"
@@ -532,7 +502,7 @@ const CourseDetailPage = () => {
                     ) : (
                       <ChevronDown size={14} className="mr-1" />
                     )}
-                    {language === "ar" ? "محاضرات" : "Lectures"}
+                    {getText("محاضرات", "Lectures")}
                   </Link>
                 </div>
               </div>
@@ -562,9 +532,7 @@ const CourseDetailPage = () => {
                   <div className="flex flex-col items-center justify-center py-16">
                     <Loader className="animate-spin h-12 w-12 text-blue-500 mx-auto mb-4" />
                     <p className="text-lg">
-                      {language === "ar"
-                        ? "جاري تحميل المادة..."
-                        : "Loading material..."}
+                      {getText("جاري تحميل المادة...", "Loading material...")}
                     </p>
                   </div>
                 </div>
@@ -574,9 +542,7 @@ const CourseDetailPage = () => {
                   <div className="flex flex-col items-center justify-center py-16">
                     <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
                     <h2 className="text-xl font-medium text-red-600 mb-2">
-                      {language === "ar"
-                        ? "خطأ في تحميل المادة"
-                        : "Error Loading Material"}
+                      {getText("خطأ في تحميل المادة", "Error Loading Material")}
                     </h2>
                     <p className="text-gray-500 mb-4">{materialError}</p>
                     <button
@@ -585,7 +551,7 @@ const CourseDetailPage = () => {
                       }
                       className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors"
                     >
-                      {language === "ar" ? "إعادة المحاولة" : "Try Again"}
+                      {getText("إعادة المحاولة", "Try Again")}
                     </button>
                   </div>
                 </div>
@@ -643,14 +609,13 @@ const CourseDetailPage = () => {
                       className="text-gray-400 dark:text-gray-600 mb-4"
                     />
                     <h2 className="text-xl font-medium text-gray-600 dark:text-gray-400">
-                      {language === "ar"
-                        ? "لم يتم اختيار أي درس"
-                        : "No lesson selected"}
+                      {getText("لم يتم اختيار أي درس", "No lesson selected")}
                     </h2>
                     <p className="text-gray-500 dark:text-gray-500 mt-2 max-w-md">
-                      {language === "ar"
-                        ? "الرجاء اختيار درس من القائمة الجانبية للبدء في التعلم."
-                        : "Please select a lesson from the sidebar to start learning."}
+                      {getText(
+                        "الرجاء اختيار درس من القائمة الجانبية للبدء في التعلم.",
+                        "Please select a lesson from the sidebar to start learning."
+                      )}
                     </p>
                   </div>
                 </div>

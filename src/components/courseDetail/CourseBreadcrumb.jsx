@@ -7,10 +7,15 @@ import { ChevronLeft, ChevronRight, Home } from "lucide-react";
 const CourseBreadcrumb = ({ course, currentLesson }) => {
   const { language, isRTL } = useLanguage();
 
-  // Helper function to get text based on language
-  const getText = (obj) => {
+  // Translation function
+  const getText = (arText, enText) => {
+    return language === "ar" ? arText : enText;
+  };
+
+  // Helper function to get text based on language from object
+  const getTextFromObj = (obj) => {
     if (!obj) return "";
-    return obj[language] || obj.en || "";
+    return obj[language] || obj.en || obj.ar || "";
   };
 
   const Separator = () => (
@@ -45,20 +50,20 @@ const CourseBreadcrumb = ({ course, currentLesson }) => {
         to="/courses" 
         className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
       >
-        {language === "ar" ? "الدورات التعليمية" : "Courses"}
+        {getText("الدورات التعليمية", "Courses")}
       </Link>
       
       <Separator />
       
       <span className="text-gray-700 dark:text-gray-300 font-semibold truncate max-w-[200px]">
-        {getText(course.title)}
+        {getTextFromObj(course.title)}
       </span>
       
       {currentLesson && (
         <>
           <Separator />
           <span className="text-blue-600 dark:text-blue-400 font-medium truncate max-w-[150px]">
-            {getText(currentLesson.title)}
+            {getTextFromObj(currentLesson.title)}
           </span>
         </>
       )}

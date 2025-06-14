@@ -251,10 +251,10 @@ const MyExamsPage = () => {
         {Array.isArray(availableExams) && availableExams.length > 0 && (
           <div className="mb-12">
             <div className="mb-8">
-              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-[#37474F]'} ${isRTL ? 'text-right' : 'text-left'}`}>
+              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-[#37474F]'} text-center`}>
                 {getText("الامتحانات المتاحة", "Available Exams")}
               </h2>
-              <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} ${isRTL ? 'text-right' : 'text-left'}`}>
+              <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-center`}>
                 {getText(
                   `عرض ${availableExams.length} امتحان متاح`,
                   `Showing ${availableExams.length} available exams`
@@ -274,10 +274,10 @@ const MyExamsPage = () => {
         {Array.isArray(completedExams) && completedExams.length > 0 && (
           <div className="mb-12">
             <div className="mb-8">
-              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-[#37474F]'} ${isRTL ? 'text-right' : 'text-left'}`}>
+              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-[#37474F]'} text-center`}>
                 {getText("الامتحانات المكتملة", "Completed Exams")}
               </h2>
-              <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} ${isRTL ? 'text-right' : 'text-left'}`}>
+              <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-center`}>
                 {getText(
                   `عرض ${completedExams.length} امتحان مكتمل`,
                   `Showing ${completedExams.length} completed exams`

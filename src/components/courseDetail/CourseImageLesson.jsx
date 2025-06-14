@@ -8,10 +8,15 @@ const CourseImageLesson = ({ lesson, materialDetails }) => {
   const { language } = useLanguage();
   const { isDarkMode } = useTheme();
 
-  // Helper function to get text based on language
-  const getText = (obj) => {
+  // Translation function
+  const getText = (arText, enText) => {
+    return language === "ar" ? arText : enText;
+  };
+
+  // Helper function to get text based on language from object
+  const getTextFromObj = (obj) => {
     if (!obj) return "";
-    return obj[language] || obj.en || "";
+    return obj[language] || obj.en || obj.ar || "";
   };
   
   console.log('🖼️ CourseImageLesson received:', { lesson, materialDetails });
@@ -26,8 +31,8 @@ const CourseImageLesson = ({ lesson, materialDetails }) => {
   
   // Get material info with fallbacks
   const materialInfo = {
-    name: materialDetails?.name || getText(lesson.title),
-    description: materialDetails?.description || getText(lesson.description),
+    name: materialDetails?.name || getTextFromObj(lesson.title),
+    description: materialDetails?.description || getTextFromObj(lesson.description),
     type: materialDetails?.type || lesson.originalType || lesson.type,
     pages: materialDetails?.number_of_pages || lesson.pages,
     instructor: materialDetails?.user?.name || lesson.instructor,
@@ -69,11 +74,11 @@ const CourseImageLesson = ({ lesson, materialDetails }) => {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {language === 'ar' ? 'ملف PDF' : 'PDF Document'}
+                            {getText('ملف PDF', 'PDF Document')}
                           </p>
                           {materialInfo.pages && (
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {materialInfo.pages} {language === 'ar' ? 'صفحة' : 'pages'}
+                              {materialInfo.pages} {getText('صفحة', 'pages')}
                             </p>
                           )}
                         </div>
@@ -84,7 +89,7 @@ const CourseImageLesson = ({ lesson, materialDetails }) => {
                         rel="noopener noreferrer"
                         className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm transition-colors"
                       >
-                        {language === 'ar' ? 'تحميل' : 'Download'}
+                        {getText('تحميل', 'Download')}
                       </a>
                     </div>
                   </div>
@@ -105,7 +110,7 @@ const CourseImageLesson = ({ lesson, materialDetails }) => {
                     <div className="text-center">
                       <ImageIcon size={64} className="text-gray-400 dark:text-gray-500 mx-auto mb-2" />
                       <p className="text-gray-500 dark:text-gray-400">
-                        {language === 'ar' ? 'فشل في تحميل الصورة' : 'Failed to load image'}
+                        {getText('فشل في تحميل الصورة', 'Failed to load image')}
                       </p>
                     </div>
                   </div>
@@ -117,10 +122,10 @@ const CourseImageLesson = ({ lesson, materialDetails }) => {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {language === 'ar' ? 'صورة تعليمية' : 'Educational Image'}
+                            {getText('صورة تعليمية', 'Educational Image')}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {language === 'ar' ? 'انقر للتكبير' : 'Click to enlarge'}
+                            {getText('انقر للتكبير', 'Click to enlarge')}
                           </p>
                         </div>
                       </div>
@@ -130,7 +135,7 @@ const CourseImageLesson = ({ lesson, materialDetails }) => {
                         rel="noopener noreferrer"
                         className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm transition-colors"
                       >
-                        {language === 'ar' ? 'فتح' : 'Open'}
+                        {getText('فتح', 'Open')}
                       </a>
                     </div>
                   </div>
@@ -149,14 +154,14 @@ const CourseImageLesson = ({ lesson, materialDetails }) => {
                         {materialInfo.name}
                       </p>
                       <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                        {language === 'ar' ? 'مستند تعليمي' : 'Educational Document'}
+                        {getText('مستند تعليمي', 'Educational Document')}
                       </p>
                     </div>
                   </div>
                   <div className="p-4 border-t dark:border-gray-700">
                     <div className="flex items-center justify-between">
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {language === 'ar' ? 'انقر لفتح المستند' : 'Click to open document'}
+                        {getText('انقر لفتح المستند', 'Click to open document')}
                       </p>
                       <a
                         href={mediaUrl}
@@ -164,7 +169,7 @@ const CourseImageLesson = ({ lesson, materialDetails }) => {
                         rel="noopener noreferrer"
                         className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm transition-colors"
                       >
-                        {language === 'ar' ? 'فتح' : 'Open'}
+                        {getText('فتح', 'Open')}
                       </a>
                     </div>
                   </div>
@@ -177,7 +182,7 @@ const CourseImageLesson = ({ lesson, materialDetails }) => {
               <div className="text-center">
                 <ImageIcon size={64} className="text-gray-400 dark:text-gray-500 mx-auto mb-4" />
                 <p className="text-gray-600 dark:text-gray-300 font-medium">
-                  {language === 'ar' ? 'لا يوجد محتوى متاح' : 'No content available'}
+                  {getText('لا يوجد محتوى متاح', 'No content available')}
                 </p>
                 <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
                   {materialInfo.name}
@@ -203,12 +208,12 @@ const CourseImageLesson = ({ lesson, materialDetails }) => {
             {materialInfo.type && (
               <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
                 <div className="font-medium text-blue-700 dark:text-blue-300">
-                  {language === 'ar' ? 'نوع المحتوى' : 'Content Type'}
+                  {getText('نوع المحتوى', 'Content Type')}
                 </div>
                 <div className="text-blue-600 dark:text-blue-400">
-                  {isPdf ? (language === 'ar' ? 'ملف PDF' : 'PDF Document') :
-                   isImage ? (language === 'ar' ? 'صورة' : 'Image') :
-                   (language === 'ar' ? 'مستند' : 'Document')}
+                  {isPdf ? getText('ملف PDF', 'PDF Document') :
+                   isImage ? getText('صورة', 'Image') :
+                   getText('مستند', 'Document')}
                 </div>
               </div>
             )}
@@ -216,10 +221,10 @@ const CourseImageLesson = ({ lesson, materialDetails }) => {
             {materialInfo.pages && (
               <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg">
                 <div className="font-medium text-purple-700 dark:text-purple-300">
-                  {language === 'ar' ? 'عدد الصفحات' : 'Number of Pages'}
+                  {getText('عدد الصفحات', 'Number of Pages')}
                 </div>
                 <div className="text-purple-600 dark:text-purple-400">
-                  {materialInfo.pages} {language === 'ar' ? 'صفحة' : 'pages'}
+                  {materialInfo.pages} {getText('صفحة', 'pages')}
                 </div>
               </div>
             )}
@@ -227,7 +232,7 @@ const CourseImageLesson = ({ lesson, materialDetails }) => {
             {materialInfo.instructor && (
               <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
                 <div className="font-medium text-green-700 dark:text-green-300">
-                  {language === 'ar' ? 'المدرس' : 'Instructor'}
+                  {getText('المدرس', 'Instructor')}
                 </div>
                 <div className="text-green-600 dark:text-green-400">
                   {materialInfo.instructor}
@@ -240,7 +245,7 @@ const CourseImageLesson = ({ lesson, materialDetails }) => {
           {materialInfo.courseIdea && (
             <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
               <h3 className="font-medium text-yellow-700 dark:text-yellow-300 mb-2">
-                {language === 'ar' ? 'موضوع الدرس' : 'Lesson Topic'}
+                {getText('موضوع الدرس', 'Lesson Topic')}
               </h3>
               <p className="text-yellow-600 dark:text-yellow-400">
                 {materialInfo.courseIdea.name}

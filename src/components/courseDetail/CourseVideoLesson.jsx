@@ -8,10 +8,15 @@ const CourseVideoLesson = ({ lesson, materialDetails }) => {
   const { language } = useLanguage();
   const { isDarkMode } = useTheme();
 
-  // Helper function to get text based on language
-  const getText = (obj) => {
+  // Translation function
+  const getText = (arText, enText) => {
+    return language === "ar" ? arText : enText;
+  };
+
+  // Helper function to get text based on language from object
+  const getTextFromObj = (obj) => {
     if (!obj) return "";
-    return obj[language] || obj.en || "";
+    return obj[language] || obj.en || obj.ar || "";
   };
   
   console.log('🎥 CourseVideoLesson received:', { lesson, materialDetails });
@@ -26,8 +31,8 @@ const CourseVideoLesson = ({ lesson, materialDetails }) => {
   
   // Get material info with fallbacks
   const materialInfo = {
-    name: materialDetails?.name || getText(lesson.title),
-    description: materialDetails?.description || getText(lesson.description),
+    name: materialDetails?.name || getTextFromObj(lesson.title),
+    description: materialDetails?.description || getTextFromObj(lesson.description),
     duration: materialDetails?.duration_in_seconds || lesson.duration_in_seconds,
     instructor: materialDetails?.user?.name || lesson.instructor,
     courseInfo: materialDetails?.course || lesson.courseInfo,
@@ -75,17 +80,18 @@ const CourseVideoLesson = ({ lesson, materialDetails }) => {
               </div>
             </div>
             <h2 className="text-2xl font-bold mb-2 text-gray-800 dark:text-gray-100">
-              {language === "ar" ? "عذراً، لقد تم استنفاذ جميع المشاهدات المتاحة" : "Sorry, you've used all available views"}
+              {getText("عذراً، لقد تم استنفاذ جميع المشاهدات المتاحة", "Sorry, you've used all available views")}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              {language === "ar"
-                ? `لقد استخدمت الحد الأقصى المسموح به من المشاهدات لهذا الدرس`
-                : `You've used the maximum allowed views for this lesson`}
+              {getText(
+                "لقد استخدمت الحد الأقصى المسموح به من المشاهدات لهذا الدرس",
+                "You've used the maximum allowed views for this lesson"
+              )}
             </p>
             <div className="flex items-center mt-2">
               <Info size={16} className="text-gray-500 dark:text-gray-400 mr-2" />
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                {language === "ar" ? `الحد الأقصى للمشاهدات: ${lesson.maxViews}` : `Maximum views: ${lesson.maxViews}`}
+                {getText(`الحد الأقصى للمشاهدات: ${lesson.maxViews}`, `Maximum views: ${lesson.maxViews}`)}
               </span>
             </div>
           </div>
@@ -111,9 +117,7 @@ const CourseVideoLesson = ({ lesson, materialDetails }) => {
                   <source src={videoUrl} type="video/mp4" />
                   <source src={videoUrl} type="video/webm" />
                   <source src={videoUrl} type="video/ogg" />
-                  {language === 'ar' 
-                    ? 'متصفحك لا يدعم تشغيل الفيديو' 
-                    : 'Your browser does not support the video tag.'}
+                  {getText('متصفحك لا يدعم تشغيل الفيديو', 'Your browser does not support the video tag.')}
                 </video>
               ) : (
                 // Fallback placeholder
@@ -123,7 +127,7 @@ const CourseVideoLesson = ({ lesson, materialDetails }) => {
                       <Play size={32} className="text-white ml-1" />
                     </div>
                     <p className="text-white">
-                      {language === 'ar' ? 'لا يوجد فيديو متاح' : 'No video available'}
+                      {getText('لا يوجد فيديو متاح', 'No video available')}
                     </p>
                   </div>
                 </div>
@@ -153,10 +157,13 @@ const CourseVideoLesson = ({ lesson, materialDetails }) => {
                 {materialInfo.duration && (
                   <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
                     <div className="font-medium text-blue-700 dark:text-blue-300">
-                      {language === 'ar' ? 'مدة الفيديو' : 'Video Duration'}
+                      {getText('مدة الفيديو', 'Video Duration')}
                     </div>
                     <div className="text-blue-600 dark:text-blue-400">
-                      {Math.floor(materialInfo.duration / 60)} دقيقة
+                      {getText(
+                        `${Math.floor(materialInfo.duration / 60)} دقيقة`,
+                        `${Math.floor(materialInfo.duration / 60)} minutes`
+                      )}
                     </div>
                   </div>
                 )}
@@ -164,7 +171,7 @@ const CourseVideoLesson = ({ lesson, materialDetails }) => {
                 {materialInfo.instructor && (
                   <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
                     <div className="font-medium text-green-700 dark:text-green-300">
-                      {language === 'ar' ? 'المدرس' : 'Instructor'}
+                      {getText('المدرس', 'Instructor')}
                     </div>
                     <div className="text-green-600 dark:text-green-400">
                       {materialInfo.instructor}
@@ -175,7 +182,7 @@ const CourseVideoLesson = ({ lesson, materialDetails }) => {
                 {materialInfo.courseInfo && (
                   <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg">
                     <div className="font-medium text-purple-700 dark:text-purple-300">
-                      {language === 'ar' ? 'الكورس' : 'Course'}
+                      {getText('الكورس', 'Course')}
                     </div>
                     <div className="text-purple-600 dark:text-purple-400">
                       {materialInfo.courseInfo.name}
@@ -188,7 +195,7 @@ const CourseVideoLesson = ({ lesson, materialDetails }) => {
               {materialInfo.courseIdea && (
                 <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                   <h3 className="font-medium text-yellow-700 dark:text-yellow-300 mb-2">
-                    {language === 'ar' ? 'موضوع الدرس' : 'Lesson Topic'}
+                    {getText('موضوع الدرس', 'Lesson Topic')}
                   </h3>
                   <p className="text-yellow-600 dark:text-yellow-400">
                     {materialInfo.courseIdea.name}

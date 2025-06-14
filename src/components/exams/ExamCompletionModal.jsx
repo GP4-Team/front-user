@@ -35,7 +35,7 @@ const ExamCompletionModal = ({
   
   const confirmText = isTimeOut 
     ? (language === 'ar' ? 'حسناً' : 'OK')
-    : (language === 'ar' ? 'سبميت' : 'Submit');
+    : (language === 'ar' ? 'إرسال' : 'Submit');
   const cancelText = language === 'ar' ? 'إلغاء' : 'Cancel';
 
   const renderModalIcon = () => {

@@ -188,17 +188,10 @@ const ExamQuestionsPage = () => {
       const result = await finishExam(passedExamId);
       
       if (result.success) {
-        message.success(language === 'ar' ? 'تم إنهاء الامتحان بنجاح' : 'Exam finished successfully');
+        message.success(language === 'ar' ? 'تم إرسال الامتحان بنجاح' : 'Exam submitted successfully');
         
-        // Navigate to results page with attempt ID
-        navigate(`/exams/${examId}/results/${passedExamId}`, { 
-          state: { 
-            examData: examData,
-            userAnswers: userAnswers,
-            timeSpent: (examData?.duration_in_seconds || 0) - timeRemaining,
-            submissionData: result.data
-          } 
-        });
+        // Navigate to all exams page (MyExamsPage)
+        navigate('/exams');
       } else {
         message.error(result.error || (language === 'ar' ? 'خطأ في إنهاء الامتحان' : 'Error finishing exam'));
         setIsExamEnded(false);
@@ -225,18 +218,10 @@ const ExamQuestionsPage = () => {
         // Auto-finish when time ends
         const result = await finishExam(passedExamId);
         
-        message.info(language === 'ar' ? 'انتهى الوقت المحدد وتم إنهاء الامتحان' : 'Time is up, exam has been finished');
+        message.info(language === 'ar' ? 'انتهى الوقت وتم إرسال الامتحان' : 'Time is up, exam has been submitted');
         
-        // Navigate to results page with attempt ID
-        navigate(`/exams/${examId}/results/${passedExamId}`, { 
-          state: { 
-            examData: examData,
-            userAnswers: userAnswers,
-            timeSpent: examData?.duration_in_seconds || 0,
-            submissionData: result.data,
-            timeUp: true
-          } 
-        });
+        // Navigate to all exams page (MyExamsPage)
+        navigate('/exams');
       } else {
         message.error(language === 'ar' ? 'لم يتم العثور على معرف جلسة الامتحان' : 'Could not find exam session ID');
       }
@@ -421,7 +406,7 @@ const ExamQuestionsPage = () => {
                     <span className={language === 'ar' ? 'text-right' : 'text-left'}>
                       {submitLoading 
                         ? (language === 'ar' ? 'جاري الإرسال...' : 'Submitting...') 
-                        : (language === 'ar' ? 'سبميت' : 'Submit')
+                        : (language === 'ar' ? 'إرسال' : 'Submit')
                       }
                     </span>
                   </Button>
@@ -521,7 +506,7 @@ const ExamQuestionsPage = () => {
                       <span className={language === 'ar' ? 'text-right mr-2' : 'text-left ml-2'}>
                         {submitLoading 
                           ? (language === 'ar' ? 'جاري الإرسال...' : 'Submitting...') 
-                          : (language === 'ar' ? 'سبميت' : 'Submit')
+                          : (language === 'ar' ? 'إرسال' : 'Submit')
                         }
                       </span>
                     </Button>

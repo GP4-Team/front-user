@@ -18,10 +18,15 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
   const { language, isRTL } = useLanguage();
   const { isDarkMode } = useTheme();
 
-  // Helper function to get text based on language
-  const getText = (obj) => {
+  // Translation function
+  const getText = (arText, enText) => {
+    return language === "ar" ? arText : enText;
+  };
+
+  // Helper function to get text based on language from object
+  const getTextFromObj = (obj) => {
     if (!obj) return "";
-    return obj[language] || obj.en || "";
+    return obj[language] || obj.en || obj.ar || "";
   };
 
   // Get icon based on lesson type
@@ -57,14 +62,14 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
 
   // Get status icon based on lesson status
   const getStatusIcon = (lesson) => {
-    // عدم عرض أيقونة lock - جميع المواد مفتوحة
+    // Don't show lock icon - all materials are open
     switch (lesson.status) {
       case "completed":
         return <CheckCircle size={18} className="text-[#81C784] ml-2 rtl:mr-2" />;
       case "current":
         return <Play size={18} className="text-[#4285F4] ml-2 rtl:mr-2" />;
       default:
-        // لا نعرض أيقونة lock
+        // Don't show lock icon
         return null;
     }
   };
@@ -77,16 +82,19 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
           <div className="flex items-center">
             <div className="w-8 h-8 bg-[#1A237E] dark:bg-[#3949AB]/20 rounded-full flex items-center justify-center mr-3 rtl:ml-3 rtl:mr-0">
               <span className="text-[#FFC107] text-sm font-medium">
-                {language === "ar" ? course.sections.length : course.sections.length}
+                {course.sections.length}
               </span>
             </div>
             <div>
               <h3 className="text-sm font-medium text-[#37474F] dark:text-white">
-                {language === "ar" ? `${course.sections.length} قسم | ` : `${course.sections.length} Sections | `}
-                {language === "ar" 
-                  ? `${course.sections.reduce((acc, section) => acc + (section.lessons ? section.lessons.length : 0), 0)} درس` 
-                  : `${course.sections.reduce((acc, section) => acc + (section.lessons ? section.lessons.length : 0), 0)} Lessons`
-                }
+                {getText(
+                  `${course.sections.length} قسم | `,
+                  `${course.sections.length} Sections | `
+                )}
+                {getText(
+                  `${course.sections.reduce((acc, section) => acc + (section.lessons ? section.lessons.length : 0), 0)} درس`,
+                  `${course.sections.reduce((acc, section) => acc + (section.lessons ? section.lessons.length : 0), 0)} Lessons`
+                )}
               </h3>
             </div>
           </div>
@@ -111,7 +119,7 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
               </div>
               <div>
                 <h3 className="font-medium text-[#37474F] dark:text-white">
-                  {getText(section.title)}
+                  {getTextFromObj(section.title)}
                 </h3>
               </div>
             </div>
@@ -134,18 +142,18 @@ const CourseSidebar = ({ course, expandedSections, toggleSection, currentLesson,
                     currentLesson && currentLesson.id === lesson.id 
                       ? "bg-[#ECEFF1] dark:bg-[#1A237E]/20" 
                       : "hover:bg-[#F5F7F9] dark:hover:bg-[#3949AB]/20"
-                  } transition-colors`} // إزالة الـ opacity للمواد الـ locked
-                  onClick={() => selectLesson(lesson)} // إزالة شرط الـ lock
+                  } transition-colors`} // Remove opacity for locked materials
+                  onClick={() => selectLesson(lesson)} // Remove lock condition
                 >
                   <div className="flex items-center">
                     {getLessonIcon(lesson)}
                     <div>
                       <h4 className="text-sm font-medium text-[#37474F] dark:text-white">
-                        {getText(lesson.title)}
+                        {getTextFromObj(lesson.title)}
                       </h4>
                       {lesson.duration && (
                         <p className="text-xs text-[#37474F] dark:text-[#B0BEC5]">
-                          {language === "ar" ? `(${getText(lesson.duration)})` : `(${getText(lesson.duration)})`}
+                          {`(${getTextFromObj(lesson.duration)})`}
                         </p>
                       )}
                     </div>
